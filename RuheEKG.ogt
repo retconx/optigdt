@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root kennfeld="EKG01" gdtIdGeraet="EKG1" gdtDateiname="EDV1EKG1.gdt" exportverzeichnis="/Users/fabian/Documents">
+    <optimierung id ="1" typ="deleteTest">
+        <eindeutigkeitskriterien>
+            <kriterium feldkennung="8410">AXIS_P</kriterium>
+        </eindeutigkeitskriterien>
+    </optimierung>
+    <optimierung id ="2" typ="deleteTest">
+        <eindeutigkeitskriterien>
+            <kriterium feldkennung="8410">AXIS_QRS</kriterium>
+        </eindeutigkeitskriterien>
+    </optimierung>
+    <optimierung id ="3" typ="deleteTest">
+        <eindeutigkeitskriterien>
+            <kriterium feldkennung="8410">AXIS_T</kriterium>
+        </eindeutigkeitskriterien>
+    </optimierung>
+    <optimierung id ="4" typ="changeTest">
+        <eindeutigkeitskriterien>
+            <kriterium feldkennung="8410">HF</kriterium>
+        </eindeutigkeitskriterien>
+        <aenderung feldkennung="8421">/min</aenderung>
+    </optimierung>
+    <optimierung id ="5" typ="concatInhalte">
+        <feldkennung>6220</feldkennung>
+    </optimierung>
+</root>
