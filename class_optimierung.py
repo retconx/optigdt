@@ -120,6 +120,30 @@ class OptiAddZeile(Optimierung):
         optimierungElement.append(inhaltElement)
         return optimierungElement
     
+class OptiChangeZeile(Optimierung):
+    def __init__(self, feldkennung:str, neuerInhalt:str, alleZeilen:bool, bisherigesRoot:ElementTree.Element):
+        super().__init__("changeZeile", bisherigesRoot)
+        self.feldkennung = feldkennung
+        self.neuerInhalt = neuerInhalt
+        self.alleZeilen = alleZeilen
+        self.Id = self.neueId
+
+    def getXml(self) -> ElementTree.Element:
+        optimierungElement = ElementTree.Element("optimierung")
+        optimierungElement.set("id", str(self.Id))
+        optimierungElement.set("typ", self.typ)
+        az = "True"
+        if not self.alleZeilen:
+            az = "False"
+        optimierungElement.set("alle", az)
+        feldkennungElement = ElementTree.Element("feldkennung") 
+        feldkennungElement.text = self.feldkennung
+        neuerInhaltElement = ElementTree.Element("inhalt") 
+        neuerInhaltElement.text = self.neuerInhalt
+        optimierungElement.append(feldkennungElement)
+        optimierungElement.append(neuerInhaltElement)
+        return optimierungElement
+    
 class OptiDeleteZeile(Optimierung):
     def __init__(self, feldkennung:str, alleZeilen:bool, bisherigesRoot:ElementTree.Element):
         super().__init__("deleteZeile", bisherigesRoot)

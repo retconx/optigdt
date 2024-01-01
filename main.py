@@ -1,7 +1,7 @@
 import sys, configparser, os, datetime, shutil, logger, re, time
 import class_gdtdatei, gdttoolsL, class_optimierung
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -34,6 +34,7 @@ reGdtId = r"^[0-9A-Za-z_\-]{8}$"
 testauswahlHintergrund = QColor(220,220,220)
 concatHintergrund = QColor(255,220,255)
 addZeileHintergrund =  QColor(220,255,220)
+changeZeileHintergrund = QColor(255,220,220)
 changeTestHintergrund = QColor(220,220,255)
 testAus6228Hintergrund = QColor(255,255,220)
 befundAusTestHintergrund = QColor(220,255,255)
@@ -121,13 +122,13 @@ class MainWindow(QMainWindow):
         self.tray.setIcon(icon)
         self.tray.setToolTip("OptiGDT-Überwachung inaktiv")
         self.trayMenu = QMenu()
-        self.trayMenuZeigenAction = QAction("OptiGDT zeigen", app)
+        self.trayMenuZeigenAction = QAction("OptiGDT zeigen", self)
         self.trayMenuZeigenAction.setEnabled(False)
-        self.trayMenuBeendenAction = QAction("OptiGDT beenden", app)
+        self.trayMenuBeendenAction = QAction("OptiGDT beenden", self)
         self.trayMenu.addAction(self.trayMenuZeigenAction)
         self.trayMenu.addAction(self.trayMenuBeendenAction)
-        self.trayMenuBeendenAction.triggered.connect(self.trayMenuBeenden) # type: ignore
         self.trayMenuZeigenAction.triggered.connect(self.trayMenuZeigen) # type: ignore
+        self.trayMenuBeendenAction.triggered.connect(self.trayMenuBeenden) # type: ignore
         self.tray.setContextMenu(self.trayMenu)
         self.tray.show()
         self.templateRootElement = ElementTree.Element("root")
@@ -297,6 +298,9 @@ class MainWindow(QMainWindow):
         self.pushButtonZeileHinzufuegen = QPushButton("Zeile hinzufügen")
         self.pushButtonZeileHinzufuegen.setFont(self.fontNormal)
         self.pushButtonZeileHinzufuegen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId)) # type: ignore
+        self.pushButtonZeileAendern = QPushButton("Zeile ändern")
+        self.pushButtonZeileAendern.setFont(self.fontNormal)
+        self.pushButtonZeileAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) # type: ignore
         self.pushButtonZeileEntfernen = QPushButton("Zeile entfernen")
         self.pushButtonZeileEntfernen.setFont(self.fontNormal)
         self.pushButtonZeileEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) # type: ignore
@@ -384,6 +388,7 @@ class MainWindow(QMainWindow):
         mainGridLayout.addWidget(self.treeWidgetOriginal, 1, 0)
         mainGridLayout.addWidget(self.treeWidgetOptimiert, 1, 1)
         optimierungsButtonsLayout.addWidget(self.pushButtonZeileHinzufuegen)
+        optimierungsButtonsLayout.addWidget(self.pushButtonZeileAendern)
         optimierungsButtonsLayout.addWidget(self.pushButtonZeileEntfernen)
         optimierungsButtonsLayout.addWidget(self.pushButtonTestAendern)
         optimierungsButtonsLayout.addWidget(self.pushButtonTestEntfernen)
@@ -441,6 +446,8 @@ class MainWindow(QMainWindow):
         optimierenMenu = menubar.addMenu("Optimieren")
         optimierenMenuZeileHinzufuegenAction = QAction("Zeile hinzufügen", self)
         optimierenMenuZeileHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId)) # type:ignore
+        optimierenMenuZeileAendernAction = QAction("Zeile ändern", self)
+        optimierenMenuZeileAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) # type:ignore
         optimierenMenuZeileEntfernenAction = QAction("Zeile entfernen", self)
         optimierenMenuZeileEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) # type:ignore
         optimierenMenuTestAendernAction = QAction("Test ändern", self)
@@ -480,6 +487,7 @@ class MainWindow(QMainWindow):
         templateMenu.addAction(templateMenuSpeichernAction)
         templateMenu.addAction(templateMenuTemplatesVerwaltenAction)
         optimierenMenu.addAction(optimierenMenuZeileHinzufuegenAction)
+        optimierenMenu.addAction(optimierenMenuZeileAendernAction)
         optimierenMenu.addAction(optimierenMenuZeileEntfernenAction)
         optimierenMenu.addAction(optimierenMenuTestAendernAction)
         optimierenMenu.addAction(optimierenMenuTestEntfernenAction)
@@ -540,6 +548,8 @@ class MainWindow(QMainWindow):
                 item.setText(2, zeile[7:-8])
                 if typ == "addZeile":
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), addZeileHintergrund)
+                elif typ == "changeZeile":
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), changeZeileHintergrund)
                 elif typ == "deleteZeile":
                     item.setFont(2, self.fontDurchgestrichen)
                 elif typ == "deleteTest":
@@ -768,7 +778,6 @@ class MainWindow(QMainWindow):
                     self.lineEditExportverzeichnis.setText("")
                     self.checkBoxKennfeld.setChecked(False)
                     self.checkBoxGdtId.setChecked(False)
-                    # self.checkBoxGdtDateiname.setChecked(False)
                     self.templateRootElement.clear()
                     self.ungesichertesTemplate = False
                     kennfeld = ""
@@ -786,7 +795,6 @@ class MainWindow(QMainWindow):
                         logger.logger.warning("Feldkennung 8316 in GDT-Datei " + self.gdtDateipfad + " nicht vorhanden")
                     self.lineEditGdtId.setText(gdtId)
                     self.lineEditGdtDateiname.setText(os.path.basename(self.gdtDateipfad))
-                    # self.checkBoxGdtDateiname.setChecked(True)
                     self.ungesichertesTemplate = False
                     self.setStatusMessage("GDT-Datei " + self.gdtDateipfad + " geladen")
                 except class_gdtdatei.GdtFehlerException as e:
@@ -931,7 +939,7 @@ class MainWindow(QMainWindow):
                             et.write(fd.selectedFiles()[0], "utf-8", True)
                             self.ungesichertesTemplate = False
                         except Exception as e:
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Sepichern des Templates: " + e.args[1], QMessageBox.StandardButton.Ok)
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Sepichern des Templates: " + str(e), QMessageBox.StandardButton.Ok)
                             mb.exec()
             elif self.treeWidgetOriginal.topLevelItemCount() == 0:
                 mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
@@ -955,7 +963,7 @@ class MainWindow(QMainWindow):
                             os.unlink(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt"))
                             logger.logger.info("Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + " gelöscht")
                         except Exception as e:
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + e.args[1], QMessageBox.StandardButton.Ok)
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + str(e), QMessageBox.StandardButton.Ok)
                             mb.exec()
             # Template-Infos ändern
             for i in range(len(dg.templatenamen)):
@@ -971,7 +979,7 @@ class MainWindow(QMainWindow):
                     et.write(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"), "utf-8", True)
                     logger.logger.info("Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + " geändert")
                 except Exception as e:
-                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + ": " + e.args[1], QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + ": " + str(e), QMessageBox.StandardButton.Ok)
                     mb.exec()
 
     def optimierenMenuZeileHinzufuegen(self, checked, optimierungsId:str=""):
@@ -998,6 +1006,49 @@ class MainWindow(QMainWindow):
                         exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                         if len(exceptions) == 0:
                             self.setStatusMessage("GDT-Zeile " + class_gdtdatei.GdtDatei.getZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text()) + " hinzugefügt")
+                        else:
+                            exceptionsListe = "\n-".join(exceptions)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                            mb.exec() 
+                        self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                        self.ungesichertesTemplate = True
+                    except class_gdtdatei.GdtFehlerException as e:
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                        mb.exec()
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                mb.exec()
+        else:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb.exec()
+
+    def optimierenMenuZeileAendern(self, checked, optimierungsId:str=""):
+        if self.addOnsFreigeschaltet:
+            feldkennung = ""
+            neuerInhalt = ""
+            alleVorkommen = False
+            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+            if optimierungsId != "":
+                for optimierungElement in self.templateRootElement.findall("optimierung"):
+                    if str(optimierungElement.get("id")) == optimierungsId:
+                        alleVorkommen = optimierungElement.get("alle") == "True"
+                        feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
+                        neuerInhalt = str(optimierungElement.find("inhalt").text) # type:ignore
+                        break
+            if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                do = dialogOptimierungChangeZeile.OptimierungChangeZeile(self.gdtDateiOriginal, alleVorkommen, feldkennung, neuerInhalt)
+                if do.exec() == 1:
+                    self.templateRootDefinieren()
+                    optimierungElement = class_optimierung.OptiChangeZeile(do.comboBoxZeile.currentText()[0:4], do.lineEditNeuerInhalt.text(), do.checkBoxAlle.isChecked(), self.templateRootElement)
+                    if optimierungsId == "": # Neue zeile
+                        self.templateRootElement.append(optimierungElement.getXml())
+                    else: # Zeile bearbeiten
+                        class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                    try:
+                        exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                        if len(exceptions) == 0:
+                            self.setStatusMessage("GDT-Zeile(n) mit der Feldkennung " + do.comboBoxZeile.currentText()[0:4] + " geändert")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
                             class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
@@ -1309,6 +1360,8 @@ class MainWindow(QMainWindow):
             optimierungstyp = class_optimierung.Optimierung.getTypVonId(self.templateRootElement, optimierungsId)
             if optimierungstyp == "addZeile":
                 self.optimierenMenuZeileHinzufuegen(False, optimierungsId)
+            elif optimierungstyp == "changeZeile":
+                self.optimierenMenuZeileAendern(False, optimierungsId)
             elif optimierungstyp == "deleteZeile":
                 self.optimierenMenuZeileEntfernen(False, optimierungsId)
             elif optimierungstyp == "changeTest":
@@ -1341,6 +1394,7 @@ class MainWindow(QMainWindow):
             except class_gdtdatei.GdtFehlerException as e:
                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entfernen der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
                 mb.exec()
+
     def pushButtonUeberwachungStartenClicked(self, checked):
         if checked:
             if os.path.exists(self.gdtImportVerzeichnis):
@@ -1372,7 +1426,8 @@ class MainWindow(QMainWindow):
                 self.trayMenuZeigenAction.setEnabled(True)
                 self.ueberwachungAktiv = True
                 if not self.isHidden():
-                    self.showMinimized()
+                    self.setWindowState(Qt.WindowState.WindowNoState)
+                    self.setHidden(True)
             else:
                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                 mb.exec()
@@ -1452,7 +1507,7 @@ class MainWindow(QMainWindow):
                                     if len(exceptions) > 0:
                                         exceptionListe = ", ".join(exceptions)
                                         logger.logger.warning("Fehlerliste nach Templateanwendung: " + exceptionListe)
-                                    gd.changeZeile("8100", gd.getSatzlaenge())
+                                    gd.setSatzlaenge()
                                     with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="\r\n") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
@@ -1473,13 +1528,15 @@ class MainWindow(QMainWindow):
         self.trayMenuZeigenAction.setEnabled(False)
 
     def trayMenuBeenden(self):
-         if self.ueberwachungAktiv:
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die GDT-Verzeichnisübrewachung ist aktiv.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+        if self.ueberwachungAktiv:
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "trayDie GDT-Verzeichnisübrewachung ist aktiv.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, self)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.Yes:
                 sys.exit()
+        else:
+            sys.exit()
     
     # Statische Methoden
     @staticmethod

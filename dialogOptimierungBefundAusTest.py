@@ -138,6 +138,7 @@ class OptimierungBefundAusTest(QDialog):
         self.listWidgetTestuebernahmen = QListWidget()
         self.listWidgetTestuebernahmen.setFont(self.fontNormal)
         self.listWidgetTestuebernahmen.currentItemChanged.connect(self.listWidgetTestuebernahmeItemChanged) # type: ignore
+        self.listWidgetTestuebernahmen.itemDoubleClicked.connect(self.pushButtonTestuebernahmeHinzufuegenClicked) # type: ignore
         dialogLayoutVTestuebernahmen.addWidget(self.listWidgetTestuebernahmen)
 
         # Contextmenü
@@ -147,7 +148,7 @@ class OptimierungBefundAusTest(QDialog):
         self.listWidgetTestuebernahmen.addAction(self.testuebernahmeEntfernenAction)
 
         dialogLayoutVBefundzeile = QVBoxLayout()
-        groupBoxBefundzeile = QGroupBox("Befundzeile")
+        groupBoxBefundzeile = QGroupBox("Befundzeile (Zeilenumbruch mit \"//\")")
         groupBoxBefundzeile.setFont(self.fontBold)
         groupBoxBefundzeile.setLayout(dialogLayoutVBefundzeile)
         self.lineEditBefundzeile = QLineEdit(self.befundzeile)
@@ -253,65 +254,74 @@ class OptimierungBefundAusTest(QDialog):
         eindeutigkeitsFeldkennungen = []
         keineFehler = False
         ueberschreiben = False
+        unzulässigeFeldkennung = -1
         for i in range(self.maxeindeutigkeitskriterien):
             feldkennung = self.lineEditFeldkennungen[i].text()
             if feldkennung != "":
                 kriterium = self.gdtDateiOriginal.replaceFkVariablen(self.lineEditKriterien[i].text())
                 if re.match(reFeldkennung, feldkennung) != None:
-                    test.setZeile(feldkennung, kriterium)
-                    eindeutigkeitsFeldkennungen.append(feldkennung)
-        test.setEindeutigkeitsFeldkennungen(eindeutigkeitsFeldkennungen)
-        anzahlGefundeneTests = 0
-        for prueftest in self.gdtDateiOriginal.getTests():
-            if test == prueftest:
-                anzahlGefundeneTests += 1
-        listWidgetItemTexte = [self.listWidgetTestuebernahmen.item(i).text() for i in range(self.listWidgetTestuebernahmen.count())]
-        if anzahlGefundeneTests == 0:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-        elif anzahlGefundeneTests > 1:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-        elif self.lineEditPlatzhalterName.text().strip() == "":
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Kein Platzhaltername eingetragen.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditPlatzhalterName.setFocus()
-            self.lineEditPlatzhalterName.selectAll()
-        elif self.lineEditPlatzhalterName.text() in listWidgetItemTexte:
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Der angegebene Platzhaltername existiert bereits. Soll die Testübernahme überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
-            mb.button(QMessageBox.StandardButton.No).setText("Nein")
-            if mb.exec() == QMessageBox.StandardButton.Yes:
-                keineFehler = True
-                ueberschreiben = True
-            self.lineEditPlatzhalterName.setFocus()
-            self.lineEditPlatzhalterName.selectAll()
-        elif self.lineEditPlatzhalterFeldkennung.text().strip() == "":
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Keine Platzhalterfeldkennung eingetragen.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditPlatzhalterFeldkennung.setFocus()
-            self.lineEditPlatzhalterFeldkennung.selectAll()
-        elif re.match(reFeldkennung, self.lineEditPlatzhalterFeldkennung.text()) == None or self.lineEditPlatzhalterFeldkennung.text()[0:2] != "84" or self.lineEditPlatzhalterFeldkennung.text()[0:2] == "8410":
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die angegebene Platzhalterfeldkennung ist ungültig.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditPlatzhalterFeldkennung.setFocus()
-            self.lineEditPlatzhalterFeldkennung.selectAll()
-        else:
-            keineFehler = True
-        
-        if keineFehler: # Kriterien eindeutig
-            eindeutigkeitskriterien = {}
-            for i in range(self.maxeindeutigkeitskriterien):
-                feldkennung = self.lineEditFeldkennungen[i].text()
-                kriterium = self.lineEditKriterien[i].text()
-                if feldkennung != "":
-                    eindeutigkeitskriterien[feldkennung] = kriterium
-            testuebernahme = Testuebernahme(self.lineEditPlatzhalterName.text(), self.lineEditPlatzhalterFeldkennung.text(), eindeutigkeitskriterien)
-            if ueberschreiben:
-                self.testuebernahmen[self.getTestuebernahmeIndex(self.lineEditPlatzhalterName.text())] = testuebernahme
+                    try:
+                        test.setZeile(feldkennung, kriterium)
+                        eindeutigkeitsFeldkennungen.append(feldkennung)
+                    except class_gdtdatei.GdtFehlerException as e:
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis", e.meldung, QMessageBox.StandardButton.Ok)
+                        mb.exec()
+                        unzulässigeFeldkennung = i
+        if unzulässigeFeldkennung == -1:
+            test.setEindeutigkeitsFeldkennungen(eindeutigkeitsFeldkennungen)
+            anzahlGefundeneTests = 0
+            for prueftest in self.gdtDateiOriginal.getTests():
+                if test == prueftest:
+                    anzahlGefundeneTests += 1
+            listWidgetItemTexte = [self.listWidgetTestuebernahmen.item(i).text() for i in range(self.listWidgetTestuebernahmen.count())]
+            if anzahlGefundeneTests == 0:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+            elif anzahlGefundeneTests > 1:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+            elif self.lineEditPlatzhalterName.text().strip() == "":
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Kein Platzhaltername eingetragen.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditPlatzhalterName.setFocus()
+                self.lineEditPlatzhalterName.selectAll()
+            elif self.lineEditPlatzhalterName.text() in listWidgetItemTexte:
+                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Der angegebene Platzhaltername existiert bereits. Soll die Testübernahme überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                if mb.exec() == QMessageBox.StandardButton.Yes:
+                    keineFehler = True
+                    ueberschreiben = True
+                self.lineEditPlatzhalterName.setFocus()
+                self.lineEditPlatzhalterName.selectAll()
+            elif self.lineEditPlatzhalterFeldkennung.text().strip() == "":
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Keine Platzhalterfeldkennung eingetragen.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditPlatzhalterFeldkennung.setFocus()
+                self.lineEditPlatzhalterFeldkennung.selectAll()
+            elif re.match(reFeldkennung, self.lineEditPlatzhalterFeldkennung.text()) == None or self.lineEditPlatzhalterFeldkennung.text()[0:2] != "84" or self.lineEditPlatzhalterFeldkennung.text()[0:2] == "8410":
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die angegebene Platzhalterfeldkennung ist ungültig.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditPlatzhalterFeldkennung.setFocus()
+                self.lineEditPlatzhalterFeldkennung.selectAll()
             else:
-                self.testuebernahmen.append(testuebernahme)
-            self.testsBereinigenUndListWidgetAusfuellen()
+                keineFehler = True
+            if keineFehler: # Kriterien eindeutig
+                eindeutigkeitskriterien = {}
+                for i in range(self.maxeindeutigkeitskriterien):
+                    feldkennung = self.lineEditFeldkennungen[i].text()
+                    kriterium = self.lineEditKriterien[i].text()
+                    if feldkennung != "":
+                        eindeutigkeitskriterien[feldkennung] = kriterium
+                testuebernahme = Testuebernahme(self.lineEditPlatzhalterName.text(), self.lineEditPlatzhalterFeldkennung.text(), eindeutigkeitskriterien)
+                if ueberschreiben:
+                    self.testuebernahmen[self.getTestuebernahmeIndex(self.lineEditPlatzhalterName.text())] = testuebernahme
+                else:
+                    self.testuebernahmen.append(testuebernahme)
+                self.testsBereinigenUndListWidgetAusfuellen()
+        else:
+            self.lineEditFeldkennungen[unzulässigeFeldkennung].setFocus()
+            self.lineEditFeldkennungen[unzulässigeFeldkennung].selectAll()
 
 
     def pushButtonUebernahmeEinfuegenClicked(self):

@@ -33,6 +33,14 @@ class Test():
         self.testzeilen["8410"] = ident
     
     def setZeile(self, feldkennung:str, inhalt:str):
+        """
+        Setzt den Inhalt einer Testzeile
+        Parameter:
+            feldkennung:str
+            inhalt:str
+        Exception:
+            GdtFehlerException, wenn keine zulässige Test-Feldkennung
+        """
         if feldkennung in self.zulaessigeFeldkennungen:
             self.testzeilen[feldkennung] = inhalt
         else:
@@ -92,19 +100,21 @@ class GdtDatei():
         self.zeilen = []
         self.dateipfad = ""
 
-    def getSatzlaenge(self, anzahlZiffern:int=5):
+    def setSatzlaenge(self, anzahlZiffern:int=5):
         """
-        Gibt die Satzlänge der GDT-Datei zurück
+        Setzt die aktuelle Satzlänge der GDT-Datei (Feldkennung 8100)
         Parameter:
             anzahlZiffern:int
-        Return:
-            Satzlänge als anzahlZiffern-stelliger String
         """
         laenge = 9 + anzahlZiffern
         for zeile in self.zeilen:
             if zeile[3:7] != "8100":
                 laenge += len(zeile[7:]) + 9
-        return ("{:>05}".format(laenge))
+        laengeFormatiert = ("{:>05}".format(laenge))
+        i = 0
+        for i in range(len(self.zeilen)):
+            if self.zeilen[i][3:7] == "8100":
+                self.zeilen[i] = GdtDatei.getZeile("8100", laengeFormatiert)
     
     def laden(self, dateipfad:str):
         """Lädt eine GDT-Datei+
@@ -113,16 +123,22 @@ class GdtDatei():
         Return:
             Liste der Dateizeilen ohne \r\n
         Exception:
-            GdtFehlerException
+            GdtFehlerException, wenn keine GDT-Datei (keine Feldkennung 8000) oder Ladefehler
         """
         self.dateipfad = dateipfad
         self.zeilen = []
+        feldkennung8000Vorhanden = False
         try:
             with open(dateipfad, "r", encoding=self.enc, newline="\r\n") as gdtDatei:
                 for zeile in gdtDatei:
+                    if zeile[:7] == "0138000":
+                        feldkennung8000Vorhanden = True
                     self.zeilen.append(zeile.strip())
-        except Exception as e:
-            raise GdtFehlerException("Fehler beim Laden von " + dateipfad + ": " + e.args[1])
+            if not feldkennung8000Vorhanden:
+                self.zeilen.clear()
+                raise GdtFehlerException("Keine gültige GDT-Datei")
+        except IOError as e:
+            raise GdtFehlerException("IO-Fehler: " + str(e))
         return self.zeilen
     
     def setZeichensatz(self, zeichensatz:GdtZeichensatz):
@@ -233,22 +249,40 @@ class GdtDatei():
         """
         self.zeilen.append(GdtDatei.getZeile(feldkennung, inhalt))
     
-    def changeZeile(self,feldkennung:str, neuerInhalt:str):
+    def changeZeile(self, id:str, feldkennung:str, neuerInhalt:str, alleVorkommen:bool=False, vorschau:bool=False):
         """
-        Ändert den Inhalt einer GDT-Zeile (erstes Vorkommen einer Feldkennung)
+        Ändert den Inhalt einer/aller GDT-Zeile(n) einer Feldkennung
         Parameter:
             feldkennung:str
             neuerInhalt:str
+            alleVorkommen:bool 
+            vorschau:bool Gelöschten Zeilen wird __id__ angehängt
+        Exception:
+            GdtFehlerException, wenn zu ändernde Zeile nicht gefunden
         """
+        vorkommen = []
         i = 0
         while i < len(self.zeilen):
             fk = self.zeilen[i][3:7]
             if fk == feldkennung:
-                self.zeilen[i] = GdtDatei.getZeile(feldkennung, neuerInhalt)
-                break
+                vorkommen.append(i)
             i +=1
+        if len(vorkommen) > 0:
+            if not alleVorkommen:
+                if vorschau:
+                    self.zeilen[vorkommen[0]] = GdtDatei.getZeile(feldkennung, neuerInhalt) + "__" + id + "__"
+                else:
+                    self.zeilen.pop(vorkommen[0])
+            else:
+                for i in range(len(vorkommen)):
+                    if vorschau:
+                        self.zeilen[i] = GdtDatei.getZeile(feldkennung, neuerInhalt) + "__" + id + "__"
+                    else:
+                        self.zeilen[i] = GdtDatei.getZeile(feldkennung, neuerInhalt)
+        else:
+            raise GdtFehlerException("Zu ändernde Zeile(n) mit der Feldkennung " + feldkennung + " nicht gefunden")
     
-    def deleteZeile(self,id:str, feldkennung:str, alleVorkommen:bool=False, vorschau:bool=False):
+    def deleteZeile(self, id:str, feldkennung:str, alleVorkommen:bool=False, vorschau:bool=False):
         """
         Löscht eine/alle GDT-Zeile(n) einer Feldkennung
         Parameter:
@@ -509,6 +543,17 @@ class GdtDatei():
                             self.addZeile(feldkennung, inhalt)
                     else:
                         exceptions.append("Zeile mit Feldkennung " + str(feldkennung) + " und Inhalt " + str(inhalt) + " nicht hinzugefügt (xml-Datei fehlerhaft)")
+                elif typ == "changeZeile":
+                    alle = optimierungElement.get("alle") == "True"
+                    feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
+                    inhalt = self.replaceFkVariablen(str(optimierungElement.find("inhalt").text)) # type: ignore
+                    if feldkennung:
+                        try:
+                            self.changeZeile(id, feldkennung, inhalt, alle, vorschau)
+                        except GdtFehlerException as e:
+                            exceptions.append(e.meldung)
+                    else:
+                        exceptions.append("Zeile(n) mit Feldkennung " + str(feldkennung) + " nicht geändert (xml-Datei fehlerhaft)")
                 elif typ == "deleteZeile":
                     alle = optimierungElement.get("alle") == "True"
                     feldkennung = optimierungElement.find("feldkennung").text # type: ignore
@@ -576,7 +621,10 @@ class GdtDatei():
                             eindeutigkeitskriterien[str(kriteriumElement.get("feldkennung"))] = str(kriteriumElement.text)
                         test = Test("xxxx", list(eindeutigkeitskriterien.keys()))
                         for kriterium in eindeutigkeitskriterien:
-                            test.setZeile(kriterium, self.replaceFkVariablen(eindeutigkeitskriterien[kriterium]))
+                            try:
+                                test.setZeile(kriterium, self.replaceFkVariablen(eindeutigkeitskriterien[kriterium]))
+                            except GdtFehlerException as e:
+                                exceptions.append(e.meldung)
                         variableElement = testElement.find("variable")
                         feldkennung = str(variableElement.find("feldkennung").text) # type: ignore
                         name = str(variableElement.find("name").text) # type: ignore
@@ -591,12 +639,22 @@ class GdtDatei():
                             exceptions.append("Test mit der ID " + test.getInhalt("8410") + " zur Befunderstellung nicht gefunden")
                     if nichtGefundeneTests == 0:
                         befund = str(optimierungElement.find("befund").text) # type: ignore
+                        befundzeilen = []
                         for inhalt in variablenInhalt:
                             befund = befund.replace("${" + inhalt + "}", variablenInhalt[inhalt])
+                            befundzeilen.clear()
+                            ## Auf gesetzte Zeilenumbrüche prüfen
+                            if "//" in befund:
+                                for befundzeile in befund.split("//"):
+                                    befundzeilen.append(befundzeile)
+                            else:
+                                befundzeilen.append(befund)
                         if vorschau:
-                            self.addZeile("6220", befund + "__" + id + "__")
+                            for befundzeile in befundzeilen:
+                                self.addZeile("6220", befundzeile + "__" + id + "__")
                         else:
-                            self.addZeile("6220", befund)
+                            for befundzeile in befundzeilen:
+                                self.addZeile("6220", befundzeile)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
                     if feldkennung:
