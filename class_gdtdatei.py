@@ -266,13 +266,13 @@ class GdtDatei():
             fk = self.zeilen[i][3:7]
             if fk == feldkennung:
                 vorkommen.append(i)
-            i +=1
+            i += 1
         if len(vorkommen) > 0:
             if not alleVorkommen:
                 if vorschau:
                     self.zeilen[vorkommen[0]] = GdtDatei.getZeile(feldkennung, neuerInhalt) + "__" + id + "__"
                 else:
-                    self.zeilen.pop(vorkommen[0])
+                    self.zeilen[vorkommen[0]] = GdtDatei.getZeile(feldkennung, neuerInhalt)
             else:
                 for i in range(len(vorkommen)):
                     if vorschau:

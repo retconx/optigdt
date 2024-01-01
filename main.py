@@ -246,7 +246,9 @@ class MainWindow(QMainWindow):
             mb.exec()
 
         # Add-Ons freigeschaltet?
-        self.addOnsFreigeschaltet = gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDT)
+        self.addOnsFreigeschaltet = gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDT) or gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDTPSEUDO)
+        if gdttoolsL.GdtToolsLizenzschluessel.getSoftwareId(self.lizenzschluessel) == gdttoolsL.SoftwareId.OPTIGDTPSEUDO:
+            logger.logger.info("Lizenzschlüssel für Pseudo-LANR " + self.lanr)
         
         jahr = datetime.datetime.now().year
         copyrightJahre = "2023"
@@ -514,7 +516,7 @@ class MainWindow(QMainWindow):
             mb.exec()
             logger.logger.warning("Updateprüfung nicht möglich: " + str(e))
         
-        if len(sys.argv) > 1 and "bg" in sys.argv:
+        if len(sys.argv) > 1 and "ue" in sys.argv:
             self.pushButtonUeberwachungStarten.setChecked(True)
             self.pushButtonUeberwachungStartenClicked(True)
 
@@ -1508,7 +1510,15 @@ class MainWindow(QMainWindow):
                                         exceptionListe = ", ".join(exceptions)
                                         logger.logger.warning("Fehlerliste nach Templateanwendung: " + exceptionListe)
                                     gd.setSatzlaenge()
-                                    with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="\r\n") as file:
+                                    # Pseudo-LANR?
+                                    rePatId = r"^patid\d+$"
+                                    if len(sys.argv) > 1:
+                                        for arg in sys.argv:
+                                            if re.match(rePatId, arg) != None:
+                                                logger.logger.info("Optimierung für Pseudo-LANR mit id " + arg[5:])
+                                                print(arg[5:])
+                                                gd.changeZeile("", "3000", arg[5:])
+                                    with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
                                     logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " gespeichert") 
@@ -1563,6 +1573,6 @@ qt.load(filename, directory)
 app.installTranslator(qt)
 app.setWindowIcon(QIcon(os.path.join(basedir, "icons/program.png")))
 window = MainWindow()
-if not "bg" in sys.argv:
+if not "ue" in sys.argv:
     window.show()
 app.exec()
