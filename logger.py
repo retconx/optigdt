@@ -10,9 +10,9 @@ else:
         os.remove(os.path.join(basedir, "log/" + logListe[0]))
 datum = datetime.datetime.strftime(datetime.datetime.today(), "%Y%m%d")
 logHandler = logging.FileHandler(os.path.join(basedir, "log/" + datum + "_optigdt.log"), mode="a", encoding="utf_8")
-logLevel = logging.DEBUG
+logLevel = logging.INFO
 logForm = logging.Formatter("{asctime} {levelname:8}: {message}", "%d.%m.%Y %H:%M:%S", "{")
-if len(sys.argv) == 2 and sys.argv[1].upper() == "DEBUG":
+if len(sys.argv) > 1 and "debug" in sys.argv[1].lower():
     logLevel = logging.DEBUG
 logHandler.setFormatter(logForm)
 logger = logging.getLogger(__name__)

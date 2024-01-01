@@ -91,6 +91,20 @@ class GdtDatei():
             self.enc = "cp1252"
         self.zeilen = []
         self.dateipfad = ""
+
+    def getSatzlaenge(self, anzahlZiffern:int=5):
+        """
+        Gibt die Satzlänge der GDT-Datei zurück
+        Parameter:
+            anzahlZiffern:int
+        Return:
+            Satzlänge als anzahlZiffern-stelliger String
+        """
+        laenge = 9 + anzahlZiffern
+        for zeile in self.zeilen:
+            if zeile[3:7] != "8100":
+                laenge += len(zeile[7:]) + 9
+        return ("{:>05}".format(laenge))
     
     def laden(self, dateipfad:str):
         """Lädt eine GDT-Datei+
@@ -104,7 +118,7 @@ class GdtDatei():
         self.dateipfad = dateipfad
         self.zeilen = []
         try:
-            with open(dateipfad, "r", encoding=self.enc) as gdtDatei:
+            with open(dateipfad, "r", encoding=self.enc, newline="\r\n") as gdtDatei:
                 for zeile in gdtDatei:
                     self.zeilen.append(zeile.strip())
         except Exception as e:
@@ -113,6 +127,11 @@ class GdtDatei():
     
     def setZeichensatz(self, zeichensatz:GdtZeichensatz):
         self.zeichensatz = zeichensatz
+        self.enc = "cp437"
+        if zeichensatz == GdtZeichensatz.BIT_7:
+            self.enc = "utf_7"
+        elif zeichensatz == GdtZeichensatz.ANSI_CP1252:
+            self.enc = "cp1252"
 
     def getZeichensatzAlsPythonString(self):
         return self.enc
@@ -155,6 +174,8 @@ class GdtDatei():
                 tempTest = Test(inhalt, ["8410"])
             elif innerhalbTest and fk[0:2] == "84" and fk != "8410":
                 tempTest.setZeile(fk, inhalt)
+                if i == len(self.zeilen) - 1:
+                    tests.append(tempTest)
             elif innerhalbTest and (fk[0:2] != "84" or fk == "8410"):
                 innerhalbTest = False
                 tests.append(tempTest)
