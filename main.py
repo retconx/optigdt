@@ -111,6 +111,7 @@ class MainWindow(QMainWindow):
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.No:
                 e.ignore()
+        self.tray.hide()
 
     def showEvent(self, e):
         self.activateWindow()
@@ -245,10 +246,20 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Aktualisieren auf Version " + configIniBase["Allgemein"]["version"], QMessageBox.StandardButton.Ok)
             mb.exec()
 
+        # Pseudo-Lizenz?
+        self.pseudoLizenzId = ""
+        rePatId = r"^patid\d+$"
+        if len(sys.argv) > 1:
+            for arg in sys.argv:
+                if re.match(rePatId, arg) != None:
+                    logger.logger.info("Pseudo-Lizenz mit id " + arg[5:])
+                    self.pseudoLizenzId = arg[5:]
+
         # Add-Ons freigeschaltet?
-        self.addOnsFreigeschaltet = gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDT) or gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDTPSEUDO)
-        if gdttoolsL.GdtToolsLizenzschluessel.getSoftwareId(self.lizenzschluessel) == gdttoolsL.SoftwareId.OPTIGDTPSEUDO:
-            logger.logger.info("Lizenzschlüssel für Pseudo-LANR " + self.lanr)
+        self.addOnsFreigeschaltet = gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDT) or gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lizenzschluessel, self.lanr, gdttoolsL.SoftwareId.OPTIGDTPSEUDO) and self.pseudoLizenzId != ""
+        if self.lizenzschluessel != "" and gdttoolsL.GdtToolsLizenzschluessel.getSoftwareId(self.lizenzschluessel) == gdttoolsL.SoftwareId.OPTIGDTPSEUDO and self.pseudoLizenzId == "":
+            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Bei Verwendung einer Pseudolizenz muss OptiGDT mit einer Patienten-Id als Startargument im Format \"patid<Pat.-Id>\" ausgeführt werden.", QMessageBox.StandardButton.Ok)
+            mb.exec() 
         
         jahr = datetime.datetime.now().year
         copyrightJahre = "2023"
@@ -462,6 +473,11 @@ class MainWindow(QMainWindow):
         optimierenMenuBefundAusTestAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId)) # type:ignore
         optimierenMenuInhalteZusammenfuehrenAction = QAction("Inhalte zusammenführen", self)
         optimierenMenuInhalteZusammenfuehrenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) # type:ignore
+        self.optimierenMenuVerzeichnisueberwachungStartenAction = QAction("Verzeichnisüberwachung starten", self)
+        self.optimierenMenuVerzeichnisueberwachungStartenAction.triggered.connect(self.optimierenMenuVerzeichnisueberwachungStarten) # type:ignore
+        self.optimierenMenuInDenHintergrundAction = QAction("OptiGDT im Hintergrund ausführen", self)
+        self.optimierenMenuInDenHintergrundAction.triggered.connect(self.optimierenMenuInDenHintergrund) # type:ignore
+        self.optimierenMenuInDenHintergrundAction.setEnabled(False)
 
         einstellungenMenu = menubar.addMenu("Einstellungen")
         einstellungenOptimierungAction = QAction("Optimierung", self)
@@ -496,6 +512,9 @@ class MainWindow(QMainWindow):
         optimierenMenu.addAction(optimierenMenuTestAus6228Action)
         optimierenMenu.addAction(optimierenMenuBefundAusTestAction)
         optimierenMenu.addAction(optimierenMenuInhalteZusammenfuehrenAction)
+        optimierenMenu.addSeparator()
+        optimierenMenu.addAction(self.optimierenMenuVerzeichnisueberwachungStartenAction)
+        optimierenMenu.addAction(self.optimierenMenuInDenHintergrundAction)
         einstellungenMenu.addAction(einstellungenOptimierungAction)
         einstellungenMenu.addAction(einstellungenGdtAction)
         einstellungenMenu.addAction(einstellungenErweiterungenAction)
@@ -1275,7 +1294,7 @@ class MainWindow(QMainWindow):
                                 eindeutigkeitskriterien[feldkennung] = kriterium
                             platzhalterFeldkennung = str(variableElement.find("feldkennung").text) # type: ignore
                             platzhalterName = str(variableElement.find("name").text) # type: ignore
-                            testuebernahme = dialogOptimierungBefundAusTest.Testuebernahme(platzhalterName, platzhalterFeldkennung, eindeutigkeitskriterien)
+                            testuebernahme = dialogOptimierungBefundAusTest.Testuebernahme(platzhalterName, platzhalterFeldkennung, eindeutigkeitskriterien.copy())
                             testuebernahmen.append(testuebernahme)
                         befundElement = optimierungElement.find("befund")
                         befundzeile = str(befundElement.text) # type: ignore
@@ -1349,6 +1368,14 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
             mb.exec()
                 
+    def optimierenMenuVerzeichnisueberwachungStarten(self):
+        self.pushButtonUeberwachungStartenClicked(True)
+        
+    def optimierenMenuInDenHintergrund(self):
+        self.setWindowState(Qt.WindowState.WindowNoState)
+        self.setHidden(True)
+        self.trayMenuZeigenAction.setEnabled(True)
+
     def templateRootDefinieren(self):
         if self.templateRootElement.get("exportverzeichnis") == "":
             self.templateRootElement.set("kennfeld", self.lineEditKennfeld.text().strip())
@@ -1393,56 +1420,63 @@ class MainWindow(QMainWindow):
                 self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                 self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
                 self.setStatusMessage("Optimierung entfernt")
+                self.ungesichertesTemplate = True
             except class_gdtdatei.GdtFehlerException as e:
                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entfernen der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
                 mb.exec()
 
     def pushButtonUeberwachungStartenClicked(self, checked):
-        if checked:
-            if os.path.exists(self.gdtImportVerzeichnis):
-                # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
-                gdtDateien = []
-                for importordnerFile in os.listdir(self.gdtImportVerzeichnis):
-                    if importordnerFile[-4:].lower() == ".gdt":
-                        gdtDateien.append(importordnerFile)
-                if len(gdtDateien) > 0:
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Es sind noch nicht bearbeitete GDT-Dateien im Importverzeichnis. Sollen diese jetzt bearbeitet werden?\nDurch Klick auf \"Nein\" werden die Dateien gelöscht.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-                    mb.setDefaultButton(QMessageBox.StandardButton.Yes)
-                    mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
-                    mb.button(QMessageBox.StandardButton.No).setText("Nein")
-                    if mb.exec() == QMessageBox.StandardButton.Yes:
-                        self.directoryChanged()
-                    else:
-                        for gdtDatei in gdtDateien:
-                            os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDatei))
-                self.tray.showMessage("OptiGDT", "Überwachung gestartet")
-                self.tray.setToolTip("OptiGDT-Überwachung aktiv")
-                logger.logger.info("FileSystemWatcher instanziert")
-                fsw.addPath(self.gdtImportVerzeichnis)
-                logger.logger.info("Importverzeichnis " + self.gdtImportVerzeichnis + " dem Watcher hinzugefügt")
-                fsw.directoryChanged.connect(self.directoryChanged) # type: ignore
-                logger.logger.info("Methode directoryChanged verbunden")
-                self.pushButtonUeberwachungStarten.setText("Verzeichnisüberwachung anhalten")
-                self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(50,150,50);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
-                self.setStatusMessage("Verzeichnisüberwachung gestartet")
-                self.trayMenuZeigenAction.setEnabled(True)
-                self.ueberwachungAktiv = True
-                if not self.isHidden():
-                    self.setWindowState(Qt.WindowState.WindowNoState)
-                    self.setHidden(True)
+        if self.addOnsFreigeschaltet:
+            if checked:
+                if os.path.exists(self.gdtImportVerzeichnis):
+                    # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
+                    gdtDateien = []
+                    for importordnerFile in os.listdir(self.gdtImportVerzeichnis):
+                        if importordnerFile[-4:].lower() == ".gdt":
+                            gdtDateien.append(importordnerFile)
+                    if len(gdtDateien) > 0:
+                        mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Es sind noch nicht bearbeitete GDT-Dateien im Importverzeichnis. Sollen diese jetzt bearbeitet werden?\nDurch Klick auf \"Nein\" werden die Dateien gelöscht.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                        mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+                        mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                        mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                        if mb.exec() == QMessageBox.StandardButton.Yes:
+                            self.directoryChanged()
+                        else:
+                            for gdtDatei in gdtDateien:
+                                os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDatei))
+                    self.tray.showMessage("OptiGDT", "Überwachung gestartet")
+                    self.tray.setToolTip("OptiGDT-Überwachung aktiv")
+                    logger.logger.info("FileSystemWatcher instanziert")
+                    fsw.addPath(self.gdtImportVerzeichnis)
+                    logger.logger.info("Importverzeichnis " + self.gdtImportVerzeichnis + " dem Watcher hinzugefügt")
+                    fsw.directoryChanged.connect(self.directoryChanged) # type: ignore
+                    logger.logger.info("Methode directoryChanged verbunden")
+                    self.pushButtonUeberwachungStarten.setText("Verzeichnisüberwachung anhalten")
+                    self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(50,150,50);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
+                    self.setStatusMessage("Verzeichnisüberwachung gestartet")
+                    self.trayMenuZeigenAction.setEnabled(True)
+                    self.ueberwachungAktiv = True
+                    if not self.isHidden():
+                        self.setWindowState(Qt.WindowState.WindowNoState)
+                        self.setHidden(True)
+                else:
+                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
+                    mb.exec()
             else:
-                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
-                mb.exec()
+                self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(0,50,0);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
+                self.pushButtonUeberwachungStarten.setText("Verzeichnisüberwachung starten")
+                fsw.removePath(self.gdtImportVerzeichnis)
+                logger.logger.info("Importverzeichnis " + self.gdtImportVerzeichnis + " vom Watcher entfernt")
+                self.tray.showMessage("OptiGDT", "Überwachung angehalten")
+                self.setStatusMessage("Verzeichnisüberwachung angehalten")
+                self.tray.setToolTip("OptiGDT-Überwachung inaktiv")
+                self.optimierenMenuVerzeichnisueberwachungStartenAction.setEnabled(True)
+                self.optimierenMenuInDenHintergrundAction.setEnabled(False)
+                self.ueberwachungAktiv = False
         else:
-            self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(0,50,0);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
-            self.pushButtonUeberwachungStarten.setText("Verzeichnisüberwachung starten")
-            fsw.removePath(self.gdtImportVerzeichnis)
-            logger.logger.info("Importverzeichnis " + self.gdtImportVerzeichnis + " vom Watcher entfernt")
-            self.tray.showMessage("OptiGDT", "Überwachung angehalten")
-            self.setStatusMessage("Verzeichnisüberwachung angehalten")
-            self.tray.setToolTip("OptiGDT-Überwachung inaktiv")
-            self.ueberwachungAktiv = False
-            
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb.exec()
+
     def deleteImportverzeichnis(self):
         for file in os.listdir(self.gdtImportVerzeichnis):
             os.unlink(file)
@@ -1510,23 +1544,19 @@ class MainWindow(QMainWindow):
                                         exceptionListe = ", ".join(exceptions)
                                         logger.logger.warning("Fehlerliste nach Templateanwendung: " + exceptionListe)
                                     gd.setSatzlaenge()
-                                    # Pseudo-LANR?
-                                    rePatId = r"^patid\d+$"
-                                    if len(sys.argv) > 1:
-                                        for arg in sys.argv:
-                                            if re.match(rePatId, arg) != None:
-                                                logger.logger.info("Optimierung für Pseudo-LANR mit id " + arg[5:])
-                                                print(arg[5:])
-                                                gd.changeZeile("", "3000", arg[5:])
+                                    if self.pseudoLizenzId != "":
+                                        gd.changeZeile("", "3000", self.pseudoLizenzId)
                                     with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
-                                    logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " gespeichert") 
+                                    logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert") 
                                     os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDateiname))
                                     logger.logger.info("Originale GDT-Datei " + gdtDateiname + " gelöscht")
                                     break
+                                except IOError as e:
+                                    logger.logger.error("IO-Error beim Speichern der optimierten GDT-Datei "+ gdtDateiname + " in " + exportverzeichnis)
                                 except class_optimierung.OptimierungsfehlerException as e:
-                                    logger.logger.warning("Exception in class_filesystemwatcher bei Templateanwendung: " + e.meldung)
+                                    logger.logger.warning("OptimierungsfehlerException bei Templateanwendung: " + e.meldung)
                     if not templateGefunden:
                         logger.logger.warning("Template für GDT-Datei " + gdtDateiname + " nicht gefunden")
                         raise class_optimierung.OptimierungsfehlerException("Template für GDT-Datei " + gdtDateiname + " nicht gefunden")
@@ -1536,6 +1566,10 @@ class MainWindow(QMainWindow):
     def trayMenuZeigen(self):
         self.showNormal()
         self.trayMenuZeigenAction.setEnabled(False)
+        if self.ueberwachungAktiv:
+            self.optimierenMenuVerzeichnisueberwachungStartenAction.setEnabled(False)
+            self.optimierenMenuInDenHintergrundAction.setEnabled(True)
+
 
     def trayMenuBeenden(self):
         if self.ueberwachungAktiv:

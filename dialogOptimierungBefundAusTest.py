@@ -171,7 +171,7 @@ class OptimierungBefundAusTest(QDialog):
         # LineEdits befüllen
         if len(self.testuebernahmen) > 0:
             i = 0
-            for kriterium in self.testuebernahmen[0].eindeutigkeitskriterien:
+            for kriterium in self.testuebernahmen[i].eindeutigkeitskriterien:
                 if i < self.maxeindeutigkeitskriterien:
                     self.lineEditFeldkennungen[i].setText(kriterium)
                     self.lineEditKriterien[i].setText(self.testuebernahmen[0].eindeutigkeitskriterien[kriterium])

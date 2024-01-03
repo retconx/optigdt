@@ -1,15 +1,8 @@
 from PySide6.QtWidgets import (
     QDialogButtonBox,
     QDialog,
-    QHBoxLayout,
     QVBoxLayout,
-    QGridLayout,
-    QGroupBox,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QCheckBox,
-    QFileDialog,
+    QLabel
 )
 from PySide6.QtGui import Qt, QDesktopServices
 

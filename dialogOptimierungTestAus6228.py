@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QLabel,
-    QComboBox,
+    QComboBox
 )
 
 reFeldkennung = r"^\d{4}$"

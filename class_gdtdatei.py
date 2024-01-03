@@ -613,7 +613,6 @@ class GdtDatei():
                         exceptions.append(e.meldung)
                 elif typ == "befundAusTest":
                     variablenInhalt = {}
-                    nichtGefundeneTests = 0
                     for testElement in optimierungElement.findall("test"):
                         eindeutigkeitskriterienElement = testElement.find("eindeutigkeitskriterien")
                         eindeutigkeitskriterien = {}
@@ -635,26 +634,25 @@ class GdtDatei():
                                 testGefunden = True
                                 break
                         if not testGefunden:
-                            nichtGefundeneTests += 1
                             exceptions.append("Test mit der ID " + test.getInhalt("8410") + " zur Befunderstellung nicht gefunden")
-                    if nichtGefundeneTests == 0:
-                        befund = str(optimierungElement.find("befund").text) # type: ignore
-                        befundzeilen = []
-                        for inhalt in variablenInhalt:
-                            befund = befund.replace("${" + inhalt + "}", variablenInhalt[inhalt])
-                            befundzeilen.clear()
-                            ## Auf gesetzte Zeilenumbrüche prüfen
-                            if "//" in befund:
-                                for befundzeile in befund.split("//"):
-                                    befundzeilen.append(befundzeile)
-                            else:
-                                befundzeilen.append(befund)
-                        if vorschau:
-                            for befundzeile in befundzeilen:
-                                self.addZeile("6220", befundzeile + "__" + id + "__")
+                    befund = str(optimierungElement.find("befund").text) # type: ignore
+                    befundzeilen = []
+                    for inhalt in variablenInhalt:
+                        befund = befund.replace("${" + inhalt + "}", variablenInhalt[inhalt])
+                        befundzeilen.clear()
+                        ## Auf gesetzte Zeilenumbrüche prüfen
+                        if "//" in befund:
+                            for befundzeile in befund.split("//"):
+                                befundzeilen.append(befundzeile)
                         else:
-                            for befundzeile in befundzeilen:
-                                self.addZeile("6220", befundzeile)
+                            befundzeilen.append(befund)
+                    if vorschau:
+                        for befundzeile in befundzeilen:
+                            self.addZeile("6220", befundzeile + "__" + id + "__")
+                    else:
+                        for befundzeile in befundzeilen:
+                            befundzeileBereinigt = re.sub(r"\$\{[^{}]+\}", "-", befundzeile)
+                            self.addZeile("6220", befundzeileBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
                     if feldkennung:
