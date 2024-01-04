@@ -100,6 +100,7 @@ class OptimierungAddZeile(QDialog):
         text = self.comboBoxTextVariable.currentText()[6:]
         neuerInhalt = bisherigerInhalt[:cursorPosition] + text + bisherigerInhalt[cursorPosition:]
         lineEdit.setText(neuerInhalt)
+        lineEdit.setFocus()
         lineEdit.setCursorPosition(cursorPosition + len(text))
         
     def pushButtonVariableClicked(self, checked, lineEdit:QLineEdit):
@@ -108,6 +109,7 @@ class OptimierungAddZeile(QDialog):
         variable = "${FK" + self.comboBoxTextVariable.currentText()[:4] + "}"
         neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
         lineEdit.setText(neuerInhalt)
+        lineEdit.setFocus()
         lineEdit.setCursorPosition(cursorPosition + len(variable))
 
     def accept(self):

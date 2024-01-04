@@ -124,6 +124,7 @@ class OptimierungDeleteTest(QDialog):
             variable = "${FK" + self.comboBoxTextVariable.currentText()[:4] + "}"
             neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
             lineEditKriterium.setText(neuerInhalt)
+            lineEditKriterium.setFocus()
             lineEditKriterium.setCursorPosition(cursorPosition + len(variable))
 
     def pushButtonTextClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
@@ -143,6 +144,7 @@ class OptimierungDeleteTest(QDialog):
             text = self.comboBoxTextVariable.currentText()[6:]
             neuerInhalt = bisherigerInhalt[:cursorPosition] + text + bisherigerInhalt[cursorPosition:]
             lineEditKriterium.setText(neuerInhalt)
+            lineEditKriterium.setFocus()
             lineEditKriterium.setCursorPosition(cursorPosition + len(text))
 
     def accept(self):

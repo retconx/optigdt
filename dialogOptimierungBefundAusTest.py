@@ -138,7 +138,7 @@ class OptimierungBefundAusTest(QDialog):
         self.listWidgetTestuebernahmen = QListWidget()
         self.listWidgetTestuebernahmen.setFont(self.fontNormal)
         self.listWidgetTestuebernahmen.currentItemChanged.connect(self.listWidgetTestuebernahmeItemChanged) # type: ignore
-        self.listWidgetTestuebernahmen.itemDoubleClicked.connect(self.pushButtonTestuebernahmeHinzufuegenClicked) # type: ignore
+        self.listWidgetTestuebernahmen.itemDoubleClicked.connect(self.pushButtonUebernahmeEinfuegenClicked) # type: ignore
         dialogLayoutVTestuebernahmen.addWidget(self.listWidgetTestuebernahmen)
 
         # Contextmenü
@@ -228,6 +228,7 @@ class OptimierungBefundAusTest(QDialog):
             variable = "${FK" + self.comboBoxTextVariable.currentText()[:4] + "}"
             neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
             lineEditKriterium.setText(neuerInhalt)
+            lineEditKriterium.setFocus()
             lineEditKriterium.setCursorPosition(cursorPosition + len(variable))
 
     def pushButtonTextClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
@@ -247,6 +248,7 @@ class OptimierungBefundAusTest(QDialog):
             text = self.comboBoxTextVariable.currentText()[6:]
             neuerInhalt = bisherigerInhalt[:cursorPosition] + text + bisherigerInhalt[cursorPosition:]
             lineEditKriterium.setText(neuerInhalt)
+            lineEditKriterium.setFocus()
             lineEditKriterium.setCursorPosition(cursorPosition + len(text))
 
     def pushButtonTestuebernahmeHinzufuegenClicked(self):
@@ -335,6 +337,7 @@ class OptimierungBefundAusTest(QDialog):
             variable = "${" + platzhalterName + "}"
             neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
             self.lineEditBefundzeile.setText(neuerInhalt)
+            self.lineEditBefundzeile.setFocus()
             self.lineEditBefundzeile.setCursorPosition(cursorPosition + len(variable))
 
     def listWidgetTestuebernahmeItemChanged(self,current):
