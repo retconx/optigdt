@@ -376,7 +376,7 @@ class MainWindow(QMainWindow):
         self.pushButtonExportverzeichnis.setFont(self.fontNormal)
         self.pushButtonExportverzeichnis.setToolTip("Durchsuchen")
         self.pushButtonExportverzeichnis.clicked.connect(self.pushButtonExportverzeichnisClicked) # type: ignore
-        labelFussnote1 = QLabel("\u00b9 Prüfungsrelevant: wird vor Anwendung des Templates auf Übereinstimmung geprüft")
+        labelFussnote1 = QLabel("\u00b9 Prüfungsrelevant: wird vor Anwendung des Templates neben dem GDT-Dateinamen auf Übereinstimmung geprüft")
         labelFussnote1.setFont(self.fontNormal)
 
         templateInfosLayout.addWidget(labelName, 0, 0)
