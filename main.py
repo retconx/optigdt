@@ -690,6 +690,7 @@ class MainWindow(QMainWindow):
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.Yes:
+                    self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
         
     def einstellungenGdt(self, checked, neustartfrage=False):
@@ -705,6 +706,7 @@ class MainWindow(QMainWindow):
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.Yes:
+                    self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
     
     def einstellungenLanrLizenzschluessel(self, checked, neustartfrage=False):
@@ -724,6 +726,7 @@ class MainWindow(QMainWindow):
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.Yes:
+                    self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
 
     def optigdtWiki(self, link):
@@ -1563,6 +1566,7 @@ class MainWindow(QMainWindow):
                                     logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert") 
                                     os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDateiname))
                                     logger.logger.info("Originale GDT-Datei " + gdtDateiname + " gelöscht")
+                                    self.tray.showMessage("OptiGDT", "Template \"" + templateDateiname[:-4] + "\" angewendet")
                                     break
                                 except IOError as e:
                                     logger.logger.error("IO-Error beim Speichern der optimierten GDT-Datei "+ gdtDateiname + " in " + exportverzeichnis)
