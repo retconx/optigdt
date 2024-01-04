@@ -1543,6 +1543,17 @@ class MainWindow(QMainWindow):
                                     if len(exceptions) > 0:
                                         exceptionListe = ", ".join(exceptions)
                                         logger.logger.warning("Fehlerliste nach Templateanwendung: " + exceptionListe)
+                                    ## Auf gesetzte Zeilenumbrüche prüfen
+                                    erster6220Inhalt = gd.getInhalte("6220")[0]
+                                    befundzeilen = []
+                                    if "//" in erster6220Inhalt:
+                                        for befundzeile in erster6220Inhalt.split("//"):
+                                            befundzeilen.append(befundzeile)
+                                    else:
+                                        befundzeilen.append(erster6220Inhalt)
+                                    gd.deleteZeile("", "6220")
+                                    for zeile in befundzeilen:
+                                        gd.addZeile("6220", zeile)
                                     gd.setSatzlaenge()
                                     if self.pseudoLizenzId != "":
                                         gd.changeZeile("", "3000", self.pseudoLizenzId)
