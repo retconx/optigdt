@@ -381,32 +381,35 @@ class GdtDatei():
             anderungen: Dictionary der Änderungen mit key: Feldkennung und value: neuer Inhalt
             vorschau:bool Geänderten Tests wird __id__ angehängt
         Exception:
-            GdtFehlerException, wenn zu ändernder Test nicht gefunden
+            GdtFehlerException, wenn keine Tests vorhanden oder zu ändernder Test nicht gefunden
         """
-        testidentZeilennummer = self.getZeilennummern("8410")[0] # Zeilennummer des ersten Testidents
-        alleTests = self.getTests()
-        gefundenerTest = Test("xxxx")
-        for pruefTest in alleTests:
-            if zuAendernderTest == pruefTest:
-                gefundenerTest = pruefTest
-                for aenderung in aenderungen:
-                    zuAendernderTest.setZeile(aenderung, aenderungen[aenderung])
-                break
+        if len(self.getZeilennummern("8410")) > 0:
+            testidentZeilennummer = self.getZeilennummern("8410")[0] # Zeilennummer des ersten Testidents
+            alleTests = self.getTests()
+            gefundenerTest = Test("xxxx")
+            for pruefTest in alleTests:
+                if zuAendernderTest == pruefTest:
+                    gefundenerTest = pruefTest
+                    for aenderung in aenderungen:
+                        zuAendernderTest.setZeile(aenderung, aenderungen[aenderung])
+                    break
+                else:
+                    testidentZeilennummer += pruefTest.getAnzahlTestzeilen()
+            zeile = testidentZeilennummer
+            alleZeilenGefundenerTest = gefundenerTest.getTestzeilen()
+            alleZeilenZuAendernderTest = zuAendernderTest.getTestzeilen()
+            if gefundenerTest.getInhalt("8410") != "xxxx":
+                while zeile < testidentZeilennummer + len(alleZeilenGefundenerTest):
+                    feldkennung = self.zeilen[zeile][3:7]
+                    if feldkennung in alleZeilenZuAendernderTest:
+                        if self.zeilen[zeile][7:] != alleZeilenZuAendernderTest[feldkennung]:
+                            if vorschau:
+                                self.zeilen[zeile] = GdtDatei.getZeile(feldkennung, alleZeilenZuAendernderTest[feldkennung] + "__" + id + "__")
+                            else:
+                                self.zeilen[zeile] = GdtDatei.getZeile(feldkennung, alleZeilenZuAendernderTest[feldkennung])
+                    zeile += 1
             else:
-                testidentZeilennummer += pruefTest.getAnzahlTestzeilen()
-        zeile = testidentZeilennummer
-        alleZeilenGefundenerTest = gefundenerTest.getTestzeilen()
-        alleZeilenZuAendernderTest = zuAendernderTest.getTestzeilen()
-        if gefundenerTest.getInhalt("8410") != "xxxx":
-             while zeile < testidentZeilennummer + len(alleZeilenGefundenerTest):
-                feldkennung = self.zeilen[zeile][3:7]
-                if feldkennung in alleZeilenZuAendernderTest:
-                    if self.zeilen[zeile][7:] != alleZeilenZuAendernderTest[feldkennung]:
-                        if vorschau:
-                            self.zeilen[zeile] = GdtDatei.getZeile(feldkennung, alleZeilenZuAendernderTest[feldkennung] + "__" + id + "__")
-                        else:
-                            self.zeilen[zeile] = GdtDatei.getZeile(feldkennung, alleZeilenZuAendernderTest[feldkennung])
-                zeile += 1
+                raise GdtFehlerException("Änderung des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
         else:
             raise GdtFehlerException("Zu ändernden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
     

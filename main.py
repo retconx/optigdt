@@ -855,6 +855,7 @@ class MainWindow(QMainWindow):
                     exportverzeichnis = str(templateRootElement.get("exportverzeichnis"))
                     if os.path.basename(self.gdtDateipfad) == gdtDateiname:
                         self.templateRootElement = templateRootElement
+                        exceptions = []
                         exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
                         self.labelTreeViewUeberschriftRechts.setText("Optimiert (" + templatePfad + "):")
@@ -875,8 +876,8 @@ class MainWindow(QMainWindow):
                     else:
                         mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Template-Datei passt nicht zur geladenen GDT-Datei.", QMessageBox.StandardButton.Ok)
                         mb.exec()
-                except:
-                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Laden des Templates " + templatePfad, QMessageBox.StandardButton.Ok)
+                except Exception as e:
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Laden des Templates " + templatePfad + ": " + str(e), QMessageBox.StandardButton.Ok)
                         mb.exec()
         elif ladenOk:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
