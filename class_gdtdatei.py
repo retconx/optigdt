@@ -409,9 +409,9 @@ class GdtDatei():
                                 self.zeilen[zeile] = GdtDatei.getZeile(feldkennung, alleZeilenZuAendernderTest[feldkennung])
                     zeile += 1
             else:
-                raise GdtFehlerException("Änderung des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
+                raise GdtFehlerException("Zu ändernden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
         else:
-            raise GdtFehlerException("Zu ändernden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
+                raise GdtFehlerException("Änderung des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
     
     def deleteTest(self, id, zuAendernderTest:Test, vorschau=False):
         """
@@ -421,29 +421,31 @@ class GdtDatei():
             zuAendernderTest: Zu ändernder Test (Typ Test). Der Test muss mindestens die Eindeutigkeitsfeldkennungen enthalten.
             vorschau:bool Gelöschten Tests wird __id__ angehängt
         Exception:
-            GdtFehlerException, wenn zu löschender Test nicht gefunden
+            GdtFehlerException, wenn keine Tests vorhanden oder zu löschender Test nicht gefunden
         """
-        testidentZeilennummer = self.getZeilennummern("8410")[0] # Zeilennummer des ersten Testidents
-        alleTests = self.getTests()
-        gefundenerTest = Test("xxxx")
-        for pruefTest in alleTests:
-            if zuAendernderTest == pruefTest:
-                gefundenerTest = pruefTest
-                break
-            else:
-                testidentZeilennummer += pruefTest.getAnzahlTestzeilen()
-        zeileBeginnTest = testidentZeilennummer
-        zeileEndeTest = testidentZeilennummer + gefundenerTest.getAnzahlTestzeilen()  - 1
-        if gefundenerTest.getInhalt("8410") != "xxxx":
-            while zeileEndeTest >= zeileBeginnTest:
-                if vorschau:
-                    self.zeilen[zeileEndeTest] += "__" + id + "__"
+        if len(self.getZeilennummern("8410")) > 0:
+            testidentZeilennummer = self.getZeilennummern("8410")[0] # Zeilennummer des ersten Testidents
+            alleTests = self.getTests()
+            gefundenerTest = Test("xxxx")
+            for pruefTest in alleTests:
+                if zuAendernderTest == pruefTest:
+                    gefundenerTest = pruefTest
+                    break
                 else:
-                    self.zeilen.pop(zeileEndeTest)
-                zeileEndeTest -= 1
+                    testidentZeilennummer += pruefTest.getAnzahlTestzeilen()
+            zeileBeginnTest = testidentZeilennummer
+            zeileEndeTest = testidentZeilennummer + gefundenerTest.getAnzahlTestzeilen()  - 1
+            if gefundenerTest.getInhalt("8410") != "xxxx":
+                while zeileEndeTest >= zeileBeginnTest:
+                    if vorschau:
+                        self.zeilen[zeileEndeTest] += "__" + id + "__"
+                    else:
+                        self.zeilen.pop(zeileEndeTest)
+                    zeileEndeTest -= 1
+            else:
+                raise GdtFehlerException("Zu löschenden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
         else:
-            raise GdtFehlerException("Zu löschenden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
-        
+            raise GdtFehlerException("Löschen des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
     def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, testbezeichnung:str, testeinheit:str, testident:str):
         """
         Erzeugt einen Test aus einem 6228-Befundtext
