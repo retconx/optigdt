@@ -1,7 +1,7 @@
 import sys, configparser, os, datetime, shutil, logger, re, time
 import class_gdtdatei, gdttoolsL, class_optimierung
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -199,7 +199,10 @@ class MainWindow(QMainWindow):
         self.gdtDateiOptimiert = class_gdtdatei.GdtDatei(self.zeichensatz)
 
         # Nachträglich hinzufefügte Options
-        # 1.1.0
+        # 2.0.8
+        self.eulagelesen = False
+        if self.configIni.has_option("Allgemein", "eulagelesen"):
+            self.eulagelesen = self.configIni["Allgemein"]["eulagelesen"] == "True"
         # /Nachträglich hinzufefügte Options
 
         # Prüfen, ob Lizenzschlüssel unverschlüsselt
@@ -210,6 +213,21 @@ class MainWindow(QMainWindow):
                     self.configIni.write(configfile)
         else:
             self.lizenzschluessel = gdttoolsL.GdtToolsLizenzschluessel.dekrypt(self.lizenzschluessel)
+
+        # Prüfen, ob EULA gelesen
+        if not self.eulagelesen:
+            de = dialogEula.Eula()
+            de.exec()
+            if de.checkBoxZustimmung.isChecked():
+                self.eulagelesen = True
+                self.configIni["Allgemein"]["eulagelesen"] = "True"
+                with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
+                    self.configIni.write(configfile)
+                logger.logger.info("EULA zugestimmt")
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OpitGDT", "Ohne Zustimmung der Lizenzvereinbarung kann OpitGDT nicht gestartet werden.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                sys.exit()
 
         # Grundeinstellungen bei erstem Start
         if ersterStart:
@@ -238,9 +256,22 @@ class MainWindow(QMainWindow):
                     self.configIni.write(configfile)
                 self.version = self.configIni["Allgemein"]["version"]
                 logger.logger.info("Version auf " + self.version + " aktualisiert")
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "OptiGDT wurde erfolgreich auf Version " + self.version + " aktualisiert.", QMessageBox.StandardButton.Ok)
-                mb.setTextFormat(Qt.TextFormat.RichText)
-                mb.exec()
+                # Prüfen, ob EULA gelesen
+                de = dialogEula.Eula(self.version)
+                de.exec()
+                self.eulagelesen = de.checkBoxZustimmung.isChecked()
+                self.configIni["Allgemein"]["eulagelesen"] = str(self.eulagelesen)
+                with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
+                    self.configIni.write(configfile)
+                if self.eulagelesen:
+                    logger.logger.info("EULA zugestimmt")
+                else:
+                    logger.logger.info("EULA nicht zugestimmt")
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Ohne  Zustimmung zur Lizenzvereinbarung kann OptiGDT nicht gestartet werden.", QMessageBox.StandardButton.Ok)
+                    mb.exec()
+                    sys.exit()
+        except SystemExit:
+            sys.exit()
         except:
             logger.logger.error("Problem beim Aktualisieren auf Version " + configIniBase["Allgemein"]["version"])
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Aktualisieren auf Version " + configIniBase["Allgemein"]["version"], QMessageBox.StandardButton.Ok)
@@ -488,14 +519,16 @@ class MainWindow(QMainWindow):
         einstellungenErweiterungenAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage)) # type: ignore
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
-        hilfeWikiAction.triggered.connect(self.optigdtWiki) # type: ignore
+        hilfeWikiAction.triggered.connect(self.optigdtWiki) 
         hilfeUpdateAction = QAction("Auf Update prüfen", self)
-        hilfeUpdateAction.triggered.connect(self.updatePruefung) # type: ignore
+        hilfeUpdateAction.triggered.connect(self.updatePruefung) 
         hilfeUeberAction = QAction("Über OptiGDT", self)
         hilfeUeberAction.setMenuRole(QAction.MenuRole.NoRole)
-        hilfeUeberAction.triggered.connect(self.ueberOptiGdt) # type: ignore
+        hilfeUeberAction.triggered.connect(self.ueberOptiGdt)
+        hilfeEulaAction = QAction("Lizenzvereinbarung (EULA)", self)
+        hilfeEulaAction.triggered.connect(self.eula) 
         hilfeLogExportieren = QAction("Log-Verzeichnis exportieren", self)
-        hilfeLogExportieren.triggered.connect(self.logExportieren) # type: ignore
+        hilfeLogExportieren.triggered.connect(self.logExportieren) 
         
         anwendungMenu.addAction(aboutAction)
         anwendungMenu.addAction(updateAction)
@@ -524,6 +557,7 @@ class MainWindow(QMainWindow):
         hilfeMenu.addAction(hilfeUpdateAction)
         hilfeMenu.addSeparator()
         hilfeMenu.addAction(hilfeUeberAction)
+        hilfeMenu.addAction(hilfeEulaAction)
         hilfeMenu.addSeparator()
         hilfeMenu.addAction(hilfeLogExportieren)
 
@@ -730,7 +764,7 @@ class MainWindow(QMainWindow):
                     os.execl(sys.executable, __file__, *sys.argv)
 
     def optigdtWiki(self, link):
-        QDesktopServices.openUrl("https://www.github.com/retconx/optigdt/wiki")
+        QDesktopServices.openUrl("https://github.com/retconx/optigdt/wiki")
 
     def logExportieren(self):
         if (os.path.exists(os.path.join(basedir, "log"))):
@@ -767,6 +801,9 @@ class MainWindow(QMainWindow):
     def ueberOptiGdt(self):
         de = dialogUeberOptiGdt.UeberOptiGdt()
         de.exec()
+
+    def eula(self):
+        QDesktopServices.openUrl("https://gdttools.de/Lizenzvereinbarung_OptiGDT.pdf")
 
     def gdtDateiMenuOeffnen(self):
         fortfahren = True
