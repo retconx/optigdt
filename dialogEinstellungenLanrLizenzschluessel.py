@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QLineEdit,
     QMessageBox,
-    QLabel
 )
 
 reLanr = "^\\d{9}$"
