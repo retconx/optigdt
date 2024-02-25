@@ -253,6 +253,7 @@ class GdtDatei():
         """
         Ändert den Inhalt einer/aller GDT-Zeile(n) einer Feldkennung
         Parameter:
+            id:str Optimierungs-Id
             feldkennung:str
             neuerInhalt:str
             alleVorkommen:bool 
@@ -480,7 +481,7 @@ class GdtDatei():
         Paramter:
             test:Test Test, aus dem die Test-Inhate übernommen werden sollen.
             befund:str Befundtext, in dem die Variablen ${TFKxxxx} durch den Test-Inhalt mit der Felkennung xxxx ersetzt werden
-        Rückegabe:
+        Rückgabe:
             Die Testinhalte beinhaltender Befundtext
         """
         i = 0
@@ -497,7 +498,7 @@ class GdtDatei():
             ersetzt = test.getInhalt(feldkennung)
             befund = befund.replace("${TFK" + feldkennung + "}", ersetzt)
         return befund
-    
+
     def replaceFkVariablen(self, zuErsetzen:str):
         """"
         Ersetzt """
@@ -660,13 +661,45 @@ class GdtDatei():
                             self.addZeile("6220", befundzeileBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
-                    if feldkennung:
+                    if feldkennung != "None" :
                         try:
                             self.concatInhalte(id, feldkennung, vorschau)
                         except GdtFehlerException as e:
                             exceptions.append(e.meldung)
                     else:
                         exceptions.append("Zusammenführen der Inhalte mit der Feldkennung " + feldkennung + " nicht möglich (xml-Datei fehlerhaft)")
+                elif typ == "addPdf":
+                    originalpfad = str(optimierungElement.find("originalpfad").text) # type: ignore
+                    originalname = str(optimierungElement.find("originalname").text) # type: ignore
+                    speichername = str(optimierungElement.find("speichername").text) # type: ignore
+                    if originalpfad != "None" and originalname != "None"  and speichername != "None" :
+                        untersuchungsdatum = ""
+                        untersuchungszeit = ""
+                        try:
+                            untersuchungsdatum = self.getInhalte("6200")[0]
+                        except:
+                            pass
+                        if untersuchungsdatum != "":
+                            try:
+                                untersuchungszeit = self.getInhalte("6201")[0]
+                            except:
+                                pass
+                            originalname = originalname.replace("JJJJ", untersuchungsdatum[4:]).replace("MM", untersuchungsdatum[2:4]).replace("TT", untersuchungsdatum[:2])
+                            if untersuchungszeit != "":
+                                originalname = originalname.replace("HH", untersuchungszeit[:2]).replace("mm", untersuchungszeit[2:4]).replace("ss", untersuchungszeit[4:])
+                            originalname = originalname.replace("${", "").replace("}", "")
+                        if vorschau:
+                            self.addZeile("6302", "optigdtAnhang" + "__" + id + "__")
+                            self.addZeile("6303", "PDF" + "__" + id + "__")
+                            self.addZeile("6304", speichername + "__" + id + "__")
+                            self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf" + "__" + id + "__")
+                        else:
+                            self.addZeile("6302", "optigdtAnhang")
+                            self.addZeile("6303", "PDF")
+                            self.addZeile("6304", speichername)
+                            self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf")
+                    else:
+                        exceptions.append("PDF anhängen nicht möglich (xml-Datei fehlerhaft)")
             return exceptions
         else:
             raise GdtFehlerException("Templateanwendung nicht möglich, da GDT-Dateipfad unbekannt")

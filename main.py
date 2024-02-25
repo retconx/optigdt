@@ -1,7 +1,7 @@
 import sys, configparser, os, datetime, shutil, logger, re, time
 import class_gdtdatei, gdttoolsL, class_optimierung
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -340,28 +340,31 @@ class MainWindow(QMainWindow):
         labelOptimierungen.setFont(self.fontBold)
         self.pushButtonZeileHinzufuegen = QPushButton("Zeile hinzufügen")
         self.pushButtonZeileHinzufuegen.setFont(self.fontNormal)
-        self.pushButtonZeileHinzufuegen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId)) # type: ignore
+        self.pushButtonZeileHinzufuegen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId)) 
         self.pushButtonZeileAendern = QPushButton("Zeile ändern")
         self.pushButtonZeileAendern.setFont(self.fontNormal)
-        self.pushButtonZeileAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) # type: ignore
+        self.pushButtonZeileAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) 
         self.pushButtonZeileEntfernen = QPushButton("Zeile entfernen")
         self.pushButtonZeileEntfernen.setFont(self.fontNormal)
-        self.pushButtonZeileEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) # type: ignore
+        self.pushButtonZeileEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) 
         self.pushButtonTestAendern = QPushButton("Test ändern")
         self.pushButtonTestAendern.setFont(self.fontNormal)
-        self.pushButtonTestAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAendern(checked, optimierungsId)) # type: ignore
+        self.pushButtonTestAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAendern(checked, optimierungsId)) 
         self.pushButtonTestEntfernen = QPushButton("Test entfernen")
         self.pushButtonTestEntfernen.setFont(self.fontNormal)
-        self.pushButtonTestEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) # type: ignore
+        self.pushButtonTestEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) 
         self.pushButtonTestAus6228 = QPushButton("Test aus 6228-Zeile")
         self.pushButtonTestAus6228.setFont(self.fontNormal)
-        self.pushButtonTestAus6228.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId)) # type: ignore
+        self.pushButtonTestAus6228.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId))
         self.pushButtonBefundAusTest = QPushButton("Befund aus Test")
         self.pushButtonBefundAusTest.setFont(self.fontNormal)
-        self.pushButtonBefundAusTest.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId)) # type: ignore
+        self.pushButtonBefundAusTest.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId))
         self.pushButtonInhalteZusammenfuehren = QPushButton("Inhalte zusammenführen")
         self.pushButtonInhalteZusammenfuehren.setFont(self.fontNormal)
-        self.pushButtonInhalteZusammenfuehren.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) # type: ignore
+        self.pushButtonInhalteZusammenfuehren.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) 
+        self.pushButtonPdfHinzufuegen = QPushButton("PDF-Datei hinzufügen")
+        self.pushButtonPdfHinzufuegen.setFont(self.fontNormal)
+        self.pushButtonPdfHinzufuegen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuPdfHinzufuegen(checked, optimierungsId)) 
 
         # Template-Infos
         templateInfosLayout = QGridLayout()
@@ -438,6 +441,7 @@ class MainWindow(QMainWindow):
         optimierungsButtonsLayout.addWidget(self.pushButtonTestAus6228)
         optimierungsButtonsLayout.addWidget(self.pushButtonBefundAusTest)
         optimierungsButtonsLayout.addWidget(self.pushButtonInhalteZusammenfuehren)
+        optimierungsButtonsLayout.addWidget(self.pushButtonPdfHinzufuegen)
         mainGridLayout.addLayout(optimierungsButtonsLayout, 1, 2, alignment=Qt.AlignmentFlag.AlignTop)
 
         # Überwachung starten-Button
@@ -470,52 +474,54 @@ class MainWindow(QMainWindow):
         anwendungMenu = menubar.addMenu("")
         aboutAction = QAction(self)
         aboutAction.setMenuRole(QAction.MenuRole.AboutRole)
-        aboutAction.triggered.connect(self.ueberOptiGdt) # type: ignore
+        aboutAction.triggered.connect(self.ueberOptiGdt) 
         updateAction = QAction("Auf Update prüfen", self)
         updateAction.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
-        updateAction.triggered.connect(self.updatePruefung) # type: ignore
+        updateAction.triggered.connect(self.updatePruefung) 
         gdtDateiMenu = menubar.addMenu("GDT-Datei")
         gdtDateiMenuOeffnenAction = QAction("Öffnen", self)
-        gdtDateiMenuOeffnenAction.triggered.connect(self.gdtDateiMenuOeffnen) # type:ignore
+        gdtDateiMenuOeffnenAction.triggered.connect(self.gdtDateiMenuOeffnen) 
         gdtDateiMenuOeffnenAction.setShortcut(QKeySequence("Ctrl+G"))
         templateMenu = menubar.addMenu("Template")
         templateMenuLadenAction = QAction("Laden", self)
-        templateMenuLadenAction.triggered.connect(self.templateMenuLaden) # type:ignore
+        templateMenuLadenAction.triggered.connect(self.templateMenuLaden) 
         templateMenuLadenAction.setShortcut(QKeySequence("Ctrl+T"))
         templateMenuSpeichernAction = QAction("Speichern", self)
-        templateMenuSpeichernAction.triggered.connect(self.templateMenuSpeichern) # type:ignore
+        templateMenuSpeichernAction.triggered.connect(self.templateMenuSpeichern) 
         templateMenuTemplatesVerwaltenAction = QAction("Templates verwalten", self)
-        templateMenuTemplatesVerwaltenAction.triggered.connect(self.templateMenuTemplatesVerwalten) # type: ignore
+        templateMenuTemplatesVerwaltenAction.triggered.connect(self.templateMenuTemplatesVerwalten) 
         optimierenMenu = menubar.addMenu("Optimieren")
         optimierenMenuZeileHinzufuegenAction = QAction("Zeile hinzufügen", self)
-        optimierenMenuZeileHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId)) # type:ignore
+        optimierenMenuZeileHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId))
         optimierenMenuZeileAendernAction = QAction("Zeile ändern", self)
-        optimierenMenuZeileAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) # type:ignore
+        optimierenMenuZeileAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) 
         optimierenMenuZeileEntfernenAction = QAction("Zeile entfernen", self)
-        optimierenMenuZeileEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) # type:ignore
+        optimierenMenuZeileEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) 
         optimierenMenuTestAendernAction = QAction("Test ändern", self)
-        optimierenMenuTestAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAendern(checked, optimierungsId)) # type:ignore
+        optimierenMenuTestAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAendern(checked, optimierungsId)) 
         optimierenMenuTestEntfernenAction = QAction("Test entfernen", self)
-        optimierenMenuTestEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) # type:ignore
+        optimierenMenuTestEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) 
         optimierenMenuTestAus6228Action = QAction("Test aus 6228-Zeile", self)
-        optimierenMenuTestAus6228Action.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId)) # type:ignore
+        optimierenMenuTestAus6228Action.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId)) 
         optimierenMenuBefundAusTestAction = QAction("Befundzeile aus Test(s)", self)
-        optimierenMenuBefundAusTestAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId)) # type:ignore
+        optimierenMenuBefundAusTestAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId))
         optimierenMenuInhalteZusammenfuehrenAction = QAction("Inhalte zusammenführen", self)
-        optimierenMenuInhalteZusammenfuehrenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) # type:ignore
+        optimierenMenuInhalteZusammenfuehrenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) 
+        optimierenMenuPdfHinzufuegenAction = QAction("PDF-Datei hinzufügen", self)
+        optimierenMenuPdfHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuPdfHinzufuegen(checked, optimierungsId)) 
         self.optimierenMenuVerzeichnisueberwachungStartenAction = QAction("Verzeichnisüberwachung starten", self)
-        self.optimierenMenuVerzeichnisueberwachungStartenAction.triggered.connect(self.optimierenMenuVerzeichnisueberwachungStarten) # type:ignore
+        self.optimierenMenuVerzeichnisueberwachungStartenAction.triggered.connect(self.optimierenMenuVerzeichnisueberwachungStarten) 
         self.optimierenMenuInDenHintergrundAction = QAction("OptiGDT im Hintergrund ausführen", self)
-        self.optimierenMenuInDenHintergrundAction.triggered.connect(self.optimierenMenuInDenHintergrund) # type:ignore
+        self.optimierenMenuInDenHintergrundAction.triggered.connect(self.optimierenMenuInDenHintergrund) 
         self.optimierenMenuInDenHintergrundAction.setEnabled(False)
 
         einstellungenMenu = menubar.addMenu("Einstellungen")
         einstellungenOptimierungAction = QAction("Optimierung", self)
-        einstellungenOptimierungAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenOptimierung(checked, neustartfrage)) # type: ignore
+        einstellungenOptimierungAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenOptimierung(checked, neustartfrage))
         einstellungenGdtAction = QAction("GDT", self)
-        einstellungenGdtAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenGdt(checked, neustartfrage)) # type: ignore
+        einstellungenGdtAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenGdt(checked, neustartfrage))
         einstellungenErweiterungenAction = QAction("LANR/Lizenzschlüssel", self)
-        einstellungenErweiterungenAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage)) # type: ignore
+        einstellungenErweiterungenAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage))
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
         hilfeWikiAction.triggered.connect(self.optigdtWiki) 
@@ -600,7 +606,7 @@ class MainWindow(QMainWindow):
                 id = str(int(zeile[-6:-2]))
                 typ = class_optimierung.Optimierung.getTypVonId(self.templateRootElement, id)
                 item.setText(2, zeile[7:-8])
-                if typ == "addZeile":
+                if typ == "addZeile" or typ == "addPdf":
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), addZeileHintergrund)
                 elif typ == "changeZeile":
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), changeZeileHintergrund)
@@ -928,7 +934,7 @@ class MainWindow(QMainWindow):
                 formularOk = False
                 self.lineEditName.setFocus()
             if formularOk and self.checkBoxKennfeld.isChecked() and self.lineEditKennfeld.text().strip() != "" and re.match(reKennfeld, self.lineEditKennfeld.text().strip()) == None:
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Das gerätespezifische Kennfeld für das Template sollte aus bis zu vier Buchstaben, gefolgt von zwei Ziffern bestehen.\nSoll es dennoch so übernommen werden (" + self.lineEditKennfeld.text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das gerätespezifische Kennfeld für das Template sollte aus bis zu vier Buchstaben, gefolgt von zwei Ziffern bestehen.\nSoll es dennoch so übernommen werden (" + self.lineEditKennfeld.text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     mb.setDefaultButton(QMessageBox.StandardButton.No)
                     mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                     mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -937,7 +943,7 @@ class MainWindow(QMainWindow):
                         self.lineEditKennfeld.selectAll()
                         formularOk = False
             if formularOk and self.checkBoxGdtId.isChecked() and self.lineEditGdtId.text().strip() != "" and re.match(reGdtId, self.lineEditGdtId.text().strip()) == None:
-                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die GDT-ID für das Template sollte aus acht Zeichen bestehen.\nSoll sie dennoch so übernommen werden (" + self.lineEditGdtId.text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die GDT-ID für das Template sollte aus acht Zeichen bestehen.\nSoll sie dennoch so übernommen werden (" + self.lineEditGdtId.text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                 mb.setDefaultButton(QMessageBox.StandardButton.No)
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -946,13 +952,13 @@ class MainWindow(QMainWindow):
                     self.lineEditGdtId.selectAll()
                     formularOk = False
             if formularOk and (self.lineEditGdtDateiname.text().strip() == "" or self.lineEditGdtDateiname.text().strip()[-4:].lower() != ".gdt"):
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Der GDT-Dateiname für das Template ist unzulässig.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template ist unzulässig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.lineEditGdtDateiname.setFocus()
                 self.lineEditGdtDateiname.selectAll()
                 formularOk = False
             if formularOk and not os.path.exists(self.lineEditExportverzeichnis.text().strip()):
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Das Exportverzeichnis für das Template existiert nicht.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Exportverzeichnis für das Template existiert nicht.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.pushButtonExportverzeichnis.setFocus()
                 formularOk = False
@@ -974,7 +980,7 @@ class MainWindow(QMainWindow):
                 if fd.exec() == 1:
                     speichernOk = True
                     if os.path.exists(pfad):
-                        mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Das Template \"" + self.lineEditName.text().strip() + "\" existiert bereits.\nSoll es überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                        mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das Template \"" + self.lineEditName.text().strip() + "\" existiert bereits.\nSoll es überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                         mb.setDefaultButton(QMessageBox.StandardButton.No)
                         mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                         mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -1015,7 +1021,7 @@ class MainWindow(QMainWindow):
             # Templates löschen
             for i in range(len(dg.templatenamen)):
                 if dg.checkBoxLoeschen[i].isChecked():
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Soll das Template \"" + dg.lineEditName[i].text() + "\" endgültig gelöscht werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Soll das Template \"" + dg.lineEditName[i].text() + "\" endgültig gelöscht werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     mb.setDefaultButton(QMessageBox.StandardButton.No)
                     mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                     mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -1024,7 +1030,7 @@ class MainWindow(QMainWindow):
                             os.unlink(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt"))
                             logger.logger.info("Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + " gelöscht")
                         except Exception as e:
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + str(e), QMessageBox.StandardButton.Ok)
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + str(e), QMessageBox.StandardButton.Ok)
                             mb.exec()
             # Template-Infos ändern
             for i in range(len(dg.templatenamen)):
@@ -1407,6 +1413,49 @@ class MainWindow(QMainWindow):
         else:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
             mb.exec()
+
+    def optimierenMenuPdfHinzufuegen(self, checked, optimierungsId:str=""):
+        if self.addOnsFreigeschaltet:
+            originalpfad = ""
+            originalname = ""
+            speichername = ""
+            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+            if optimierungsId != "":
+                for optimierungElement in self.templateRootElement.findall("optimierung"):
+                    if str(optimierungElement.get("id")) == optimierungsId:
+                        originalpfad = str(optimierungElement.find("originalpfad").text) # type:ignore
+                        originalname = str(optimierungElement.find("originalname").text) # type:ignore
+                        speichername = str(optimierungElement.find("speichername").text) # type:ignore
+                        break
+            if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                do = dialogOptimierungAddPdf.OptimierungAddPdf(self.gdtDateiOriginal, originalpfad, originalname, speichername)
+                if do.exec() == 1:
+                    self.templateRootDefinieren()
+                    optimierungElement = class_optimierung.OptiAddPdf(do.lineEditVerzeichnis.text(), do.lineEditName.text(), do.lineEditNameUebertragen.text(), self.templateRootElement)
+                    if optimierungsId == "": # Neue zeile
+                        self.templateRootElement.append(optimierungElement.getXml())
+                    else: # Zeile bearbeiten
+                        class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                    try:
+                        exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                        if len(exceptions) == 0:
+                            self.setStatusMessage("PDF-Datei hinzugefügt")
+                        else:
+                            exceptionsListe = "\n-".join(exceptions)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                            mb.exec() 
+                        self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                        self.ungesichertesTemplate = True
+                    except class_gdtdatei.GdtFehlerException as e:
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                        mb.exec()
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                mb.exec()
+        else:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb.exec()
                 
     def optimierenMenuVerzeichnisueberwachungStarten(self):
         self.pushButtonUeberwachungStartenClicked(True)
@@ -1443,6 +1492,8 @@ class MainWindow(QMainWindow):
                 self.optimierenMenuBefundAusTest(False, optimierungsId)
             elif optimierungstyp == "concatInhalte":
                 self.optimierenMenuInhalteZusammenfuehren(False, optimierungsId)
+            elif optimierungstyp == "addPdf":
+                self.optimierenMenuPdfHinzufuegen(False, optimierungsId)
             self.setStatusMessage("Optimierung bearbeitet")
         except class_gdtdatei.GdtFehlerException as e:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Bebrbeiten der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)

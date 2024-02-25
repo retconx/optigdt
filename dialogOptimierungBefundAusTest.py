@@ -214,7 +214,7 @@ class OptimierungBefundAusTest(QDialog):
     def pushButtonVariableClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
         einfuegenOk = True
         if lineEditFeldkennung.text() != "" and self.comboBoxTextVariable.currentText()[:4] != lineEditFeldkennung.text():
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die Feldkennung der einzufügenden Variable stimmt nicht mit der angegebenen Feldkennung überein.\nSoll die Variable dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die Feldkennung der einzufügenden Variable stimmt nicht mit der angegebenen Feldkennung überein.\nSoll die Variable dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -234,7 +234,7 @@ class OptimierungBefundAusTest(QDialog):
     def pushButtonTextClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
         einfuegenOk = True
         if lineEditFeldkennung.text() != "" and self.comboBoxTextVariable.currentText()[:4] != lineEditFeldkennung.text():
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die Feldkennung des einzufügenden Texts stimmt nicht mit der angegebenen Feldkennung überein.\nSoll der Text dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die Feldkennung des einzufügenden Texts stimmt nicht mit der angegebenen Feldkennung überein.\nSoll der Text dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -266,7 +266,7 @@ class OptimierungBefundAusTest(QDialog):
                         test.setZeile(feldkennung, kriterium)
                         eindeutigkeitsFeldkennungen.append(feldkennung)
                     except class_gdtdatei.GdtFehlerException as e:
-                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis", e.meldung, QMessageBox.StandardButton.Ok)
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", e.meldung, QMessageBox.StandardButton.Ok)
                         mb.exec()
                         unzulässigeFeldkennung = i
         if unzulässigeFeldkennung == -1:
@@ -277,18 +277,18 @@ class OptimierungBefundAusTest(QDialog):
                     anzahlGefundeneTests += 1
             listWidgetItemTexte = [self.listWidgetTestuebernahmen.item(i).text() for i in range(self.listWidgetTestuebernahmen.count())]
             if anzahlGefundeneTests == 0:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
                 mb.exec()
             elif anzahlGefundeneTests > 1:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
                 mb.exec()
             elif self.lineEditPlatzhalterName.text().strip() == "":
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Kein Platzhaltername eingetragen.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Kein Platzhaltername eingetragen.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.lineEditPlatzhalterName.setFocus()
                 self.lineEditPlatzhalterName.selectAll()
             elif self.lineEditPlatzhalterName.text() in listWidgetItemTexte:
-                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Der angegebene Platzhaltername existiert bereits. Soll die Testübernahme überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Der angegebene Platzhaltername existiert bereits. Soll die Testübernahme überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.Yes:
@@ -297,12 +297,12 @@ class OptimierungBefundAusTest(QDialog):
                 self.lineEditPlatzhalterName.setFocus()
                 self.lineEditPlatzhalterName.selectAll()
             elif self.lineEditPlatzhalterFeldkennung.text().strip() == "":
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Keine Platzhalterfeldkennung eingetragen.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine Platzhalterfeldkennung eingetragen.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.lineEditPlatzhalterFeldkennung.setFocus()
                 self.lineEditPlatzhalterFeldkennung.selectAll()
             elif re.match(reFeldkennung, self.lineEditPlatzhalterFeldkennung.text()) == None or self.lineEditPlatzhalterFeldkennung.text()[0:2] != "84" or self.lineEditPlatzhalterFeldkennung.text()[0:2] == "8410":
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die angegebene Platzhalterfeldkennung ist ungültig.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die angegebene Platzhalterfeldkennung ist ungültig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.lineEditPlatzhalterFeldkennung.setFocus()
                 self.lineEditPlatzhalterFeldkennung.selectAll()
@@ -328,7 +328,7 @@ class OptimierungBefundAusTest(QDialog):
 
     def pushButtonUebernahmeEinfuegenClicked(self):
         if not self.listWidgetTestuebernahmen.currentItem().text():
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Keine Testübernahme ausgewählt.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine Testübernahme ausgewählt.", QMessageBox.StandardButton.Ok)
             mb.exec()
         else:
             platzhalterName = self.listWidgetTestuebernahmen.currentItem().text()

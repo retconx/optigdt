@@ -125,7 +125,7 @@ class EinstellungenOptimierung(QDialog):
     def accept(self):
         formularOk = True
         if re.match(reZahlPattern, self.lineEditVerzoegerung.text()) == None:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die Verzögerungangabe muss eine Zahl sein.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Verzögerungangabe muss eine Zahl sein.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditVerzoegerung.setFocus()
             self.lineEditVerzoegerung.selectAll()

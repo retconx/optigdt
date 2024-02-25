@@ -207,5 +207,5 @@ class OptimierungTestAus6228(QDialog):
         if len(fehler) == 0:
             self.done(1)
         else:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Formular nicht korrekt ausgefüllt:\n- " + "\n- ".join(fehler), QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Formular nicht korrekt ausgefüllt:\n- " + "\n- ".join(fehler), QMessageBox.StandardButton.Ok)
             mb.exec()

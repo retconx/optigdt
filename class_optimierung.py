@@ -299,3 +299,25 @@ class OptiConcatInhalte(Optimierung):
         optimierungElement.append(feldkennungElement)
         return optimierungElement
 
+class OptiAddPdf(Optimierung):
+    def __init__(self, originalpfad:str, originalname:str, speichername:str, bisherigesRoot:ElementTree.Element):
+        super().__init__("addPdf", bisherigesRoot)
+        self.originalpfad = originalpfad
+        self.originalname = originalname
+        self.speichername = speichername
+        self.Id = self.neueId
+
+    def getXml(self) -> ElementTree.Element:
+        optimierungElement = ElementTree.Element("optimierung")
+        optimierungElement.set("id", str(self.Id))
+        optimierungElement.set("typ", self.typ)
+        originalpfadElement = ElementTree.Element("originalpfad")
+        originalpfadElement.text = self.originalpfad
+        optimierungElement.append(originalpfadElement)
+        originalnameElement = ElementTree.Element("originalname")
+        originalnameElement.text = self.originalname
+        optimierungElement.append(originalnameElement)
+        speichernameElement = ElementTree.Element("speichername")
+        speichernameElement.text = self.speichername
+        optimierungElement.append(speichernameElement)
+        return optimierungElement

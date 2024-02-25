@@ -116,7 +116,7 @@ class OptimierungAddZeile(QDialog):
         if self.lineEditFeldkennung.text() == "" and self.lineEditFeldkennung.text() == "":
             self.done(1)
         elif not re.match(reFeldkennung, self.lineEditFeldkennung.text()):
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditFeldkennung.setFocus()
             self.lineEditFeldkennung.selectAll()

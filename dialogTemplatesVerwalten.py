@@ -160,7 +160,7 @@ class TemplatesVerwalten(QDialog):
         for i in range(len(self.templatenamen)):
             if self.lineEditName[i].text().strip() != "":
                 if self.lineEditKennfeld[i].text().strip() != "" and re.match(reKennfeld, self.lineEditKennfeld[i].text().strip()) == None:
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Das gerätespezifische Kennfeld für das Template \"" + self.lineEditName[i].text() + "\" sollte aus bis zu vier Buchstaben, gefolgt von zwei Ziffern bestehen.\nSoll es dennoch so übernommen werden (" + self.lineEditKennfeld[i].text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das gerätespezifische Kennfeld für das Template \"" + self.lineEditName[i].text() + "\" sollte aus bis zu vier Buchstaben, gefolgt von zwei Ziffern bestehen.\nSoll es dennoch so übernommen werden (" + self.lineEditKennfeld[i].text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     mb.setDefaultButton(QMessageBox.StandardButton.No)
                     mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                     mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -170,7 +170,7 @@ class TemplatesVerwalten(QDialog):
                         formularOk = False
                         break
                 if self.lineEditGdtId[i].text().strip() != "" and re.match(reGdtId, self.lineEditGdtId[i].text().strip()) == None:
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die GDT-ID für das Template \"" + self.lineEditName[i].text() + "\" sollte aus acht Zeichen bestehen.\nSoll sie dennoch so übernommen werden (" + self.lineEditGdtId[i].text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die GDT-ID für das Template \"" + self.lineEditName[i].text() + "\" sollte aus acht Zeichen bestehen.\nSoll sie dennoch so übernommen werden (" + self.lineEditGdtId[i].text().strip() + ")?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                     mb.setDefaultButton(QMessageBox.StandardButton.No)
                     mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                     mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -180,14 +180,14 @@ class TemplatesVerwalten(QDialog):
                         formularOk = False
                         break
                 if self.lineEditGdtDateiname[i].text().strip() == "" or self.lineEditGdtDateiname[i].text().strip()[-4:].lower() != ".gdt":
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Der GDT-Dateiname für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" ist unzulässig.", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" ist unzulässig.", QMessageBox.StandardButton.Ok)
                     mb.exec()
                     self.lineEditGdtDateiname[i].setFocus()
                     self.lineEditGdtDateiname[i].selectAll()
                     formularOk = False
                     break
                 if not os.path.exists(self.lineEditExportverzeichnis[i].text().strip()):
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Das Exportverzeichnis für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Exportverzeichnis für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                     mb.exec()
                     formularOk = False
                     break

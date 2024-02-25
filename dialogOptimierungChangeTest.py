@@ -142,7 +142,7 @@ class OptimierungChangeTest(QDialog):
     def pushButtonVariableClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
         einfuegenOk = True
         if lineEditFeldkennung.text() != "" and self.comboBoxTextVariable.currentText()[:4] != lineEditFeldkennung.text():
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die Feldkennung der einzufügenden Variable stimmt nicht mit der angegebenen Feldkennung überein.\nSoll die Variable dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die Feldkennung der einzufügenden Variable stimmt nicht mit der angegebenen Feldkennung überein.\nSoll die Variable dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -162,7 +162,7 @@ class OptimierungChangeTest(QDialog):
     def pushButtonTextClicked(self, checked, lineEditFeldkennung:QLineEdit, lineEditKriterium:QLineEdit):
         einfuegenOk = True
         if lineEditFeldkennung.text() != "" and self.comboBoxTextVariable.currentText()[:4] != lineEditFeldkennung.text():
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis", "Die Feldkennung des einzufügenden Texts stimmt nicht mit der angegebenen Feldkennung überein.\nSoll der Text dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die Feldkennung des einzufügenden Texts stimmt nicht mit der angegebenen Feldkennung überein.\nSoll der Text dennoch eingefügt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -190,7 +190,7 @@ class OptimierungChangeTest(QDialog):
                 feldkennungenOk = False
                 break
         if not feldkennungenOk:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Feldkennungen müssen aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Feldkennungen müssen aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
             mb.exec()
         else:
             self.eindeutigkeitskriterien.clear()
@@ -210,10 +210,10 @@ class OptimierungChangeTest(QDialog):
                 if test == prueftest:
                     anzahlGefundeneTests += 1
             if anzahlGefundeneTests == 0:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Es existiert kein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
                 mb.exec()
             elif anzahlGefundeneTests > 1:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Es existieren mehr als ein Test mit den angegebenen Eindeutigkeitskriterien.", QMessageBox.StandardButton.Ok)
                 mb.exec()
             elif anzahlGefundeneTests == 1:
                 for i in range(self.maxeindeutigkeitskriterien):

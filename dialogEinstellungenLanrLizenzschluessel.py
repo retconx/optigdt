@@ -59,12 +59,12 @@ class EinstellungenProgrammerweiterungen(QDialog):
         if self.lineEditLanr.text() == "" and self.lineEditLizenzschluessel.text() == "":
             self.done(1)
         elif not re.match(reLanr, self.lineEditLanr.text()) or not gdttoolsL.GdtToolsLizenzschluessel.checksummeLanrKorrekt(self.lineEditLanr.text()):
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die LANR ist ungültig.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die LANR ist ungültig.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditLanr.setFocus()
             self.lineEditLanr.selectAll()
         elif re.match(reLizenzschluessel, self.lineEditLizenzschluessel.text()) == None or (not gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lineEditLizenzschluessel.text().upper(), self.lineEditLanr.text(), gdttoolsL.SoftwareId.OPTIGDT) and not gdttoolsL.GdtToolsLizenzschluessel.lizenzErteilt(self.lineEditLizenzschluessel.text().upper(), self.lineEditLanr.text(), gdttoolsL.SoftwareId.OPTIGDTPSEUDO)):
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis", "Die LANR/Lizenzschlüssel-Kombination ist ungültig.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die LANR/Lizenzschlüssel-Kombination ist ungültig.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditLizenzschluessel.setFocus()
             self.lineEditLizenzschluessel.selectAll()
