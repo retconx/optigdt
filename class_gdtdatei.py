@@ -694,10 +694,13 @@ class GdtDatei():
                             self.addZeile("6304", speichername + "__" + id + "__")
                             self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf" + "__" + id + "__")
                         else:
-                            self.addZeile("6302", "optigdtAnhang")
-                            self.addZeile("6303", "PDF")
-                            self.addZeile("6304", speichername)
-                            self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf")
+                            if os.path.exists(os.path.join(originalpfad, originalname) + ".pdf"):
+                                self.addZeile("6302", "optigdtAnhang")
+                                self.addZeile("6303", "PDF")
+                                self.addZeile("6304", speichername)
+                                self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf")
+                            else:
+                                exceptions.append("Anhang " + os.path.join(originalpfad, originalname) + ".pdf nicht angehängt, da nicht existiert")
                     else:
                         exceptions.append("PDF anhängen nicht möglich (xml-Datei fehlerhaft)")
             return exceptions

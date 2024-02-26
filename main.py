@@ -550,6 +550,7 @@ class MainWindow(QMainWindow):
         optimierenMenu.addAction(optimierenMenuTestAus6228Action)
         optimierenMenu.addAction(optimierenMenuBefundAusTestAction)
         optimierenMenu.addAction(optimierenMenuInhalteZusammenfuehrenAction)
+        optimierenMenu.addAction(optimierenMenuPdfHinzufuegenAction)
         optimierenMenu.addSeparator()
         optimierenMenu.addAction(self.optimierenMenuVerzeichnisueberwachungStartenAction)
         optimierenMenu.addAction(self.optimierenMenuInDenHintergrundAction)
