@@ -117,7 +117,7 @@ class GdtDatei():
                 self.zeilen[i] = GdtDatei.getZeile("8100", laengeFormatiert)
     
     def laden(self, dateipfad:str):
-        """Lädt eine GDT-Datei+
+        """Lädt eine GDT-Datei
         Parameter: 
             dateipfad
         Return:
@@ -140,6 +140,26 @@ class GdtDatei():
         except IOError as e:
             raise GdtFehlerException("IO-Fehler: " + str(e))
         return self.zeilen
+    
+    def speichern(self, pfad:str, zeichensatz:GdtZeichensatz):
+        """
+        Speichert die GDT-Datei
+            Return: True bei Erfolg, False bei Misserfolg
+        """
+        if zeichensatz == GdtZeichensatz.BIT_7:
+            enc = "utf_7"
+        elif zeichensatz == GdtZeichensatz.IBM_CP437:
+            enc = "cp437"
+        else:
+            enc = "cp1252"
+
+        try:
+            with open(pfad, "w", encoding=enc) as fobj:
+                for zeile in self.zeilen:
+                    fobj.write(zeile + "\r\n")
+            return True
+        except:
+            return False
     
     def setZeichensatz(self, zeichensatz:GdtZeichensatz):
         self.zeichensatz = zeichensatz
