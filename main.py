@@ -889,6 +889,8 @@ class MainWindow(QMainWindow):
             if mb.exec() == QMessageBox.StandardButton.No:
                 schliessenOk = False
         if schliessenOk:
+            self.labelTreeViewUeberschriftLinks.setText("")
+            self.labelTreeViewUeberschriftRechts.setText("")
             self.treeWidgetOriginal.clear()
             self.treeWidgetOptimiert.clear()
             self.ungesichertesTemplate = False
@@ -1599,6 +1601,8 @@ class MainWindow(QMainWindow):
                         self.setStatusMessage("Verzeichnisüberwachung gestartet")
                         self.trayMenuZeigenAction.setEnabled(True)
                         self.ueberwachungAktiv = True
+                        self.labelTreeViewUeberschriftLinks.setText("")
+                        self.labelTreeViewUeberschriftRechts.setText("")
                         self.treeWidgetOriginal.clear()
                         self.treeWidgetOptimiert.clear()
                         if not self.isHidden():
