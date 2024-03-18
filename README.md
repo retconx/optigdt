@@ -1,3 +1,4 @@
 # OptiGDT
 OptiGDT ist eine eigenständig plattformunabhängig lauffähige Software zur Optimierung von GDT-Dateien.
-<br />https://gdttools.de
+
+Hier geht's zum Wiki: https://github.com/retconx/optigdt/wiki
