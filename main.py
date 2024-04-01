@@ -1766,7 +1766,7 @@ filename = "qtbase_de"
 directory = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
 qt.load(filename, directory)
 app.installTranslator(qt)
-app.setWindowIcon(QIcon(os.path.join(basedir, "icons/program.png")))
+app.setWindowIcon(QIcon(os.path.join(basedir, "icons", "program.png")))
 window = MainWindow()
 if not "ue" in sys.argv:
     window.show()
