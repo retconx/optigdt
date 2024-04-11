@@ -203,6 +203,10 @@ class MainWindow(QMainWindow):
         self.eulagelesen = False
         if self.configIni.has_option("Allgemein", "eulagelesen"):
             self.eulagelesen = self.configIni["Allgemein"]["eulagelesen"] == "True"
+        # 2.2.0
+        self.punktinkomma6220 = False
+        if self.configIni.has_option("Optimierung", "punktinkomma6220"):
+            self.punktinkomma6220 = self.configIni["Optimierung"]["punktinkomma6220"] == "True"
         # /Nachträglich hinzufefügte Options
 
         # Prüfen, ob Lizenzschlüssel unverschlüsselt
@@ -248,7 +252,9 @@ class MainWindow(QMainWindow):
                 self.configIni["Allgemein"]["version"] = configIniBase["Allgemein"]["version"]
                 self.configIni["Allgemein"]["releasedatum"] = configIniBase["Allgemein"]["releasedatum"] 
                 # config.ini aktualisieren
-                # 1.0.3 -> 1.1.0: ["Allgemein"]["vorlagenverzeichnis"] hinzufügen
+                # 2.1.3 -> 2.2.0: ["Optimierung"]["punktinkomma6220"] hinzufügen
+                if not self.configIni.has_option("Optimierung", "punktinkomma6220"):
+                    self.configIni["Optimierung"]["punktinkomma6220"] = "False"
 
                 # /config.ini aktualisieren
 
@@ -724,6 +730,7 @@ class MainWindow(QMainWindow):
             self.configIni["Optimierung"]["maxtestaenderungen"] = de.lineEditMaxAenderungenProTest.text().strip()
             self.configIni["Optimierung"]["maxanzahl6228spalten"] = de.lineEditMaxAnzahl6228Spalten.text().strip()
             self.configIni["Optimierung"]["standard6228trennregexpattern"] = de.lineEditStandardSpaltenTrennzeichen.text().strip()
+            self.configIni["Optimierung"]["punktinkomma6220"] = str(de.checkboxPunktInKomma.isChecked())
 
             with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
                 self.configIni.write(configfile)
@@ -1702,7 +1709,15 @@ class MainWindow(QMainWindow):
                                         befundzeilen.append(erster6220Inhalt)
                                     gd.deleteZeile("", "6220")
                                     for zeile in befundzeilen:
-                                        gd.addZeile("6220", zeile)
+                                        zeileMitKommas = zeile
+                                        # Dezimalpunkt in Komma wandeln
+                                        if self.punktinkomma6220:
+                                            regexPattern = r"-?\d+\.\d+"
+                                            dezimalpunktzahlen = re.findall(regexPattern, zeile)
+                                            for dezimalpunktzahl in dezimalpunktzahlen:
+                                                dezimalkommazahl = dezimalpunktzahl.replace(".", ",")
+                                                zeileMitKommas = zeileMitKommas.replace(dezimalpunktzahl, dezimalkommazahl)
+                                        gd.addZeile("6220", zeileMitKommas)
                                     gd.setSatzlaenge()
                                     if self.pseudoLizenzId != "":
                                         gd.changeZeile("", "3000", self.pseudoLizenzId)

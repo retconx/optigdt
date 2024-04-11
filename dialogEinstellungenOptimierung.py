@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QDialog,
     QVBoxLayout,
-    QHBoxLayout,
+    QCheckBox,
     QGridLayout,
     QGroupBox,
     QLabel,
@@ -35,6 +35,7 @@ class EinstellungenOptimierung(QDialog):
         self.maxAnzahl6228Spalten = configIni["Optimierung"]["maxanzahl6228spalten"]
         self.standard6228TrennRegexPattern = configIni["Optimierung"]["standard6228trennregexpattern"]
         self.sekundenBisTemplatebearbeitung = configIni["Optimierung"]["sekundenbistemplatebearbeitung"]
+        self.punktinkomma6220 = configIni["Optimierung"]["punktinkomma6220"] == "True"
 
         self.setWindowTitle("Optimierungs-Einstellungen")
         self.setMinimumWidth(500)
@@ -104,9 +105,20 @@ class EinstellungenOptimierung(QDialog):
         groupboxTestAus6228Layout.addWidget(labelStandardTrennzeichen)
         groupboxTestAus6228Layout.addWidget(self.lineEditStandardSpaltenTrennzeichen)
 
+        # GroupboxAllgemein
+        groupboxAllgemeinLayout = QGridLayout()
+        groupboxAllgemein = QGroupBox("Allgemein")
+        groupboxAllgemein.setFont(self.fontBold)
+        self.checkboxPunktInKomma = QCheckBox("Dezimalkomma statt -punkt in Befund (6220)")
+        self.checkboxPunktInKomma.setFont(self.fontNormal)
+        self.checkboxPunktInKomma.setChecked(self.punktinkomma6220)
+        groupboxAllgemeinLayout.addWidget(self.checkboxPunktInKomma, 0, 0)
+        groupboxAllgemein.setLayout(groupboxAllgemeinLayout)
+
         dialogLayoutV.addWidget(groupboxTemplate)
         dialogLayoutV.addWidget(groupboxTest)
         dialogLayoutV.addWidget(groupboxTestAus6228)
+        dialogLayoutV.addWidget(groupboxAllgemein)
         dialogLayoutV.addWidget(self.buttonBox)
         self.setLayout(dialogLayoutV)
 

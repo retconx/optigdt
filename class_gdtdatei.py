@@ -662,23 +662,16 @@ class GdtDatei():
                         if not testGefunden:
                             exceptions.append("Test mit der ID " + test.getInhalt("8410") + " zur Befunderstellung nicht gefunden")
                     befund = str(optimierungElement.find("befund").text) # type: ignore
-                    befundzeilen = []
                     for inhalt in variablenInhalt:
                         befund = befund.replace("${" + inhalt + "}", variablenInhalt[inhalt])
-                        befundzeilen.clear()
-                        ## Auf gesetzte Zeilenumbrüche prüfen
-                        if "//" in befund:
-                            for befundzeile in befund.split("//"):
-                                befundzeilen.append(befundzeile)
-                        else:
-                            befundzeilen.append(befund)
                     if vorschau:
-                        for befundzeile in befundzeilen:
+                        # Auf gesetzte Zeilenumbrüche prüfen
+                        for befundzeile in befund.split("//"):
                             self.addZeile("6220", befundzeile + "__" + id + "__")
                     else:
-                        for befundzeile in befundzeilen:
-                            befundzeileBereinigt = re.sub(r"\$\{[^{}]+\}", "-", befundzeile)
-                            self.addZeile("6220", befundzeileBereinigt)
+                        # Auf gesetzte Zeilenumbrüche wird in directoryChanged in main.py geüprüft
+                        befundBereinigt = re.sub(r"\$\{[^{}]+\}", "-", befund)
+                        self.addZeile("6220", befundBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
                     if feldkennung != "None" :
