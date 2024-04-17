@@ -670,7 +670,15 @@ class GdtDatei():
                             self.addZeile("6220", befundzeile + "__" + id + "__")
                     else:
                         # Auf gesetzte Zeilenumbrüche wird in directoryChanged in main.py geüprüft
+                        # Nicht ersetzte Variablen durch "-" ersetzen
                         befundBereinigt = re.sub(r"\$\{[^{}]+\}", "-", befund)
+                        # Einheiten nach - entfernen
+                        einheiten = self.getInhalte("8421")
+                        for einheit in einheiten:
+                            if ("-" + einheit) in befundBereinigt:
+                                befundBereinigt = befundBereinigt.replace("-" + einheit, "-")
+                            elif ("- " + einheit) in befundBereinigt:
+                                befundBereinigt = befundBereinigt.replace("- " + einheit, "-")
                         self.addZeile("6220", befundBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore

@@ -207,6 +207,10 @@ class MainWindow(QMainWindow):
         self.punktinkomma6220 = False
         if self.configIni.has_option("Optimierung", "punktinkomma6220"):
             self.punktinkomma6220 = self.configIni["Optimierung"]["punktinkomma6220"] == "True"
+        # 2.3.0
+        self.autoupdate = True
+        if self.configIni.has_option("Allgemein", "autoupdate"):
+            self.autoupdate = self.configIni["Allgemein"]["autoupdate"] == "True"
         # /Nachträglich hinzufefügte Options
 
         # Prüfen, ob Lizenzschlüssel unverschlüsselt
@@ -255,6 +259,9 @@ class MainWindow(QMainWindow):
                 # 2.1.3 -> 2.2.0: ["Optimierung"]["punktinkomma6220"] hinzufügen
                 if not self.configIni.has_option("Optimierung", "punktinkomma6220"):
                     self.configIni["Optimierung"]["punktinkomma6220"] = "False"
+                # 2.2.0 -> 2.3.0
+                if not self.configIni.has_option("Allgemein", "autoupdate"):
+                    self.configIni["Allgemein"]["autoupdate"] = "True"
 
                 # /config.ini aktualisieren
 
@@ -481,7 +488,7 @@ class MainWindow(QMainWindow):
         aboutAction = QAction(self)
         aboutAction.setMenuRole(QAction.MenuRole.AboutRole)
         aboutAction.triggered.connect(self.ueberOptiGdt) 
-        updateAction = QAction("Auf Update prüfen", self)
+        updateAction = QAction("Jetzt auf Update prüfen", self)
         updateAction.setMenuRole(QAction.MenuRole.ApplicationSpecificRole)
         updateAction.triggered.connect(self.updatePruefung) 
         gdtDateiMenu = menubar.addMenu("GDT-Datei")
@@ -533,8 +540,12 @@ class MainWindow(QMainWindow):
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
         hilfeWikiAction.triggered.connect(self.optigdtWiki) 
-        hilfeUpdateAction = QAction("Auf Update prüfen", self)
+        hilfeUpdateAction = QAction("Jetzt auf Update prüfen", self)
         hilfeUpdateAction.triggered.connect(self.updatePruefung) 
+        hilfeAutoUpdateAction = QAction("Automatisch auf Update prüfen", self)
+        hilfeAutoUpdateAction.setCheckable(True)
+        hilfeAutoUpdateAction.setChecked(self.autoupdate)
+        hilfeAutoUpdateAction.triggered.connect(self.autoUpdatePruefung)
         hilfeUeberAction = QAction("Über OptiGDT", self)
         hilfeUeberAction.setMenuRole(QAction.MenuRole.NoRole)
         hilfeUeberAction.triggered.connect(self.ueberOptiGdt)
@@ -570,6 +581,7 @@ class MainWindow(QMainWindow):
         hilfeMenu.addAction(hilfeWikiAction)
         hilfeMenu.addSeparator()
         hilfeMenu.addAction(hilfeUpdateAction)
+        hilfeMenu.addAction(hilfeAutoUpdateAction)
         hilfeMenu.addSeparator()
         hilfeMenu.addAction(hilfeUeberAction)
         hilfeMenu.addAction(hilfeEulaAction)
@@ -577,13 +589,16 @@ class MainWindow(QMainWindow):
         hilfeMenu.addAction(hilfeLogExportieren)
 
         # Updateprüfung auf Github
-        try:
-            self.updatePruefung(meldungNurWennUpdateVerfuegbar=True)
-        except Exception as e:
-            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Updateprüfung nicht möglich.\nBitte überprüfen Sie Ihre Internetverbindung.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            logger.logger.warning("Updateprüfung nicht möglich: " + str(e))
+        if self.autoupdate:
+            
+            try:
+                self.updatePruefung(meldungNurWennUpdateVerfuegbar=True)
+            except Exception as e:
+                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Updateprüfung nicht möglich.\nBitte überprüfen Sie Ihre Internetverbindung.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                logger.logger.warning("Updateprüfung nicht möglich: " + str(e))
         
+        # Autostart?
         if len(sys.argv) > 1 and "ue" in sys.argv:
             self.pushButtonUeberwachungStarten.setChecked(True)
             self.pushButtonUeberwachungStartenClicked(True)
@@ -813,6 +828,12 @@ class MainWindow(QMainWindow):
         elif not meldungNurWennUpdateVerfuegbar:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Sie nutzen die aktuelle OptiGDT-Version.", QMessageBox.StandardButton.Ok)
             mb.exec()
+
+    def autoUpdatePruefung(self, checked):
+        self.autoupdate = checked
+        self.configIni["Allgemein"]["autoupdate"] = str(checked)
+        with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
+            self.configIni.write(configfile)
     
     def ueberOptiGdt(self):
         de = dialogUeberOptiGdt.UeberOptiGdt()
