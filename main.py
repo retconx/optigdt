@@ -1,5 +1,8 @@
 import sys, configparser, os, datetime, shutil, logger, re, time
-import class_gdtdatei, gdttoolsL, class_optimierung
+import class_gdtdatei, class_optimierung
+## Nur mit Lizenz
+import gdttoolsL
+## /Nur mit Lizenz
 import xml.etree.ElementTree as ElementTree
 import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher
@@ -213,6 +216,7 @@ class MainWindow(QMainWindow):
             self.autoupdate = self.configIni["Allgemein"]["autoupdate"] == "True"
         # /Nachträglich hinzufefügte Options
 
+        ## Nur mit Lizenz
         # Prüfen, ob Lizenzschlüssel unverschlüsselt
         if len(self.lizenzschluessel) == 29:
             logger.logger.info("Lizenzschlüssel unverschlüsselt")
@@ -221,6 +225,7 @@ class MainWindow(QMainWindow):
                     self.configIni.write(configfile)
         else:
             self.lizenzschluessel = gdttoolsL.GdtToolsLizenzschluessel.dekrypt(self.lizenzschluessel)
+        ## /Nur mit Lizenz
 
         # Prüfen, ob EULA gelesen
         if not self.eulagelesen:
@@ -243,9 +248,11 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Vermutlich starten Sie OptiGDT das erste Mal auf diesem PC.\nMöchten Sie jetzt die Grundeinstellungen vornehmen?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.Yes)
             if mb.exec() == QMessageBox.StandardButton.Yes:
+                ## Nur mit Lizenz
+                self.einstellungenLanrLizenzschluessel(False, neustartfrage=False)
+                ## /Nur mit Lizenz
                 self.einstellungenOptimierung(False, neustartfrage=False)
-                self.einstellungenGdt(False, neustartfrage=False)
-                self.einstellungenLanrLizenzschluessel(False, neustartfrage=True)
+                self.einstellungenGdt(False, neustartfrage=True)
 
         # Version vergleichen und gegebenenfalls aktualisieren
         configIniBase = configparser.ConfigParser()
@@ -290,6 +297,9 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Aktualisieren auf Version " + configIniBase["Allgemein"]["version"], QMessageBox.StandardButton.Ok)
             mb.exec()
 
+        self.addOnsFreigeschaltet = True
+        
+        # Nur mit Lizenz
         # Pseudo-Lizenz?
         self.pseudoLizenzId = ""
         rePatId = r"^patid\d+$"
@@ -303,6 +313,7 @@ class MainWindow(QMainWindow):
         if self.lizenzschluessel != "" and gdttoolsL.GdtToolsLizenzschluessel.getSoftwareId(self.lizenzschluessel) == gdttoolsL.SoftwareId.OPTIGDTPSEUDO and self.pseudoLizenzId == "":
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Bei Verwendung einer Pseudolizenz muss OptiGDT mit einer Patienten-Id als Startargument im Format \"patid<Pat.-Id>\" ausgeführt werden.", QMessageBox.StandardButton.Ok)
             mb.exec() 
+        ## /Nur mit Lizenz
         
         jahr = datetime.datetime.now().year
         copyrightJahre = "2023"
@@ -535,8 +546,10 @@ class MainWindow(QMainWindow):
         einstellungenOptimierungAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenOptimierung(checked, neustartfrage))
         einstellungenGdtAction = QAction("GDT", self)
         einstellungenGdtAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenGdt(checked, neustartfrage))
+        ## Nur mit Lizenz
         einstellungenErweiterungenAction = QAction("LANR/Lizenzschlüssel", self)
         einstellungenErweiterungenAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage))
+        ## /Nur mit Lizenz
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
         hilfeWikiAction.triggered.connect(self.optigdtWiki) 
@@ -576,7 +589,9 @@ class MainWindow(QMainWindow):
         optimierenMenu.addAction(self.optimierenMenuInDenHintergrundAction)
         einstellungenMenu.addAction(einstellungenOptimierungAction)
         einstellungenMenu.addAction(einstellungenGdtAction)
+        ## Nur mit Lizenz
         einstellungenMenu.addAction(einstellungenErweiterungenAction)
+        ## /Nur mit Lizenz
 
         hilfeMenu.addAction(hilfeWikiAction)
         hilfeMenu.addSeparator()
@@ -590,7 +605,6 @@ class MainWindow(QMainWindow):
 
         # Updateprüfung auf Github
         if self.autoupdate:
-            
             try:
                 self.updatePruefung(meldungNurWennUpdateVerfuegbar=True)
             except Exception as e:
@@ -774,6 +788,7 @@ class MainWindow(QMainWindow):
                     self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
     
+    ## Nur mit Lizenz
     def einstellungenLanrLizenzschluessel(self, checked, neustartfrage=False):
         de = dialogEinstellungenLanrLizenzschluessel.EinstellungenProgrammerweiterungen(self.configPath)
         if de.exec() == 1:
@@ -793,6 +808,7 @@ class MainWindow(QMainWindow):
                 if mb.exec() == QMessageBox.StandardButton.Yes:
                     self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
+    ## /Nur mit Lizenz
 
     def optigdtWiki(self, link):
         QDesktopServices.openUrl("https://github.com/retconx/optigdt/wiki")
@@ -1740,8 +1756,10 @@ class MainWindow(QMainWindow):
                                                 zeileMitKommas = zeileMitKommas.replace(dezimalpunktzahl, dezimalkommazahl)
                                         gd.addZeile("6220", zeileMitKommas)
                                     gd.setSatzlaenge()
+                                    ## Nur mit Lizenz
                                     if self.pseudoLizenzId != "":
                                         gd.changeZeile("", "3000", self.pseudoLizenzId)
+                                    ## /Nur mit Lizenz
                                     with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
