@@ -249,10 +249,13 @@ class MainWindow(QMainWindow):
             mb.setDefaultButton(QMessageBox.StandardButton.Yes)
             if mb.exec() == QMessageBox.StandardButton.Yes:
                 ## Nur mit Lizenz
-                self.einstellungenLanrLizenzschluessel(False, neustartfrage=False)
+                self.einstellungenLanrLizenzschluessel(False, False)
                 ## /Nur mit Lizenz
-                self.einstellungenOptimierung(False, neustartfrage=False)
-                self.einstellungenGdt(False, neustartfrage=True)
+                self.einstellungenOptimierung(False, False)
+                self.einstellungenGdt(False, False)
+                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Ersteinrichtung ist abgeschlossen. OptiGDGT wird beendet.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                sys.exit()
 
         # Version vergleichen und gegebenenfalls aktualisieren
         configIniBase = configparser.ConfigParser()
@@ -543,12 +546,12 @@ class MainWindow(QMainWindow):
 
         einstellungenMenu = menubar.addMenu("Einstellungen")
         einstellungenOptimierungAction = QAction("Optimierung", self)
-        einstellungenOptimierungAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenOptimierung(checked, neustartfrage))
+        einstellungenOptimierungAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenOptimierung(checked, neustartfrage))
         einstellungenGdtAction = QAction("GDT", self)
-        einstellungenGdtAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenGdt(checked, neustartfrage))
+        einstellungenGdtAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenGdt(checked, neustartfrage))
         ## Nur mit Lizenz
         einstellungenErweiterungenAction = QAction("LANR/Lizenzschlüssel", self)
-        einstellungenErweiterungenAction.triggered.connect(lambda checked=False, neustartfrage=True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage))
+        einstellungenErweiterungenAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage))
         ## /Nur mit Lizenz
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
@@ -750,7 +753,7 @@ class MainWindow(QMainWindow):
     #         self.lineEditGdtDateiname.setText(os.path.basename(self.gdtDateipfad))
 
     # Menuverarbeitung
-    def einstellungenOptimierung(self, checked, neustartfrage=False):
+    def einstellungenOptimierung(self, checked, neustartfrage):
         de = dialogEinstellungenOptimierung.EinstellungenOptimierung(self.configPath)
         if de.exec() == 1:
             self.configIni["Optimierung"]["standardtemplateverzeichnis"] = de.lineEditTemplateverzeichnis.text().strip()
@@ -772,7 +775,7 @@ class MainWindow(QMainWindow):
                     self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
         
-    def einstellungenGdt(self, checked, neustartfrage=False):
+    def einstellungenGdt(self, checked, neustartfrage):
         de = dialogEinstellungenGdt.EinstellungenGdt(self.configPath)
         if de.exec() == 1:
             self.configIni["GDT"]["gdtimportverzeichnis"] = de.lineEditImport.text()
@@ -789,7 +792,7 @@ class MainWindow(QMainWindow):
                     os.execl(sys.executable, __file__, *sys.argv)
     
     ## Nur mit Lizenz
-    def einstellungenLanrLizenzschluessel(self, checked, neustartfrage=False):
+    def einstellungenLanrLizenzschluessel(self, checked, neustartfrage):
         de = dialogEinstellungenLanrLizenzschluessel.EinstellungenProgrammerweiterungen(self.configPath)
         if de.exec() == 1:
             self.configIni["Erweiterungen"]["lanr"] = de.lineEditLanr.text()
