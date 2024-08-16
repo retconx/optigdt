@@ -32,6 +32,8 @@ basedir = os.path.dirname(__file__)
 unveraenderbareFeldkennungen = ("8000", "8100", "8315", "8316", "9206", "9218", "0102", "0103", "0132", "3000", "8402")
 reKennfeld = r"^[A-Z]{1,4}[0-9]{2}$"
 reGdtId = r"^[0-9A-Za-z_\-]{8}$"
+reGdtDateiendungSequentiell = r"^\.\d{3}$"
+reGdtDateiendung = r"^\.gdt|\.\d{3}$"
 
 # Farbdefinitionen
 testauswahlHintergrund = QColor(220,220,220)
@@ -272,7 +274,6 @@ class MainWindow(QMainWindow):
                 # 2.2.0 -> 2.3.0
                 if not self.configIni.has_option("Allgemein", "autoupdate"):
                     self.configIni["Allgemein"]["autoupdate"] = "True"
-
                 # /config.ini aktualisieren
 
                 with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
@@ -841,7 +842,7 @@ class MainWindow(QMainWindow):
         githubRelaseTag = response.json()["tag_name"]
         latestVersion = githubRelaseTag[1:] # ohne v
         if versionVeraltet(self.version, latestVersion):
-            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://www.github.com/retconx/optigdt/releases'>Github</a> verfügbar.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://github.com/retconx/optigdt/releases'>Github</a> verfügbar.", QMessageBox.StandardButton.Ok)
             mb.setTextFormat(Qt.TextFormat.RichText)
             mb.exec()
         elif not meldungNurWennUpdateVerfuegbar:
@@ -852,7 +853,7 @@ class MainWindow(QMainWindow):
         self.autoupdate = checked
         self.configIni["Allgemein"]["autoupdate"] = str(checked)
         with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
-            self.configIni.write(configfile)
+            self.configIni.write(configfile) 
     
     def ueberOptiGdt(self):
         de = dialogUeberOptiGdt.UeberOptiGdt()
@@ -880,7 +881,11 @@ class MainWindow(QMainWindow):
                 fd.setWindowTitle("GDT-Datei laden")
                 fd.setModal(True)
                 fd.setViewMode(QFileDialog.ViewMode.Detail)
-                fd.setNameFilters(["gdt-Dateien (*.gdt)"])
+                dreistelligeNummern = []
+                for i in range(1000):   
+                    dreistelligeNummern.append("*.{:>03}".format(str(i)))
+                filter = "*.gdt " + str.join(" ", dreistelligeNummern)
+                fd.setNameFilters(["gdt-Dateien (" + filter + ")"])
                 fd.setLabelText(QFileDialog.DialogLabel.Accept, "Ok")
                 fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
                 if fd.exec() == 1:
@@ -979,7 +984,13 @@ class MainWindow(QMainWindow):
                             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Template kann nicht geöffnet werden, da keine passende Referenz-GDT-Datei gefunden wurde.", QMessageBox.StandardButton.Ok)
                             mb.exec()
                             gdtDateiVorhanden = False
-                    if gdtDateiVorhanden and os.path.basename(self.gdtDateipfad) == gdtDateiname:
+                    gdtDateinamePasst = False
+                    endungGeladeneDatei = self.gdtDateipfad[-4:]
+                    if endungGeladeneDatei.lower() == ".gdt":
+                        gdtDateinamePasst = os.path.basename(self.gdtDateipfad) == gdtDateiname
+                    elif re.match(reGdtDateiendungSequentiell, endungGeladeneDatei) != None:
+                        gdtDateinamePasst = re.match(reGdtDateiendungSequentiell, gdtDateiname[-4:]) != None and os.path.basename(self.gdtDateipfad)[:-4] == gdtDateiname[:-4]
+                    if gdtDateiVorhanden and gdtDateinamePasst:
                         self.templateRootElement = templateRootElement
                         exceptions = []
                         exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
@@ -1034,7 +1045,7 @@ class MainWindow(QMainWindow):
                     self.lineEditGdtId.setFocus()
                     self.lineEditGdtId.selectAll()
                     formularOk = False
-            if formularOk and (self.lineEditGdtDateiname.text().strip() == "" or self.lineEditGdtDateiname.text().strip()[-4:].lower() != ".gdt"):
+            if formularOk and (self.lineEditGdtDateiname.text().strip() == "" or re.match(reGdtDateiendung, self.lineEditGdtDateiname.text().strip()[-4:].lower()) == None):
                 mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template ist unzulässig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 self.lineEditGdtDateiname.setFocus()
@@ -1688,7 +1699,8 @@ class MainWindow(QMainWindow):
             logger.logger.info("Name in files: " + gdtDateiname)
             if len(gdtDateiname) > 4:
                 dateiendung = gdtDateiname[-4:]
-                if dateiendung.lower() == ".gdt":
+                # if dateiendung.lower() == ".gdt":
+                if re.match(reGdtDateiendung, dateiendung.lower()) != None:
                     logger.logger.info("GDT-Datei " + gdtDateiname + " gefunden")
                     gd = class_gdtdatei.GdtDatei(class_gdtdatei.GdtZeichensatz.IBM_CP437)
                     gd.laden(os.path.join(self.gdtImportVerzeichnis, gdtDateiname))
@@ -1730,7 +1742,12 @@ class MainWindow(QMainWindow):
                             if gdtIdTemplate != "":
                                 gdtIdKorrekt = gdtIdGdtDatei == gdtIdTemplate
                             logger.logger.info("Vorhandenes Template: " + os.path.join(self.standardTemplateVerzeichnis, templateDateiname))
-                            if gdtDateinameInTemplate == gdtDateiname and kennfeldKorrekt and gdtIdKorrekt:
+                            gdtDateinameKorrekt = False
+                            if dateiendung.lower() == ".gdt":
+                                gdtDateinameKorrekt = gdtDateinameInTemplate == gdtDateiname
+                            elif re.match(reGdtDateiendungSequentiell, dateiendung) != None:
+                                gdtDateinameKorrekt = re.match(reGdtDateiendungSequentiell, gdtDateinameInTemplate[-4:]) and gdtDateinameInTemplate[:-4] == gdtDateiname[:-4]
+                            if gdtDateinameKorrekt and kennfeldKorrekt and gdtIdKorrekt:
                                 templateGefunden = True
                                 logger.logger.info("Zu " + gdtDateiname + " passendendes Template " + os.path.join(self.standardTemplateVerzeichnis, templateDateiname) + " gefunden")
                                 try:

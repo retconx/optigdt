@@ -81,11 +81,11 @@ class OptimierungAddPdf(QDialog):
         try:
             untersuchungsdatum = gdtDateiOriginal.getInhalte("6200")[0]
         except:
-            raise
+            pass
         try:
             untersuchungszeit = gdtDateiOriginal.getInhalte("6201")[0]
         except:
-            raise
+            pass
         self.comboBoxVariable = QComboBox()
         self.comboBoxVariable.setFont(self.fontNormal)
         self.comboBoxVariable.setEditable(False)

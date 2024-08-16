@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 
 reKennfeld = r"^[A-Z]{1,4}[0-9]{2}$"
 reGdtId = r"^[0-9A-Za-z_\-]{8}$"
+reGdtDateiendung = r"^\.gdt|\.\d{3}$"
 
 if sys.platform == "win32":
     updateSafePath = os.path.expanduser("~\\appdata\\local\\optigdt")
@@ -109,7 +110,7 @@ class TemplatesVerwalten(QDialog):
             dialogLayoutG.addWidget(self.lineEditGdtDateiname[i], (i + 1), 4)
             dialogLayoutG.addWidget(self.lineEditExportverzeichnis[i], (i + 1), 5)
             dialogLayoutG.addWidget(self.pushButtonDurchsuchen[i], (i + 1), 6)
-        labelFussnote1 = QLabel("\u00b9 Muss auf \".gdt\" enden")
+        labelFussnote1 = QLabel("\u00b9 Muss auf \".gdt\" oder \".000\" - \".999\" enden")
         labelFussnote1.setFont(self.fontNormal)
         labelFussnote2 = QLabel("\u00b2 Verzeichnis, aus dem das Praxisverwaltungssystem (PVS) die Datei importiert (GDT-Importverzeichnis des PVS)")
         labelFussnote2.setFont(self.fontNormal)
@@ -179,7 +180,8 @@ class TemplatesVerwalten(QDialog):
                         self.lineEditGdtId[i].selectAll()
                         formularOk = False
                         break
-                if self.lineEditGdtDateiname[i].text().strip() == "" or self.lineEditGdtDateiname[i].text().strip()[-4:].lower() != ".gdt":
+                # if self.lineEditGdtDateiname[i].text().strip() == "" or self.lineEditGdtDateiname[i].text().strip()[-4:].lower() != ".gdt":
+                if self.lineEditGdtDateiname[i].text().strip() == "" or re.match(reGdtDateiendung, self.lineEditGdtDateiname[i].text().strip()[-4:].lower()) == None:
                     mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" ist unzulässig.", QMessageBox.StandardButton.Ok)
                     mb.exec()
                     self.lineEditGdtDateiname[i].setFocus()
