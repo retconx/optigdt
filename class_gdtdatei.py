@@ -693,6 +693,10 @@ class GdtDatei():
                     originalpfad = str(optimierungElement.find("originalpfad").text) # type: ignore
                     originalname = str(optimierungElement.find("originalname").text) # type: ignore
                     speichername = str(optimierungElement.find("speichername").text) # type: ignore
+                    # Ab Version 2.5.0
+                    dateiformat = "PDF"
+                    if optimierungElement.find("dateiformat") != None:
+                        dateiformat = str(optimierungElement.find("dateiformat").text) # type: ignore
                     if originalpfad != "None" and originalname != "None"  and speichername != "None" :
                         untersuchungsdatum = ""
                         untersuchungszeit = ""
@@ -711,13 +715,13 @@ class GdtDatei():
                             originalname = originalname.replace("${", "").replace("}", "")
                         if vorschau:
                             self.addZeile("6302", "optigdtAnhang" + "__" + id + "__")
-                            self.addZeile("6303", "PDF" + "__" + id + "__")
+                            self.addZeile("6303", dateiformat + "__" + id + "__")
                             self.addZeile("6304", speichername + "__" + id + "__")
                             self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf" + "__" + id + "__")
                         else:
                             if os.path.exists(os.path.join(originalpfad, originalname) + ".pdf"):
                                 self.addZeile("6302", "optigdtAnhang")
-                                self.addZeile("6303", "PDF")
+                                self.addZeile("6303", dateiformat)
                                 self.addZeile("6304", speichername)
                                 self.addZeile("6305", os.path.join(originalpfad, originalname) + ".pdf")
                             else:
@@ -807,7 +811,7 @@ class GdtDatei():
         Parametter:
             templatepfad:str
         Return:
-            Tupel aus kennfeld, gdtIdGeraet, gdftDateiname und exportverzeichnis
+            Tupel aus kennfeld, gdtIdGeraet, gdftDateiname, exportverzeichnis und immerGdtAlsExportDateiendung
         """
         tree = ElementTree.parse(templatePfad)
         root = tree.getroot()
@@ -815,8 +819,9 @@ class GdtDatei():
         gdtIdGeraet = str(root.get("gdtIdGeraet"))
         gdtDateiname = str(root.get("gdtDateiname"))
         exportverzeichnis = str(root.get("exportverzeichnis"))
+        immerGdtAlsExportDateiendung = root.get("immergdtalsexportdateiendung") == "True"
         
-        return kennfeld, gdtIdGeraet, gdtDateiname, exportverzeichnis
+        return kennfeld, gdtIdGeraet, gdtDateiname, exportverzeichnis, immerGdtAlsExportDateiendung
 
 if __name__ == "__main__:":
     gd = GdtDatei(GdtZeichensatz.ANSI_CP1252)

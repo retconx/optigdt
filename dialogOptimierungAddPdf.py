@@ -1,4 +1,4 @@
-import os
+import os, re
 import  class_gdtdatei
 from PySide6.QtGui import QFont, Qt
 from PySide6.QtWidgets import (
@@ -19,12 +19,13 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungAddPdf(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, originalpfad:str="", originalname:str="", speichername:str=""):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, originalpfad:str="", originalname:str="", speichername:str="", dateiformat:str=""):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.originalpfad = originalpfad
         self.originalname = originalname
         self.speichername = speichername
+        self.dateiformat = dateiformat
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -107,18 +108,34 @@ class OptimierungAddPdf(QDialog):
         dialogLayoutV.addWidget(groupBoxOriginaldatei)
 
         # GroupBox Übertragene Datei
-        dialogLayoutH = QHBoxLayout()
+        dialogLayoutG = QGridLayout()
         groupBoxUebertrageneDatei = QGroupBox("Übertragene Datei")
         groupBoxUebertrageneDatei.setFont(self.fontBold)
-        groupBoxUebertrageneDatei.setLayout(dialogLayoutH)
+        groupBoxUebertrageneDatei.setLayout(dialogLayoutG)
         labelNameUebertragen = QLabel("Name")
         labelNameUebertragen.setFont(self.fontNormal)
         self.lineEditNameUebertragen = QLineEdit(self.speichername)
         self.lineEditNameUebertragen.setFont(self.fontNormal)
-        dialogLayoutH.addWidget(labelNameUebertragen)
-        dialogLayoutH.addWidget(self.lineEditNameUebertragen)
+        labelDateiendung= QLabel("Dateiformatsbezeichnung\u00b9")
+        labelDateiendung.setFont(self.fontNormal)
+        self.lineEditDateiformat = QLineEdit(self.dateiformat)
+        self.lineEditDateiformat.setFont(self.fontNormal)
+        self.lineEditDateiformat.setFixedWidth(40)
+        self.lineEditDateiformat.setPlaceholderText("PDF")
+        labelGdtFeldkennung6303 = QLabel("(GDT-Feldkennung 6303)")
+        labelGdtFeldkennung6303.setFont(self.fontNormal)
+        dialogLayoutG.addWidget(labelNameUebertragen, 0, 0, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditNameUebertragen, 0, 1, 1, 2)
+        dialogLayoutG.addWidget(labelDateiendung, 1, 0, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditDateiformat, 1, 1, 1, 1)
+        dialogLayoutG.addWidget(labelGdtFeldkennung6303, 1, 2, 1, 1)
 
         dialogLayoutV.addWidget(groupBoxUebertrageneDatei)
+
+        labelFussnote = QLabel("\u00b9 Die Dateiformatsbezeichnung hat keinen Einfluss auf das tatsächlich übertragene Dateiformat PDF.")
+        labelFussnote.setFont(self.fontNormal)
+
+        dialogLayoutV.addWidget(labelFussnote)
         dialogLayoutV.addWidget(self.buttonBox)     
 
         self.setLayout(dialogLayoutV)
@@ -146,9 +163,16 @@ class OptimierungAddPdf(QDialog):
         lineEdit.setCursorPosition(cursorPosition + len(variable))
 
     def accept(self):
+        if self.lineEditDateiformat.text() == "":
+            self.lineEditDateiformat.setText("PDF")
         if self.lineEditVerzeichnis.text() == "" or self.lineEditName.text() == "" or self.lineEditNameUebertragen.text() == "":
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Formular unvollständig ausgefüllt", QMessageBox.StandardButton.Ok)
             mb.exec()
+        elif re.match(r"^[A-Za-z0-9]{3}$", self.lineEditDateiformat.text()) == None:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Dateiendung der übertragenen Datei muss aus drei Buchstaben (keine Umlaute) und/oder Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+            mb.exec()
+            self.lineEditDateiformat.setFocus()
+            self.lineEditDateiformat.selectAll()
         else:
             if self.lineEditName.text()[-4:].lower() == ".pdf":
                 self.lineEditName.setText(self.lineEditName.text()[:-4])

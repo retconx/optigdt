@@ -403,58 +403,63 @@ class MainWindow(QMainWindow):
         labelName.setFont(self.fontNormal)
         self.lineEditName = QLineEdit()
         self.lineEditName.setFont(self.fontNormal)
-        self.lineEditName.textEdited.connect(self.lineEditTemplateInfoChanged) # type: ignore
+        self.lineEditName.textEdited.connect(self.lineEditTemplateInfoChanged)
         labelKennfeld = QLabel("Gerätespezifisches Kennfeld")
         labelKennfeld.setFont(self.fontNormal)
         self.lineEditKennfeld = QLineEdit()
         self.lineEditKennfeld.setFont(self.fontNormal)
-        self.lineEditKennfeld.textEdited.connect(self.lineEditTemplateInfoChanged) # type: ignore
+        self.lineEditKennfeld.textEdited.connect(self.lineEditTemplateInfoChanged)
         labelGdtId = QLabel("GDT-ID")
         labelGdtId.setFont(self.fontNormal)
         self.lineEditGdtId = QLineEdit()
         self.lineEditGdtId.setFont(self.fontNormal)
-        self.lineEditGdtId.textEdited.connect(self.lineEditTemplateInfoChanged) # type: ignore
+        self.lineEditGdtId.textEdited.connect(self.lineEditTemplateInfoChanged)
         labelGdtDateiname = QLabel("GDT-Dateiname")
         labelGdtDateiname.setFont(self.fontNormal)
         self.lineEditGdtDateiname = QLineEdit()
         self.lineEditGdtDateiname.setFont(self.fontNormal)
-        self.lineEditGdtDateiname.textEdited.connect(self.lineEditTemplateInfoChanged) # type: ignore
+        self.lineEditGdtDateiname.textEdited.connect(self.lineEditTemplateInfoChanged)
+        self.checkboxImmerGdtAlsExportDateiendung = QCheckBox("Immer \".gdt\" als Export-Dateiendung\u00b2")
+        self.checkboxImmerGdtAlsExportDateiendung.setFont(self.fontNormal)
         labelExportverzeichnis = QLabel("Exportverzeichnis")
         labelExportverzeichnis.setFont(self.fontNormal)
         self.lineEditExportverzeichnis = QLineEdit()
         self.lineEditExportverzeichnis.setFont(self.fontNormal)
         self.lineEditExportverzeichnis.setReadOnly(True)
-        self.lineEditExportverzeichnis.textChanged.connect(self.lineEditTemplateInfoChanged) # type: ignore
+        self.lineEditExportverzeichnis.textChanged.connect(self.lineEditTemplateInfoChanged) 
         self.checkBoxKennfeld = QCheckBox("PR\u00b9")
         self.checkBoxKennfeld.setFont(self.fontNormal)
         self.checkBoxKennfeld.setToolTip("Prüfungsrelevant")
-        self.checkBoxKennfeld.stateChanged.connect(self.checkBoxKennfeldChanged) # type: ignore
+        self.checkBoxKennfeld.stateChanged.connect(self.checkBoxKennfeldChanged) 
         self.checkBoxGdtId = QCheckBox("PR\u00b9")
         self.checkBoxGdtId.setFont(self.fontNormal)
         self.checkBoxGdtId.setToolTip("Prüfungsrelevant")
-        self.checkBoxGdtId.stateChanged.connect(self.checkBoxGdtIdChanged) # type: ignore
+        self.checkBoxGdtId.stateChanged.connect(self.checkBoxGdtIdChanged) 
         self.pushButtonExportverzeichnis = QPushButton("...")
         self.pushButtonExportverzeichnis.setFont(self.fontNormal)
         self.pushButtonExportverzeichnis.setToolTip("Durchsuchen")
-        self.pushButtonExportverzeichnis.clicked.connect(self.pushButtonExportverzeichnisClicked) # type: ignore
+        self.pushButtonExportverzeichnis.clicked.connect(self.pushButtonExportverzeichnisClicked) 
         labelFussnote1 = QLabel("\u00b9 Prüfungsrelevant: wird vor Anwendung des Templates neben dem GDT-Dateinamen auf Übereinstimmung geprüft")
         labelFussnote1.setFont(self.fontNormal)
+        labelFussnote2 = QLabel("\u00b2 Diese Option kann zu Konflikten beim Ex-/ Importvorgang führen.")
+        labelFussnote2.setFont(self.fontNormal)
 
-        templateInfosLayout.addWidget(labelName, 0, 0)
-        templateInfosLayout.addWidget(self.lineEditName, 0, 1)
-        templateInfosLayout.addWidget(labelKennfeld, 1, 0)
-        templateInfosLayout.addWidget(self.lineEditKennfeld, 1, 1)
-        templateInfosLayout.addWidget(self.checkBoxKennfeld, 1, 2)
+        templateInfosLayout.addWidget(labelName, 0, 0, 1, 1)
+        templateInfosLayout.addWidget(self.lineEditName, 0, 1, 1, 2)
+        templateInfosLayout.addWidget(labelKennfeld, 1, 0, 1, 1)
+        templateInfosLayout.addWidget(self.lineEditKennfeld, 1, 1, 1, 2)
+        templateInfosLayout.addWidget(self.checkBoxKennfeld, 1, 3)
         templateInfosLayout.addWidget(labelGdtId, 2, 0)
-        templateInfosLayout.addWidget(self.lineEditGdtId, 2, 1)
-        templateInfosLayout.addWidget(self.checkBoxGdtId, 2, 2)
+        templateInfosLayout.addWidget(self.lineEditGdtId, 2, 1, 1, 2)
+        templateInfosLayout.addWidget(self.checkBoxGdtId, 2, 3)
         templateInfosLayout.addWidget(labelGdtDateiname, 3, 0)
         templateInfosLayout.addWidget(self.lineEditGdtDateiname, 3, 1)
-        # templateInfosLayout.addWidget(self.checkBoxGdtDateiname, 3, 2)
+        templateInfosLayout.addWidget(self.checkboxImmerGdtAlsExportDateiendung, 3, 2)
         templateInfosLayout.addWidget(labelExportverzeichnis, 4, 0)
-        templateInfosLayout.addWidget(self.lineEditExportverzeichnis, 4, 1)
-        templateInfosLayout.addWidget(self.pushButtonExportverzeichnis, 4, 2)
-        templateInfosLayout.addWidget(labelFussnote1, 5, 0, 1, 2)
+        templateInfosLayout.addWidget(self.lineEditExportverzeichnis, 4, 1, 1, 2)
+        templateInfosLayout.addWidget(self.pushButtonExportverzeichnis, 4, 3)
+        templateInfosLayout.addWidget(labelFussnote1, 5, 0, 1, 4)
+        templateInfosLayout.addWidget(labelFussnote2, 6, 0, 1, 4)
 
         mainGridLayout.addWidget(self.labelTreeViewUeberschriftLinks, 0, 0)
         mainGridLayout.addWidget(self.labelTreeViewUeberschriftRechts, 0, 1)
@@ -905,6 +910,7 @@ class MainWindow(QMainWindow):
                     self.lineEditKennfeld.setText("")
                     self.lineEditGdtId.setText("")
                     self.lineEditGdtDateiname.setText("")
+                    self.checkboxImmerGdtAlsExportDateiendung.setChecked(False)
                     self.lineEditExportverzeichnis.setText("")
                     self.checkBoxKennfeld.setChecked(False)
                     self.checkBoxGdtId.setChecked(False)
@@ -975,6 +981,10 @@ class MainWindow(QMainWindow):
                     gdtId = str(templateRootElement.get("gdtIdGeraet"))
                     gdtDateiname = str(templateRootElement.get("gdtDateiname"))
                     exportverzeichnis = str(templateRootElement.get("exportverzeichnis"))
+                    # Ab Version 2.6.0
+                    immerGdtAlsExportDateiendung = False
+                    if templateRootElement.get("immergdtalsexportdateiendung") != None:
+                        immerGdtAlsExportDateiendung = templateRootElement.get("immergdtalsexportdateiendung") == "True"
                     gdtDateiVorhanden = True
                     if self.treeWidgetOriginal.topLevelItemCount() == 0: # Keine GDT-Datei geladen
                         if os.path.exists(os.path.join(self.configPath, "gdtreferenzen", gdtDateiname)):
@@ -1003,6 +1013,7 @@ class MainWindow(QMainWindow):
                         self.lineEditGdtId.setText(gdtId)
                         self.checkBoxGdtId.setChecked(gdtId != "")
                         self.lineEditGdtDateiname.setText(gdtDateiname)
+                        self.checkboxImmerGdtAlsExportDateiendung.setChecked(immerGdtAlsExportDateiendung)
                         self.lineEditExportverzeichnis.setText(exportverzeichnis)
                         self.ungesichertesTemplate = False
                         if len(exceptions) > 0:
@@ -1092,6 +1103,7 @@ class MainWindow(QMainWindow):
                         gdtDateiname = self.lineEditGdtDateiname.text().strip()
                         self.templateRootElement.set("gdtDateiname", gdtDateiname)
                         self.templateRootElement.set("exportverzeichnis", self.lineEditExportverzeichnis.text())
+                        self.templateRootElement.set("immergdtalsexportdateiendung", str(self.checkboxImmerGdtAlsExportDateiendung.isChecked())) # Ab Version 2.6.0
                         et = ElementTree.ElementTree(self.templateRootElement)
                         ElementTree.indent(et)
                         try:
@@ -1521,6 +1533,7 @@ class MainWindow(QMainWindow):
             originalpfad = ""
             originalname = ""
             speichername = ""
+            dateiformat = "PDF"
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
@@ -1528,12 +1541,15 @@ class MainWindow(QMainWindow):
                         originalpfad = str(optimierungElement.find("originalpfad").text) # type:ignore
                         originalname = str(optimierungElement.find("originalname").text) # type:ignore
                         speichername = str(optimierungElement.find("speichername").text) # type:ignore
+                        # Ab Version 2.5.0
+                        if optimierungElement.find("dateiformat") != None:
+                            dateiformat = str(optimierungElement.find("dateiformat").text) # type:ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungAddPdf.OptimierungAddPdf(self.gdtDateiOriginal, originalpfad, originalname, speichername)
+                do = dialogOptimierungAddPdf.OptimierungAddPdf(self.gdtDateiOriginal, originalpfad, originalname, speichername, dateiformat)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiAddPdf(do.lineEditVerzeichnis.text(), do.lineEditName.text(), do.lineEditNameUebertragen.text(), self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiAddPdf(do.lineEditVerzeichnis.text(), do.lineEditName.text(), do.lineEditNameUebertragen.text(), do.lineEditDateiformat.text().upper(), self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten
@@ -1635,7 +1651,7 @@ class MainWindow(QMainWindow):
                         # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
                         gdtDateien = []
                         for importordnerFile in os.listdir(self.gdtImportVerzeichnis):
-                            if importordnerFile[-4:].lower() == ".gdt":
+                            if re.match(reGdtDateiendung, importordnerFile[-4:].lower()) != None:
                                 gdtDateien.append(importordnerFile)
                         if len(gdtDateien) > 0:
                             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Es sind noch nicht bearbeitete GDT-Dateien im Importverzeichnis. Sollen diese jetzt bearbeitet werden?\nDurch Klick auf \"Nein\" werden die Dateien gelöscht.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -1663,6 +1679,15 @@ class MainWindow(QMainWindow):
                         self.labelTreeViewUeberschriftRechts.setText("")
                         self.treeWidgetOriginal.clear()
                         self.treeWidgetOptimiert.clear()
+                        self.lineEditName.setText("")
+                        self.lineEditKennfeld.setText("")
+                        self.lineEditGdtId.setText("")
+                        self.lineEditGdtDateiname.setText("")
+                        self.checkboxImmerGdtAlsExportDateiendung.setChecked(False)
+                        self.lineEditExportverzeichnis.setText("")
+                        self.checkBoxKennfeld.setChecked(False)
+                        self.checkBoxGdtId.setChecked(False)
+                        self.ungesichertesTemplate = False
                         if not self.isHidden():
                             self.setWindowState(Qt.WindowState.WindowNoState)
                             self.setHidden(True)
@@ -1699,7 +1724,6 @@ class MainWindow(QMainWindow):
             logger.logger.info("Name in files: " + gdtDateiname)
             if len(gdtDateiname) > 4:
                 dateiendung = gdtDateiname[-4:]
-                # if dateiendung.lower() == ".gdt":
                 if re.match(reGdtDateiendung, dateiendung.lower()) != None:
                     logger.logger.info("GDT-Datei " + gdtDateiname + " gefunden")
                     gd = class_gdtdatei.GdtDatei(class_gdtdatei.GdtZeichensatz.IBM_CP437)
@@ -1735,6 +1759,7 @@ class MainWindow(QMainWindow):
                             gdtIdTemplate = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[1]
                             gdtDateinameInTemplate = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[2]
                             exportverzeichnis = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[3]
+                            immerGdtAlsExportDateiendung = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[4]
                             kennfeldKorrekt = True
                             if kennfeldTemplate != "":
                                 kennfeldKorrekt = kennfeldGdtDatei == kennfeldTemplate
@@ -1780,10 +1805,15 @@ class MainWindow(QMainWindow):
                                     if self.pseudoLizenzId != "":
                                         gd.changeZeile("", "3000", self.pseudoLizenzId)
                                     ## /Nur mit Lizenz
+                                    if immerGdtAlsExportDateiendung:
+                                        gdtDateiname = gdtDateiname[:-4] + ".gdt"
                                     with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
-                                    logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert") 
+                                    if immerGdtAlsExportDateiendung:
+                                        logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert (Dateiendung von " + dateiendung + " in .gdt geändert)") 
+                                    else:
+                                        logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert") 
                                     os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDateiname))
                                     logger.logger.info("Originale GDT-Datei " + gdtDateiname + " gelöscht")
                                     self.tray.showMessage("OptiGDT", "Template \"" + templateDateiname[:-4] + "\" angewendet")
