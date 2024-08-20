@@ -180,16 +180,15 @@ class TemplatesVerwalten(QDialog):
                         self.lineEditGdtId[i].selectAll()
                         formularOk = False
                         break
-                # if self.lineEditGdtDateiname[i].text().strip() == "" or self.lineEditGdtDateiname[i].text().strip()[-4:].lower() != ".gdt":
                 if self.lineEditGdtDateiname[i].text().strip() == "" or re.match(reGdtDateiendung, self.lineEditGdtDateiname[i].text().strip()[-4:].lower()) == None:
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" ist unzulässig.", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Der GDT-Dateiname für das Template \"" + self.lineEditName[i].text().strip() + "\" ist unzulässig.", QMessageBox.StandardButton.Ok)
                     mb.exec()
                     self.lineEditGdtDateiname[i].setFocus()
                     self.lineEditGdtDateiname[i].selectAll()
                     formularOk = False
                     break
-                if not os.path.exists(self.lineEditExportverzeichnis[i].text().strip()):
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Exportverzeichnis für das Template \"" + self.lineEditGdtId[i].text().strip() + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
+                if not self.checkBoxLoeschen[i].isChecked() and not os.path.exists(self.lineEditExportverzeichnis[i].text().strip()):
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Exportverzeichnis für das Template \"" + self.lineEditName[i].text().strip() + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                     mb.exec()
                     formularOk = False
                     break

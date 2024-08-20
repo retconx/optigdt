@@ -1144,20 +1144,6 @@ class MainWindow(QMainWindow):
     def templateMenuTemplatesVerwalten(self):
         dg = dialogTemplatesVerwalten.TemplatesVerwalten(self.standardTemplateVerzeichnis)
         if dg.exec() == 1:
-            # Templates löschen
-            for i in range(len(dg.templatenamen)):
-                if dg.checkBoxLoeschen[i].isChecked():
-                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Soll das Template \"" + dg.lineEditName[i].text() + "\" endgültig gelöscht werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-                    mb.setDefaultButton(QMessageBox.StandardButton.No)
-                    mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
-                    mb.button(QMessageBox.StandardButton.No).setText("Nein")
-                    if mb.exec() == QMessageBox.StandardButton.Yes:
-                        try:
-                            os.unlink(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt"))
-                            logger.logger.info("Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + " gelöscht")
-                        except Exception as e:
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + str(e), QMessageBox.StandardButton.Ok)
-                            mb.exec()
             # Template-Infos ändern
             for i in range(len(dg.templatenamen)):
                 tree = ElementTree.parse(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"))
@@ -1174,6 +1160,21 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + ": " + str(e), QMessageBox.StandardButton.Ok)
                     mb.exec()
+                    
+            # Templates löschen
+            for i in range(len(dg.templatenamen)):
+                if dg.checkBoxLoeschen[i].isChecked():
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Soll das Template \"" + dg.lineEditName[i].text() + "\" endgültig gelöscht werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb.setDefaultButton(QMessageBox.StandardButton.No)
+                    mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                    mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                    if mb.exec() == QMessageBox.StandardButton.Yes:
+                        try:
+                            os.unlink(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt"))
+                            logger.logger.info("Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + " gelöscht")
+                        except Exception as e:
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Löschen des Templates \"" + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text().strip() + ".ogt") + "\": " + str(e), QMessageBox.StandardButton.Ok)
+                            mb.exec()
 
     def optimierenMenuZeileHinzufuegen(self, checked, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
