@@ -132,7 +132,8 @@ class EinstellungenOptimierung(QDialog):
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
             self.standardTemplateverzeichnis = fd.directory()
-            self.lineEditTemplateverzeichnis.setText(fd.directory().path())
+            self.lineEditTemplateverzeichnis.setText(os.path.abspath(fd.directory().path()))
+            self.lineEditTemplateverzeichnis.setToolTip(os.path.abspath(fd.directory().path()))
 
     def accept(self):
         formularOk = True

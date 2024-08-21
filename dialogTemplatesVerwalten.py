@@ -153,8 +153,8 @@ class TemplatesVerwalten(QDialog):
         fd.setLabelText(QFileDialog.DialogLabel.Accept, "Ok")
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
-            self.lineEditExportverzeichnis[templatenummer].setText(fd.directory().path())
-            self.lineEditExportverzeichnis[templatenummer].setToolTip(fd.directory().path())
+            self.lineEditExportverzeichnis[templatenummer].setText(os.path.abspath(fd.directory().path()))
+            self.lineEditExportverzeichnis[templatenummer].setToolTip(os.path.abspath(fd.directory().path()))
     
     def accept(self):
         formularOk = True

@@ -1,11 +1,11 @@
 import sys, configparser, os, datetime, shutil, logger, re, time
-import class_gdtdatei, class_optimierung
+import class_gdtdatei, class_optimierung, class_importWorker
 ## Nur mit Lizenz
 import gdttoolsL
 ## /Nur mit Lizenz
 import xml.etree.ElementTree as ElementTree
 import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf
-from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher
+from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher, QThreadPool
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
     QApplication,
@@ -123,6 +123,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.threadPool = QThreadPool()
+        self.importWorker = None
         self.tray = QSystemTrayIcon(app)
         icon = QIcon(os.path.join(basedir, "icons/program.png"))
         self.tray.setIcon(icon)
@@ -224,6 +226,10 @@ class MainWindow(QMainWindow):
         self.gdtImportVerzeichnisSekundaer = ""
         if self.configIni.has_option("GDT", "gdtimportverzeichnissekundaer"):
             self.gdtImportVerzeichnisSekundaer = self.configIni["GDT"]["gdtimportverzeichnissekundaer"]
+        # 2.7.5
+        self.sekundaeresimportverzeichnispruefen = False
+        if self.configIni.has_option("Optimierung", "sekundaeresimportverzeichnispruefen"):
+            self.sekundaeresimportverzeichnispruefen = self.configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] == "True"
         # /Nachträglich hinzufefügte Options
 
         ## Nur mit Lizenz
@@ -285,6 +291,9 @@ class MainWindow(QMainWindow):
                 # 2.6.1 -> 2.7.0
                 if not self.configIni.has_option("GDT", "gdtimportverzeichnissekundaer"):
                     self.configIni["GDT"]["gdtimportverzeichnissekundaer"] = ""
+                # 2.7.3 - 2.7.5
+                if not self.configIni.has_option("Optimierung", "sekundaeresimportverzeichnispruefen"):
+                    self.configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] = "False"
                 # /config.ini aktualisieren
 
                 with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
@@ -742,8 +751,8 @@ class MainWindow(QMainWindow):
         fd.setLabelText(QFileDialog.DialogLabel.Accept, "Ok")
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
-            self.lineEditExportverzeichnis.setText(fd.directory().path())
-            self.lineEditExportverzeichnis.setToolTip(fd.directory().path())
+            self.lineEditExportverzeichnis.setText(os.path.abspath(fd.directory().path()))
+            self.lineEditExportverzeichnis.setToolTip(os.path.abspath(fd.directory().path()))
 
     def checkBoxKennfeldChanged(self):
         self.ungesichertesTemplate = True
@@ -797,6 +806,7 @@ class MainWindow(QMainWindow):
         if de.exec() == 1:
             self.configIni["GDT"]["gdtimportverzeichnis"] = de.lineEditImportPrimaer.text()
             self.configIni["GDT"]["gdtimportverzeichnissekundaer"] = de.lineEditImportSekundaer.text()
+            self.configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] = str(de.checkBoxSekundaeresImportverzeichnisPruefen.isChecked())
             self.configIni["GDT"]["zeichensatz"] = str(de.aktuelleZeichensatznummer + 1)
             with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
                 self.configIni.write(configfile)
@@ -1660,6 +1670,10 @@ class MainWindow(QMainWindow):
                     fortfahren = False
             if fortfahren:
                 self.ungesichertesTemplate = False
+                if self.importWorker == None:
+                    self.importWorker = class_importWorker.ImportWorker(self.gdtImportVerzeichnisSekundaer)
+                    self.importWorker.signals.importVerzeichnisGefunden.connect(self.importVerzeichnisGefunden)
+                    self.importWorker.signals.importWorkerRunning.connect(self.importWorkerRunning)
                 if checked:
                     if os.path.exists(self.gdtImportVerzeichnis):
                         # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
@@ -1678,6 +1692,8 @@ class MainWindow(QMainWindow):
                                 for gdtDatei in gdtDateien:
                                     os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDatei))
                         if os.path.exists(self.gdtImportVerzeichnisSekundaer):
+                            if self.sekundaeresimportverzeichnispruefen:
+                                self.threadPool.start(self.importWorker)
                             gdtDateien.clear()
                             for importordnerFile in os.listdir(self.gdtImportVerzeichnisSekundaer):
                                 if re.match(reGdtDateiendung, importordnerFile[-4:].lower()) != None:
@@ -1728,6 +1744,8 @@ class MainWindow(QMainWindow):
                         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                         mb.exec()
                 else:
+                    if self.sekundaeresimportverzeichnispruefen:
+                        self.importWorker.kill()
                     self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(0,50,0);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
                     self.pushButtonUeberwachungStarten.setText("Verzeichnisüberwachung starten")
                     fsw.removePath(self.gdtImportVerzeichnis)
@@ -1744,6 +1762,21 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
             mb.exec()
 
+    def importVerzeichnisGefunden(self, gefunden):
+        if gefunden:
+            logger.logger.info("Sekundärer Importpfad " + self.gdtImportVerzeichnisSekundaer + " gefunden")
+            fsw.addPath(self.gdtImportVerzeichnisSekundaer)
+            dir = fsw.directories()
+            logger.logger.info("Überwacht: " + str.join(", ", dir))
+        else:
+            logger.logger.info("Sekundärer Importpfad " + self.gdtImportVerzeichnisSekundaer + " nicht gefunden")
+
+    def importWorkerRunning(self, running):
+        if running:
+            logger.logger.info("ImportWorker gestartet")
+        else:
+            logger.logger.info("ImportWorker gestoppt")
+
     def deleteImportverzeichnis(self):
         for file in os.listdir(self.gdtImportVerzeichnis):
             os.unlink(file)
@@ -1754,7 +1787,9 @@ class MainWindow(QMainWindow):
         """
         time.sleep(self.sekundenBisTemplatebearbeitung)
         logger.logger.info("Innerhalb directoryChanged")
-        files = os.listdir(changeVerzeichnis)
+        files = []
+        if os.path.exists(changeVerzeichnis):
+            files = os.listdir(changeVerzeichnis)
         for gdtDateiname in files:
             logger.logger.info("Name in files: " + gdtDateiname)
             if len(gdtDateiname) > 4:

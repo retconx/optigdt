@@ -822,14 +822,3 @@ class GdtDatei():
         immerGdtAlsExportDateiendung = root.get("immergdtalsexportdateiendung") == "True"
         
         return kennfeld, gdtIdGeraet, gdtDateiname, exportverzeichnis, immerGdtAlsExportDateiendung
-
-if __name__ == "__main__:":
-    gd = GdtDatei(GdtZeichensatz.ANSI_CP1252)
-    gd.laden(os.path.join(basedir, "EDV1EKG1.GDT"))
-
-    gd.applyTemplateVonPfad("templateRuheEkg.xml")
-    i = 0
-    for i in range(80):
-        print(gd.zeilen[i])
-    for zeile in gd.zeilen:
-        print(zeile)

@@ -150,8 +150,8 @@ class OptimierungAddPdf(QDialog):
         fd.setLabelText(QFileDialog.DialogLabel.Accept, "Ok")
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
-            self.lineEditVerzeichnis.setText(fd.directory().path())
-            self.lineEditVerzeichnis.setToolTip(fd.directory().path())
+            self.lineEditVerzeichnis.setText(os.path.abspath(fd.directory().path()))
+            self.lineEditVerzeichnis.setToolTip(os.path.abspath(fd.directory().path()))
 
     def pushButtonVariableClicked(self, checked, lineEdit:QLineEdit):
         bisherigerInhalt = lineEdit.text()

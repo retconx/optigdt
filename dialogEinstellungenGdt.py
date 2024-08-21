@@ -4,13 +4,13 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QDialog,
     QVBoxLayout,
-    QHBoxLayout,
+    QMessageBox,
     QGridLayout,
     QGroupBox,
     QLabel,
     QLineEdit,
     QPushButton,
-    QMessageBox,
+    QCheckBox,
     QFileDialog,
     QComboBox
 )
@@ -58,15 +58,21 @@ class EinstellungenGdt(QDialog):
         labelSekundaer.setFont(self.fontNormal)
         self.lineEditImportSekundaer = QLineEdit(self.gdtImportVerzeichnisSekundaer)
         self.lineEditImportSekundaer.setFont(self.fontNormal)
+        self.lineEditImportSekundaer.textChanged.connect(self.lineEditImportSekundaerChanged)
         buttonDurchsuchenImportSekundaer = QPushButton("Durchsuchen")
         buttonDurchsuchenImportSekundaer.setFont(self.fontNormal)
         buttonDurchsuchenImportSekundaer.clicked.connect(self.durchsuchenImportSekundaer)
+        self.checkBoxSekundaeresImportverzeichnisPruefen = QCheckBox("Existenz des sekundären Importverzeichnisses im Hintergrund prüfen")
+        self.checkBoxSekundaeresImportverzeichnisPruefen.setFont(self.fontNormal)
+        self.checkBoxSekundaeresImportverzeichnisPruefen.setChecked(configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] == "True")
+        self.checkBoxSekundaeresImportverzeichnisPruefen.setEnabled
         groupboxLayoutG.addWidget(labelPrimaer, 0, 0)
         groupboxLayoutG.addWidget(self.lineEditImportPrimaer, 0, 1)
         groupboxLayoutG.addWidget(buttonDurchsuchenImportPrimaer, 0, 2)
         groupboxLayoutG.addWidget(labelSekundaer, 1, 0)
         groupboxLayoutG.addWidget(self.lineEditImportSekundaer, 1, 1)
         groupboxLayoutG.addWidget(buttonDurchsuchenImportSekundaer, 1, 2)
+        groupboxLayoutG.addWidget(self.checkBoxSekundaeresImportverzeichnisPruefen, 2, 0, 1, 2)
         groupboxImportverzeichnis.setLayout(groupboxLayoutG)
         # Groupbox Zeichensatz
         groupboxLayoutZeichensatz = QVBoxLayout()
@@ -97,7 +103,8 @@ class EinstellungenGdt(QDialog):
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
             self.gdtImportVerzeichnisPrimaer = fd.directory()
-            self.lineEditImportPrimaer.setText(fd.directory().path())
+            self.lineEditImportPrimaer.setText(os.path.abspath(fd.directory().path()))
+            self.lineEditImportPrimaer.setToolTip(os.path.abspath(fd.directory().path()))
 
     def durchsuchenImportSekundaer(self):
         fd = QFileDialog(self)
@@ -109,10 +116,37 @@ class EinstellungenGdt(QDialog):
         fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
         if fd.exec() == 1:
             self.gdtImportVerzeichnisSekundaer = fd.directory()
-            self.lineEditImportSekundaer.setText(fd.directory().path())
+            self.lineEditImportSekundaer.setText(os.path.abspath(fd.directory().path()))
+            self.lineEditImportSekundaer.setToolTip(os.path.abspath(fd.directory().path()))
+    def lineEditImportSekundaerChanged(self):
+        if self.lineEditImportSekundaer.text() == "":
+            self.checkBoxSekundaeresImportverzeichnisPruefen.setChecked(False)
+            self.checkBoxSekundaeresImportverzeichnisPruefen.setEnabled(False)
+        else:
+            self.checkBoxSekundaeresImportverzeichnisPruefen.setEnabled(True)
 
     def zeichensatzGewechselt(self):
         self.aktuelleZeichensatznummer = self.combobxZeichensatz.currentIndex()
 
     def accept(self):
-        self.done(1)
+        speichernOk = True
+        if not os.path.exists(self.lineEditImportPrimaer.text()):
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das primäre Importverzeichnis existiert nicht. Sollen die Einstellungen dennoch gespeichert werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
+            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+            mb.button(QMessageBox.StandardButton.No).setText("Nein")
+            if mb.exec() == QMessageBox.StandardButton.No:
+                speichernOk = False
+                self.lineEditImportPrimaer.setFocus()
+                self.lineEditImportPrimaer.selectAll()
+        if speichernOk and not os.path.exists(self.lineEditImportSekundaer.text()):
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das sekundäre Importverzeichnis existiert nicht. Sollen die Einstellungen dennoch gespeichert werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
+            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+            mb.button(QMessageBox.StandardButton.No).setText("Nein")
+            if mb.exec() == QMessageBox.StandardButton.No:
+                speichernOk = False
+                self.lineEditImportSekundaer.setFocus()
+                self.lineEditImportSekundaer.selectAll()
+        if speichernOk:
+            self.done(1)
