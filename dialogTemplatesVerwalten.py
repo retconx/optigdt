@@ -114,10 +114,14 @@ class TemplatesVerwalten(QDialog):
         labelFussnote1.setFont(self.fontNormal)
         labelFussnote2 = QLabel("\u00b2 Verzeichnis, aus dem das Praxisverwaltungssystem (PVS) die Datei importiert (GDT-Importverzeichnis des PVS)")
         labelFussnote2.setFont(self.fontNormal)
+        self.pushButtonReferenzverzeichnisBereinigen = QPushButton("Referenz-GDT-Dateiverzeichnis bereinigen")
+        self.pushButtonReferenzverzeichnisBereinigen.setFont(self.fontNormal)
+        self.pushButtonReferenzverzeichnisBereinigen.clicked.connect(self.pushButtonReferenzverzeichnisBereinigenClicked)
         
         dialogLayoutV.addWidget(groupBoxGeräte)
         dialogLayoutV.addWidget(labelFussnote1)
         dialogLayoutV.addWidget(labelFussnote2)
+        dialogLayoutV.addWidget(self.pushButtonReferenzverzeichnisBereinigen)
         dialogLayoutV.addWidget(self.buttonBox)
         self.setLayout(dialogLayoutV)
 
@@ -155,6 +159,39 @@ class TemplatesVerwalten(QDialog):
         if fd.exec() == 1:
             self.lineEditExportverzeichnis[templatenummer].setText(os.path.abspath(fd.directory().path()))
             self.lineEditExportverzeichnis[templatenummer].setToolTip(os.path.abspath(fd.directory().path()))
+
+    def pushButtonReferenzverzeichnisBereinigenClicked(self):
+        referenzGdtDateiverzeichnis = os.path.join(updateSafePath, "gdtreferenzen")
+        bereinigungsliste = []
+        for referenzGdtDatei in os.listdir(referenzGdtDateiverzeichnis):
+            templateVorhanden = False
+            for templateDatei in os.listdir(self.templateverzeichnis):
+                if templateDatei[:-4] in referenzGdtDatei:
+                    templateVorhanden = True
+                    break
+            if not templateVorhanden:
+                bereinigungsliste.append(referenzGdtDatei)
+        if len(bereinigungsliste) > 0:
+            bereinigungslisteFormatiert = str.join("\n- ", bereinigungsliste)
+            sinPlu1 = "folgenden Referenz-GDT-Dateien"
+            sinPlu2 = "Sollen"
+            if len(bereinigungsliste) == 1:
+                sinPlu1 = "folgende Referenz-GDT-Datei"
+                sinPlu2 = "Soll"
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Für die " + sinPlu1 + " existiert kein Template:\n-" + bereinigungslisteFormatiert + "\n"  + sinPlu2 + " diese entfernt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
+            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+            mb.button(QMessageBox.StandardButton.No).setText("Nein")
+            if mb.exec() == QMessageBox.StandardButton.Yes:
+                for datei in bereinigungsliste:
+                    try:
+                        os.unlink(os.path.join(referenzGdtDateiverzeichnis, datei))
+                    except:
+                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Entfernen der Datei " + datei + ".", QMessageBox.StandardButton.Ok)
+                        mb.exec()
+        else: 
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Referenz-GDT-Dateiverzeichnis ist bereits bereinigt.", QMessageBox.StandardButton.Ok)
+            mb.exec()
     
     def accept(self):
         formularOk = True

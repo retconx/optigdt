@@ -983,6 +983,14 @@ class MainWindow(QMainWindow):
             self.labelTreeViewUeberschriftRechts.setText("")
             self.treeWidgetOriginal.clear()
             self.treeWidgetOptimiert.clear()
+            self.lineEditName.setText("")
+            self.lineEditKennfeld.setText("")
+            self.lineEditGdtId.setText("")
+            self.lineEditGdtDateiname.setText("")
+            self.checkboxImmerGdtAlsExportDateiendung.setChecked(False)
+            self.lineEditExportverzeichnis.setText("")
+            self.checkBoxKennfeld.setChecked(False)
+            self.checkBoxGdtId.setChecked(False)
             self.ungesichertesTemplate = False
 
     def templateMenuLaden(self):
@@ -1019,9 +1027,11 @@ class MainWindow(QMainWindow):
                         immerGdtAlsExportDateiendung = templateRootElement.get("immergdtalsexportdateiendung") == "True"
                     gdtDateiVorhanden = True
                     if self.treeWidgetOriginal.topLevelItemCount() == 0: # Keine GDT-Datei geladen
-                        if os.path.exists(os.path.join(self.configPath, "gdtreferenzen", gdtDateiname)):
-                            self.gdtDateiMenuOeffnen(False, os.path.join(self.configPath, "gdtreferenzen", gdtDateiname))
-                            logger.logger.info("Referenz-GDT-Datei " + os.path.join(self.configPath, "gdtreferenzen", gdtDateiname) + " geladen")
+                        referenzGdtDateiname = os.path.join(self.configPath, "gdtreferenzen", os.path.basename(templatePfad)[:-4] + "_ref_" + gdtDateiname)
+                        if os.path.exists(os.path.join(self.configPath, "gdtreferenzen", referenzGdtDateiname)):
+                            self.gdtDateiMenuOeffnen(False, os.path.join(self.configPath, "gdtreferenzen", referenzGdtDateiname))
+                            self.gdtDateipfad = referenzGdtDateiname.split("_ref_")[1]
+                            logger.logger.info("Referenz-GDT-Datei " + os.path.join(self.configPath, "gdtreferenzen", templatePfad) + " geladen")
                         else:
                             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Template kann nicht geöffnet werden, da keine passende Referenz-GDT-Datei gefunden wurde.", QMessageBox.StandardButton.Ok)
                             mb.exec()
@@ -1147,13 +1157,14 @@ class MainWindow(QMainWindow):
                     # GDT-Datei als Referenz speichern
                         if not os.path.exists(os.path.join(self.configPath, "gdtreferenzen")):
                             os.mkdir(os.path.join(self.configPath, "gdtreferenzen"), 0o777)
-                        pfad = os.path.join(self.configPath, "gdtreferenzen", gdtDateiname)
+                        referenzdateiname = self.lineEditName.text() + "_ref_" + gdtDateiname
+                        pfad = os.path.join(self.configPath, "gdtreferenzen", referenzdateiname)
                         if self.gdtDateiOriginal.speichern(pfad, self.zeichensatz):
-                            logger.logger.info("GDT-Datei " + gdtDateiname + " als Referenz gespeichet")
+                            logger.logger.info("GDT-Datei " + referenzdateiname + " als Referenz gespeichet")
                         else: 
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der GDT-Datei " + gdtDateiname + " als Referenzdatei", QMessageBox.StandardButton.Ok)
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der GDT-Datei " + referenzdateiname + " als Referenzdatei", QMessageBox.StandardButton.Ok)
                             mb.exec()
-                            logger.logger.error("Fehler beim Speichern der GDT-Datei " + gdtDateiname + " als Referenz in " + pfad)
+                            logger.logger.error("Fehler beim Speichern der GDT-Datei " + referenzdateiname + " als Referenz in " + pfad)
             elif self.treeWidgetOriginal.topLevelItemCount() == 0:
                 mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
                 mb.exec()

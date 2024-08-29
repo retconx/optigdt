@@ -65,7 +65,7 @@ class EinstellungenGdt(QDialog):
         self.checkBoxSekundaeresImportverzeichnisPruefen = QCheckBox("Existenz des sekundären Importverzeichnisses im Hintergrund prüfen")
         self.checkBoxSekundaeresImportverzeichnisPruefen.setFont(self.fontNormal)
         self.checkBoxSekundaeresImportverzeichnisPruefen.setChecked(configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] == "True")
-        self.checkBoxSekundaeresImportverzeichnisPruefen.setEnabled
+        self.checkBoxSekundaeresImportverzeichnisPruefen.setEnabled(self.gdtImportVerzeichnisSekundaer != "")
         groupboxLayoutG.addWidget(labelPrimaer, 0, 0)
         groupboxLayoutG.addWidget(self.lineEditImportPrimaer, 0, 1)
         groupboxLayoutG.addWidget(buttonDurchsuchenImportPrimaer, 0, 2)
