@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ElementTree
 
 gdtDefinitionsPfad = "qms/200105_GdtV21_definition.csv"
 basedir = os.path.dirname(__file__)
+reGdtDateiendungSequentiell = r"^\.\d{3}$"
 
 class GdtFehlerException(Exception):
     def __init__(self, meldung):
@@ -697,7 +698,10 @@ class GdtDatei():
                     dateiformat = "PDF"
                     if optimierungElement.find("dateiformat") != None:
                         dateiformat = str(optimierungElement.find("dateiformat").text) # type: ignore
-                    if originalpfad != "None" and originalname != "None"  and speichername != "None" :
+                    if originalpfad != "None" and originalname != "None" and speichername != "None" :
+                        if re.match(reGdtDateiendungSequentiell, self.dateipfad[-4:]) != None:
+                            endung = self.dateipfad[-3:]
+                            originalname = originalname.replace("${###}", endung)
                         untersuchungsdatum = ""
                         untersuchungszeit = ""
                         try:

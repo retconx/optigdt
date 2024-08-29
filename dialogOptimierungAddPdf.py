@@ -53,6 +53,7 @@ class OptimierungAddPdf(QDialog):
         self.lineEditVerzeichnis = QLineEdit(self.originalpfad)
         self.lineEditVerzeichnis.setFont(self.fontNormal)
         self.pushButtonVerzeichnisSuchen = QPushButton("...")
+        self.pushButtonVerzeichnisSuchen.setToolTip("Durchsuchen")
         self.pushButtonVerzeichnisSuchen.setFont(self.fontNormal)
         self.pushButtonVerzeichnisSuchen.clicked.connect(self.pushbuttonVerzeichnisSuchenClicked)
         labelName = QLabel("Name (ohne \".pdf\")")
@@ -63,12 +64,18 @@ class OptimierungAddPdf(QDialog):
         self.pushButtonVariable.setFont(self.fontNormal)
         self.pushButtonVariable.setToolTip("Variable einfügen")
         self.pushButtonVariable.clicked.connect(lambda checked = False, lineEditName = self.lineEditName: self.pushButtonVariableClicked(checked, lineEditName))
+        self.pushButtonDateiendungsziffern = QPushButton("###")
+        self.pushButtonDateiendungsziffern.setFont(self.fontNormal)
+        self.pushButtonDateiendungsziffern.setToolTip("Platzhalter für Dateiendung ### einfügen")
+        self.pushButtonDateiendungsziffern.clicked.connect(lambda checked = False, lineEditName = self.lineEditName: self.pushButtonDateiendungsziffernClicked(checked, lineEditName))
+
         dialogLayoutG.addWidget(labelVerzeichnis, 0, 0)
         dialogLayoutG.addWidget(self.lineEditVerzeichnis, 0, 1)
-        dialogLayoutG.addWidget(self.pushButtonVerzeichnisSuchen, 0, 2)
+        dialogLayoutG.addWidget(self.pushButtonVerzeichnisSuchen, 0, 2, 1, 2)
         dialogLayoutG.addWidget(labelName, 1, 0)
         dialogLayoutG.addWidget(self.lineEditName, 1, 1)
         dialogLayoutG.addWidget(self.pushButtonVariable, 1, 2)
+        dialogLayoutG.addWidget(self.pushButtonDateiendungsziffern, 1, 3)
         
         dialogLayoutH = QHBoxLayout()
         dialogLayoutH.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -91,6 +98,9 @@ class OptimierungAddPdf(QDialog):
         self.comboBoxVariable.setFont(self.fontNormal)
         self.comboBoxVariable.setEditable(False)
         self.comboBoxVariable.setEnabled(False)
+        labelKeinDatum = QLabel("Die GDT-Datei enthält kein Untersuchungsdatum.")
+        labelKeinDatum.setFont(self.fontNormal)
+        labelKeinDatum.setStyleSheet("color:rgb(0,0,200)")
         self.formate= ["JJJJMMTT", "JJJJ-MM-TT", "JJJJ", "MM", "TT"]
         if untersuchungszeit != "":
             self.formate.extend(["HHmmss", "HH-mm-ss", "HH", "mm", "ss"])
@@ -103,6 +113,8 @@ class OptimierungAddPdf(QDialog):
                 self.comboBoxVariable.addItem(format + " (" + item + ")")
         dialogLayoutH.addWidget(labelFormat)
         dialogLayoutH.addWidget(self.comboBoxVariable)
+        if untersuchungsdatum == "":
+            dialogLayoutH.addWidget(labelKeinDatum)
         dialogLayoutG.addWidget(groupBoxVariableEinfuegen, 2, 0, 1, 3)
 
         dialogLayoutV.addWidget(groupBoxOriginaldatei)
@@ -157,6 +169,15 @@ class OptimierungAddPdf(QDialog):
         bisherigerInhalt = lineEdit.text()
         cursorPosition = lineEdit.cursorPosition()
         variable = "${" + self.formate[self.comboBoxVariable.currentIndex()] + "}"
+        neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
+        lineEdit.setText(neuerInhalt)
+        lineEdit.setFocus()
+        lineEdit.setCursorPosition(cursorPosition + len(variable))
+
+    def pushButtonDateiendungsziffernClicked(self, checked, lineEdit:QLineEdit):
+        bisherigerInhalt = lineEdit.text()
+        cursorPosition = lineEdit.cursorPosition()
+        variable = "${###}"
         neuerInhalt = bisherigerInhalt[:cursorPosition] + variable + bisherigerInhalt[cursorPosition:]
         lineEdit.setText(neuerInhalt)
         lineEdit.setFocus()

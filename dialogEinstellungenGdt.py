@@ -139,7 +139,7 @@ class EinstellungenGdt(QDialog):
                 speichernOk = False
                 self.lineEditImportPrimaer.setFocus()
                 self.lineEditImportPrimaer.selectAll()
-        if speichernOk and not os.path.exists(self.lineEditImportSekundaer.text()):
+        if speichernOk and self.lineEditImportSekundaer.text() != "" and not os.path.exists(self.lineEditImportSekundaer.text()):
             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das sekundäre Importverzeichnis existiert nicht. Sollen die Einstellungen dennoch gespeichert werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")

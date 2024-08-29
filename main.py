@@ -4,7 +4,7 @@ import class_gdtdatei, class_optimierung, class_importWorker
 import gdttoolsL
 ## /Nur mit Lizenz
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf, dialogEinstellungenImportExport
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher, QThreadPool
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -578,6 +578,10 @@ class MainWindow(QMainWindow):
         ## Nur mit Lizenz
         einstellungenErweiterungenAction = QAction("LANR/Lizenzschlüssel", self)
         einstellungenErweiterungenAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenLanrLizenzschluessel(checked, neustartfrage))
+        einstellungenImportExportAction = QAction("Im- /Exportieren", self)
+        einstellungenImportExportAction.triggered.connect(self.einstellungenImportExport)
+        einstellungenImportExportAction.setShortcut(QKeySequence("Ctrl+I"))
+        einstellungenImportExportAction.setMenuRole(QAction.MenuRole.NoRole)
         ## /Nur mit Lizenz
         hilfeMenu = menubar.addMenu("Hilfe")
         hilfeWikiAction = QAction("OptiGDT Wiki", self)
@@ -620,6 +624,7 @@ class MainWindow(QMainWindow):
         einstellungenMenu.addAction(einstellungenGdtAction)
         ## Nur mit Lizenz
         einstellungenMenu.addAction(einstellungenErweiterungenAction)
+        einstellungenMenu.addAction(einstellungenImportExportAction)
         ## /Nur mit Lizenz
 
         hilfeMenu.addAction(hilfeWikiAction)
@@ -839,6 +844,11 @@ class MainWindow(QMainWindow):
                 if mb.exec() == QMessageBox.StandardButton.Yes:
                     self.tray.hide()
                     os.execl(sys.executable, __file__, *sys.argv)
+    
+    def einstellungenImportExport(self):
+        de = dialogEinstellungenImportExport.EinstellungenImportExport(self.configPath)
+        if de.exec() == 1:
+            pass   
     ## /Nur mit Lizenz
 
     def optigdtWiki(self, link):
@@ -1671,15 +1681,20 @@ class MainWindow(QMainWindow):
             if fortfahren:
                 self.ungesichertesTemplate = False
                 if self.importWorker == None:
+                    logger.logger.info("Bisher kein ImportWorker instanziert")
                     self.importWorker = class_importWorker.ImportWorker(self.gdtImportVerzeichnisSekundaer)
+                    logger.logger.info("ImportWorker instanziert")
                     self.importWorker.signals.importVerzeichnisGefunden.connect(self.importVerzeichnisGefunden)
                     self.importWorker.signals.importWorkerRunning.connect(self.importWorkerRunning)
+                    logger.logger.info("ImportWorker-Signale verbunden")
                 if checked:
+                    logger.logger.info("Verzeichnungsüberwachungsbutton checked")
                     if os.path.exists(self.gdtImportVerzeichnis):
                         # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
                         gdtDateien = []
                         for importordnerFile in os.listdir(self.gdtImportVerzeichnis):
                             if re.match(reGdtDateiendung, importordnerFile[-4:].lower()) != None:
+                                logger.logger.info(importordnerFile + " in Importverzeichnis " + self.gdtImportVerzeichnis + " gefunden")
                                 gdtDateien.append(importordnerFile)
                         if len(gdtDateien) > 0:
                             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Es sind noch nicht bearbeitete GDT-Dateien im primären Importverzeichnis. Sollen diese jetzt bearbeitet werden?\nDurch Klick auf \"Nein\" werden die Dateien gelöscht.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -1691,12 +1706,14 @@ class MainWindow(QMainWindow):
                             else:
                                 for gdtDatei in gdtDateien:
                                     os.unlink(os.path.join(self.gdtImportVerzeichnis, gdtDatei))
+                        if self.sekundaeresimportverzeichnispruefen:
+                            self.threadPool.start(self.importWorker)
+                            logger.logger.info("ImportWorker gestartet")
                         if os.path.exists(self.gdtImportVerzeichnisSekundaer):
-                            if self.sekundaeresimportverzeichnispruefen:
-                                self.threadPool.start(self.importWorker)
                             gdtDateien.clear()
                             for importordnerFile in os.listdir(self.gdtImportVerzeichnisSekundaer):
                                 if re.match(reGdtDateiendung, importordnerFile[-4:].lower()) != None:
+                                    logger.logger.info(importordnerFile + " in Importverzeichnis " + self.gdtImportVerzeichnisSekundaer + " gefunden")
                                     gdtDateien.append(importordnerFile)
                             if len(gdtDateien) > 0:
                                 mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Es sind noch nicht bearbeitete GDT-Dateien im sekundären Importverzeichnis. Sollen diese jetzt bearbeitet werden?\nDurch Klick auf \"Nein\" werden die Dateien gelöscht.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -1744,6 +1761,7 @@ class MainWindow(QMainWindow):
                         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                         mb.exec()
                 else:
+                    logger.logger.info("Verzeichnungsüberwachungsbutton not checked")
                     if self.sekundaeresimportverzeichnispruefen:
                         self.importWorker.kill()
                     self.pushButtonUeberwachungStarten.setStyleSheet("background:rgb(0,50,0);color:rgb(255,255,255);border:2px solid rgb(0,0,0)")
