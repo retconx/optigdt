@@ -1,4 +1,4 @@
-import configparser, os, sys, datetime
+import configparser, os, sys, datetime, zipfile
 ## Nur mit Lizenz
 import gdttoolsL
 ## /import
@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 class EinstellungenImportExport(QDialog):
     def __init__(self, configPath):
         super().__init__()
-        self.setFixedWidth(340)
+        self.setFixedWidth(360)
         self.configPath = configPath
 
         #config.ini lesen
@@ -71,9 +71,14 @@ class EinstellungenImportExport(QDialog):
         for cb in self.checkboxEinstellungen:
             groupboxEinstellungenLayout.addWidget(cb)
         self.groupboxEinstellungen.setLayout(groupboxEinstellungenLayout)
+
+        self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen = QCheckBox("Referenz-GDT-Dateiverzeichnis einbeziehen")
+        self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setStyleSheet("font-weight:normal")
+        self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setChecked(True)
         
         mainLayoutV.addWidget(groupboxImportExport)
         mainLayoutV.addWidget(self.groupboxEinstellungen)
+        mainLayoutV.addWidget(self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen)
         mainLayoutV.addWidget(self.buttonBox)
         self.setLayout(mainLayoutV)
         self.radiobuttonClicked()
@@ -82,10 +87,13 @@ class EinstellungenImportExport(QDialog):
         if self.radiobuttonImport.isChecked():
             self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Importieren...")
             self.groupboxEinstellungen.setTitle("Zu importierende Einstellungen")
-            
+            self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setEnabled(True)
+            self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setChecked(True)
         else:
             self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setText("Exportieren...")
             self.groupboxEinstellungen.setTitle("Zu exportierende Einstellungen")
+            self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setEnabled(os.path.exists(os.path.join(self.configPath, "gdtreferenzen")))
+            self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.setChecked(os.path.exists(os.path.join(self.configPath, "gdtreferenzen")))
 
     def checkboxClicked(self):
         gecheckt = 0
@@ -97,19 +105,27 @@ class EinstellungenImportExport(QDialog):
         else:
             self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
 
+
+
     def accept(self):
         if self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).text() == "Importieren...":
             fd = QFileDialog(self)
             fd.setFileMode(QFileDialog.FileMode.ExistingFile)
             fd.setWindowTitle("Einstellungen importieren")
             fd.setModal(True)
-            fd.setNameFilters(["OptiGDT-Einstellungsdateien (*.oed)"])
+            fd.setNameFilters(["OptiGDT-Einstellungsdateien (*.oed *.zip)"])
             fd.setLabelText(QFileDialog.DialogLabel.Accept, "Laden")
             fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
             if fd.exec() == 1:
-                datei = fd.selectedFiles()[0]
+                ausgewaehlteDatei = fd.selectedFiles()[0]
                 configImport = configparser.ConfigParser()
-                configImport.read(datei)
+                configPfad = ausgewaehlteDatei
+                if ausgewaehlteDatei[-3:] == "zip":
+                    zipfilePfad = ausgewaehlteDatei
+                    zf = zipfile.ZipFile(zipfilePfad, "r")
+                    zf.extract("config.ini", self.configPath)
+                    configPfad = os.path.join(self.configPath, "config.ini")          
+                configImport.read(configPfad)
                 if "Allgemein" in configImport.sections() or "Optimierung" in configImport.sections() or "GDT" in configImport.sections() or "Erweiterungen" in configImport.sections():
                     i=0
                     for section in configImport.sections():
@@ -120,8 +136,18 @@ class EinstellungenImportExport(QDialog):
                     try:
                         with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
                             self.configIni.write(configfile)
+                        referenzdateienImportiert = ""
+                        if self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.isChecked() and ausgewaehlteDatei[-3:] == "zip": # ab 2.8.2
+                            try:
+                                referenzGdtDateien = [rd for rd in zf.namelist() if rd.startswith("gdtreferenzen")]
+                                for referenzGdtDatei in referenzGdtDateien:
+                                    zf.extract(referenzGdtDatei, self.configPath)
+                                referenzdateienImportiert = " sowie das Referenz-GDT-Dateiverzeichnis"
+                            except:
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entpacken der Referenz-GDT-Dateien", QMessageBox.StandardButton.Ok)
+                                mb.exec()
                         self.done(1)
-                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Einstellungen wurden erfolgreich importiert. Damit diese wirksam werden, muss OptiGDT neu gestartet werden.\nSoll OptiGDT neu gestartet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                        mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die Einstellungen" + referenzdateienImportiert +  " wurden erfolgreich importiert. Damit diese wirksam werden, muss OptiGDT neu gestartet werden.\nSoll OptiGDT neu gestartet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                         mb.setDefaultButton(QMessageBox.StandardButton.Yes)
                         mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                         mb.button(QMessageBox.StandardButton.No).setText("Nein")
@@ -131,9 +157,9 @@ class EinstellungenImportExport(QDialog):
                         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Importieren der Einstellungen: " + str(e), QMessageBox.StandardButton.Ok)
                         mb.exec()
                 else:
-                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Datei " + datei + " ist keine gültige OptiGDT-Konfigurationsdatei", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Datei " + configPfad + " ist keine gültige OptiGDT-Konfigurationsdatei", QMessageBox.StandardButton.Ok)
                     mb.exec()
-        else:
+        else: # Exportieren...
             fd = QFileDialog(self)
             fd.setFileMode(QFileDialog.FileMode.Directory)
             fd.setWindowTitle("Einstellungen exportieren")
@@ -142,11 +168,15 @@ class EinstellungenImportExport(QDialog):
             fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
             if fd.exec() == 1:
                 configExport = configparser.ConfigParser()
-                pfad = fd.directory().absolutePath()
-                dateiname = datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S") + "_OptiGdtEinstellungen.oed"
-                datei = os.path.join(pfad, dateiname)
+                ausgewaehlterPfad = fd.directory().absolutePath()
+                zeitstempelString = datetime.datetime.strftime(datetime.datetime.now(), "%Y%m%d%H%M%S")
+                zipName = zeitstempelString + "_OptiGdtEinstellungen.zip"
+                zipPfad = os.path.join(ausgewaehlterPfad, zipName)
+                zf = zipfile.ZipFile(zipPfad, "w")
+                configName = "config.ini"
+                configPfad = os.path.join(ausgewaehlterPfad, configName)
                 try:
-                    with open(datei, "w") as exportfile:
+                    with open(configPfad, "w") as exportfile:
                         if self.checkboxEinstellungen[0].isChecked():
                             section = "Allgemein"
                             configExport.add_section(section)
@@ -168,7 +198,23 @@ class EinstellungenImportExport(QDialog):
                             for option in self.configIni.options(section):
                                 configExport[section][option] = self.configIni[section][option]
                         configExport.write(exportfile)
-                        mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die gewünschten Einstellungen wurden erfolgreich unter dem Namen " + dateiname + " exportiert.", QMessageBox.StandardButton.Ok)
+                        exportfile.close()
+                        zf.write(configPfad, configName)
+                        os.unlink(configPfad)
+                        # Referenz-GDT-Dateiverzeichnis zippen
+                        referenzdateienExportiert = ""
+                        if self.checkBoxReferenzGdtDateiverzeichnisEinbeziehen.isChecked():
+                            try:
+                                zf.mkdir("gdtreferenzen", mode=0o777)
+                                for referenzdateiName in os.listdir(os.path.join(self.configPath, "gdtreferenzen")):
+                                    referenzdateiPfad = os.path.join(self.configPath, "gdtreferenzen", referenzdateiName)
+                                    if "_ref_" in referenzdateiName:
+                                        zf.write(referenzdateiPfad, os.path.join("gdtreferenzen", referenzdateiName))
+                                referenzdateienExportiert = " sowie das Referenz-GDT-Dateiverzeichnis"
+                            except:
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Komprimieren des Referenz-GDT-Dateiverzeichnisses", QMessageBox.StandardButton.Ok)
+                                mb.exec()
+                        mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die gewünschten Einstellungen" + referenzdateienExportiert + " wurden erfolgreich unter dem Namen " + zipName + " exportiert." + referenzdateienExportiert, QMessageBox.StandardButton.Ok)
                         mb.exec()
                         self.done(1)
                 except Exception as e:

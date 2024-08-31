@@ -178,7 +178,7 @@ class TemplatesVerwalten(QDialog):
             if len(bereinigungsliste) == 1:
                 sinPlu1 = "folgende Referenz-GDT-Datei"
                 sinPlu2 = "Soll"
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Für die " + sinPlu1 + " existiert kein Template:\n-" + bereinigungslisteFormatiert + "\n"  + sinPlu2 + " diese entfernt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Für die " + sinPlu1 + " existiert kein Template:\n- " + bereinigungslisteFormatiert + "\n"  + sinPlu2 + " diese entfernt werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
