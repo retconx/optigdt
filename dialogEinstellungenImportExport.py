@@ -119,14 +119,20 @@ class EinstellungenImportExport(QDialog):
             if fd.exec() == 1:
                 ausgewaehlteDatei = fd.selectedFiles()[0]
                 configImport = configparser.ConfigParser()
-                configPfad = ausgewaehlteDatei
+                configPfad = ""
+                zipEntpackt = True
                 if ausgewaehlteDatei[-3:] == "zip":
-                    zipfilePfad = ausgewaehlteDatei
-                    zf = zipfile.ZipFile(zipfilePfad, "r")
-                    zf.extract("config.ini", self.configPath)
-                    configPfad = os.path.join(self.configPath, "config.ini")          
+                    try:
+                        zipfilePfad = ausgewaehlteDatei
+                        zf = zipfile.ZipFile(zipfilePfad, "r")
+                        zf.extract("config.ini", self.configPath)
+                        configPfad = os.path.join(self.configPath, "config.ini")    
+                    except:
+                        zipEntpackt = False     
+                else:
+                    configPfad = ausgewaehlteDatei 
                 configImport.read(configPfad)
-                if "Allgemein" in configImport.sections() or "Optimierung" in configImport.sections() or "GDT" in configImport.sections() or "Erweiterungen" in configImport.sections():
+                if zipEntpackt and "Allgemein" in configImport.sections() or "Optimierung" in configImport.sections() or "GDT" in configImport.sections() or "Erweiterungen" in configImport.sections():
                     i=0
                     for section in configImport.sections():
                         if self.checkboxEinstellungen[i].isChecked():
@@ -157,7 +163,7 @@ class EinstellungenImportExport(QDialog):
                         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Importieren der Einstellungen: " + str(e), QMessageBox.StandardButton.Ok)
                         mb.exec()
                 else:
-                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Datei " + configPfad + " ist keine gültige OptiGDT-Konfigurationsdatei", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die ausgewählte Datei ist keine gültige OptiGDT-Konfigurationsdatei", QMessageBox.StandardButton.Ok)
                     mb.exec()
         else: # Exportieren...
             fd = QFileDialog(self)
