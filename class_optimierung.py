@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ElementTree 
-import class_gdtdatei
+import class_gdtdatei, class_Enums
 
 class OptimierungsfehlerException(Exception):
     def __init__(self, meldung):
@@ -285,9 +285,10 @@ class OptiBefundAusTest(Optimierung):
         return optimierungElement
 
 class OptiConcatInhalte(Optimierung):
-    def __init__(self, feldkennung:str, bisherigesRoot:ElementTree.Element):
+    def __init__(self, feldkennung:str, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, bisherigesRoot:ElementTree.Element):
         super().__init__("concatInhalte", bisherigesRoot)
         self.feldkennung = feldkennung
+        self.einzufuegendesZeichen = einzufuegendesZeichen
         self.Id = self.neueId
 
     def getXml(self) -> ElementTree.Element:
@@ -297,6 +298,9 @@ class OptiConcatInhalte(Optimierung):
         feldkennungElement = ElementTree.Element("feldkennung") 
         feldkennungElement.text = self.feldkennung
         optimierungElement.append(feldkennungElement)
+        einzufuegendesZeichenElement = ElementTree.Element("einzufuegendeszeichen") 
+        einzufuegendesZeichenElement.text = self.einzufuegendesZeichen.name
+        optimierungElement.append(einzufuegendesZeichenElement)
         return optimierungElement
 
 class OptiAddPdf(Optimierung):

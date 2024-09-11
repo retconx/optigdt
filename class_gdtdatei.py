@@ -1,6 +1,7 @@
 from enum import Enum
 import csv, os, re
 import xml.etree.ElementTree as ElementTree
+import class_Enums
 
 gdtDefinitionsPfad = "qms/200105_GdtV21_definition.csv"
 basedir = os.path.dirname(__file__)
@@ -130,7 +131,7 @@ class GdtDatei():
         self.zeilen = []
         feldkennung8000Vorhanden = False
         try:
-            with open(dateipfad, "r", encoding=self.enc, newline="\r\n") as gdtDatei:
+            with open(dateipfad, "r", encoding=self.enc, newline="") as gdtDatei:
                 for zeile in gdtDatei:
                     if zeile[:7] == "0138000":
                         feldkennung8000Vorhanden = True
@@ -140,6 +141,11 @@ class GdtDatei():
                 raise GdtFehlerException("Keine gültige GDT-Datei")
         except IOError as e:
             raise GdtFehlerException("IO-Fehler: " + str(e))
+        except Exception as e:
+            charmapMeldung = ""
+            if "charmap" in str(e):
+                charmapMeldung = "\nMöglicherweise wurde in den GDT-Einstellungen ein unpassender Zeichensatz ausgewählt."
+            raise GdtFehlerException(str(e) + charmapMeldung)
         return self.zeilen
     
     def speichern(self, pfad:str, zeichensatz:GdtZeichensatz):
@@ -339,20 +345,25 @@ class GdtDatei():
         else:
             raise GdtFehlerException("Zu löschende Zeile(n) mit der Feldkennung " + feldkennung + " nicht gefunden")
 
-    def concatInhalte(self, id, feldkennung:str, vorschau:bool=False):
+    def concatInhalte(self, id, feldkennung:str, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, vorschau:bool=False):
         """
-        Führt die Inhalte einer Feldkunnung in der Zeile des ersten Vorkommens der Feldkennung zusammen
+        Führt die Inhalte einer Feldkunnung in der Zeile des ersten Vorkommens der Feldkennung zusammen und fügt optional ein Zeichen zwischen den Inhalten ein
         Parameter:
             id:str Optimierungs-Id
             feldkennung:str
+            einzufuegendesZeichen:EinzufuegendeZeichen
             vorschau:bool Zusammengefassten Zeilen wird __Optimierungs-Id__ angehängt
         """
         concat = ""
         zeilenMitFeldkennung = self.getZeilennummern(feldkennung)
         ersteZeileMitFeldkennung = zeilenMitFeldkennung[0]
         inhalte = self.getInhalte(feldkennung)
+        i = 0
         for inhalt in inhalte:
             concat += inhalt
+            if i < len(inhalte) - 1:
+                concat += einzufuegendesZeichen.value
+            i += 1
         if vorschau:
             self.zeilen[ersteZeileMitFeldkennung] = self.getZeile(feldkennung, concat + "__" + id + "__")
         else:
@@ -683,9 +694,12 @@ class GdtDatei():
                         self.addZeile("6220", befundBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
+                    einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen.Kein_Zeichen
+                    if optimierungElement.find("einzufuegendeszeichen") != None:
+                        einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen[str(optimierungElement.find("einzufuegendeszeichen").text)] # type: ignore
                     if feldkennung != "None" :
                         try:
-                            self.concatInhalte(id, feldkennung, vorschau)
+                            self.concatInhalte(id, feldkennung, einzufuegendesZeichen, vorschau)
                         except GdtFehlerException as e:
                             exceptions.append(e.meldung)
                     else:

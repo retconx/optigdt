@@ -1,10 +1,10 @@
-import sys, configparser, os, datetime, shutil, logger, re, time
-import class_gdtdatei, class_optimierung, class_importWorker
+import sys, configparser, os, datetime, shutil, logger, re, time, atexit, subprocess
+import class_gdtdatei, class_optimierung, class_importWorker, class_Enums
 ## Nur mit Lizenz
 import gdttoolsL
 ## /Nur mit Lizenz
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf, dialogEinstellungenImportExport
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf, dialogEinstellungenImportExport, dialogEinstellungenAllgemein
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher, QThreadPool
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -230,6 +230,10 @@ class MainWindow(QMainWindow):
         self.sekundaeresimportverzeichnispruefen = False
         if self.configIni.has_option("Optimierung", "sekundaeresimportverzeichnispruefen"):
             self.sekundaeresimportverzeichnispruefen = self.configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] == "True"
+        # 2.9.0
+        self.updaterpfad = ""
+        if self.configIni.has_option("Allgemein", "updaterpfad"):
+            self.updaterpfad = self.configIni["Allgemein"]["updaterpfad"]
         # /Nachträglich hinzufefügte Options
 
         ## Nur mit Lizenz
@@ -269,6 +273,7 @@ class MainWindow(QMainWindow):
                 ## /Nur mit Lizenz
                 self.einstellungenOptimierung(False, False)
                 self.einstellungenGdt(False, False)
+                self.einstellungenAllgemein(False, False)
                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Ersteinrichtung ist abgeschlossen. OptiGDGT wird beendet.", QMessageBox.StandardButton.Ok)
                 mb.exec()
                 sys.exit()
@@ -294,6 +299,9 @@ class MainWindow(QMainWindow):
                 # 2.7.3 - 2.7.5
                 if not self.configIni.has_option("Optimierung", "sekundaeresimportverzeichnispruefen"):
                     self.configIni["Optimierung"]["sekundaeresimportverzeichnispruefen"] = "False"
+                # 2.8.2 -> 2.9.0 ["Allgemein"]["updaterpfad"] hinzufügen
+                if not self.configIni.has_option("Allgemein", "updaterpfad"):
+                    self.configIni["Allgemein"]["updaterpfad"] = ""
                 # /config.ini aktualisieren
 
                 with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
@@ -571,6 +579,8 @@ class MainWindow(QMainWindow):
         self.optimierenMenuInDenHintergrundAction.setEnabled(False)
 
         einstellungenMenu = menubar.addMenu("Einstellungen")
+        einstellungenAllgemeinAction = QAction("Allgemeine Einstellungen", self)
+        einstellungenAllgemeinAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenAllgemein(checked, neustartfrage))
         einstellungenOptimierungAction = QAction("Optimierung", self)
         einstellungenOptimierungAction.triggered.connect(lambda checked = False, neustartfrage = True: self.einstellungenOptimierung(checked, neustartfrage))
         einstellungenGdtAction = QAction("GDT", self)
@@ -620,6 +630,7 @@ class MainWindow(QMainWindow):
         optimierenMenu.addSeparator()
         optimierenMenu.addAction(self.optimierenMenuVerzeichnisueberwachungStartenAction)
         optimierenMenu.addAction(self.optimierenMenuInDenHintergrundAction)
+        einstellungenMenu.addAction(einstellungenAllgemeinAction)
         einstellungenMenu.addAction(einstellungenOptimierungAction)
         einstellungenMenu.addAction(einstellungenGdtAction)
         ## Nur mit Lizenz
@@ -784,6 +795,21 @@ class MainWindow(QMainWindow):
     #         self.lineEditGdtDateiname.setText(os.path.basename(self.gdtDateipfad))
 
     # Menuverarbeitung
+    def einstellungenAllgemein(self, checked, neustartfrage):
+        de = dialogEinstellungenAllgemein.EinstellungenAllgemein(self.configPath)
+        if de.exec() == 1:
+            self.configIni["Allgemein"]["updaterpfad"] = de.lineEditUpdaterPfad.text()
+            self.configIni["Allgemein"]["autoupdate"] = str(de.checkBoxAutoUpdate.isChecked())
+            with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
+                self.configIni.write(configfile)
+            if neustartfrage:
+                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Damit die Einstellungsänderungen wirksam werden, sollte OptiGDT neu gestartet werden.\nSoll OptiGDT jetzt neu gestartet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+                mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                if mb.exec() == QMessageBox.StandardButton.Yes:
+                    os.execl(sys.executable, __file__, *sys.argv)
+
     def einstellungenOptimierung(self, checked, neustartfrage):
         de = dialogEinstellungenOptimierung.EinstellungenOptimierung(self.configPath)
         if de.exec() == 1:
@@ -874,16 +900,63 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Log-Verzeichnis wurde nicht gefunden.", QMessageBox.StandardButton.Ok)
             mb.exec() 
                 
+    # def updatePruefung(self, meldungNurWennUpdateVerfuegbar = False):
+    #     response = requests.get("https://api.github.com/repos/retconx/optigdt/releases/latest")
+    #     githubRelaseTag = response.json()["tag_name"]
+    #     latestVersion = githubRelaseTag[1:] # ohne v
+    #     if versionVeraltet(self.version, latestVersion):
+    #         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://github.com/retconx/optigdt/releases'>Github</a> verfügbar.", QMessageBox.StandardButton.Ok)
+    #         mb.setTextFormat(Qt.TextFormat.RichText)
+    #         mb.exec()
+    #     elif not meldungNurWennUpdateVerfuegbar:
+    #         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Sie nutzen die aktuelle OptiGDT-Version.", QMessageBox.StandardButton.Ok)
+    #         mb.exec()
+
     def updatePruefung(self, meldungNurWennUpdateVerfuegbar = False):
+        logger.logger.info("Updateprüfung")
         response = requests.get("https://api.github.com/repos/retconx/optigdt/releases/latest")
         githubRelaseTag = response.json()["tag_name"]
         latestVersion = githubRelaseTag[1:] # ohne v
         if versionVeraltet(self.version, latestVersion):
-            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://github.com/retconx/optigdt/releases'>Github</a> verfügbar.", QMessageBox.StandardButton.Ok)
-            mb.setTextFormat(Qt.TextFormat.RichText)
-            mb.exec()
+            logger.logger.info("Bisher: " + self.version + ", neu: " + latestVersion)
+            if os.path.exists(self.updaterpfad):
+                mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf Github verfügbar.\nSoll der GDT-Tools Updater geladen werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+                mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                if mb.exec() == QMessageBox.StandardButton.Yes:
+                    logger.logger.info("Updater wird geladen")
+                    atexit.register(self.updaterLaden)
+                    sys.exit()
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://github.com/retconx/optigdt/releases'>Github</a> verfügbar.<br />Bitte beachten Sie auch die Möglichkeit, den Updateprozess mit dem <a href='https://github.com/retconx/gdttoolsupdater/wiki'>GDT-Tools Updater</a> zu automatisieren.", QMessageBox.StandardButton.Ok)
+                mb.setTextFormat(Qt.TextFormat.RichText)
+                mb.exec()
         elif not meldungNurWennUpdateVerfuegbar:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Sie nutzen die aktuelle OptiGDT-Version.", QMessageBox.StandardButton.Ok)
+            mb.exec()
+
+    def updaterLaden(self):
+        sex = sys.executable
+        programmverzeichnis = ""
+        logger.logger.info("sys.executable: " + sex)
+        if "win32" in sys.platform:
+            programmverzeichnis = sex[:sex.rfind("optigdt.exe")]
+        elif "darwin" in sys.platform:
+            programmverzeichnis = sex[:sex.find("OptiGDT.app")]
+        elif "linux" in sys.platform:
+            programmverzeichnis = sex[:sex.rfind("optigdt")]
+        logger.logger.info("Programmverzeichnis: " + programmverzeichnis)
+        try:
+            if "win32" in sys.platform:
+                subprocess.Popen([self.updaterpfad, "optigdt", self.version, programmverzeichnis], creationflags=subprocess.DETACHED_PROCESS) # type: ignore
+            elif "darwin" in sys.platform:
+                subprocess.Popen(["open", "-a", self.updaterpfad, "--args", "optigdt", self.version, programmverzeichnis])
+            elif "linux" in sys.platform:
+                subprocess.Popen([self.updaterpfad, "optigdt", self.version, programmverzeichnis])
+        except Exception as e:
+            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Der GDT-Tools Updater konnte nicht gestartet werden", QMessageBox.StandardButton.Ok)
+            logger.logger.error("Fehler beim Starten des GDT-Tools Updaters: " + str(e))
             mb.exec()
 
     def autoUpdatePruefung(self, checked):
@@ -1149,7 +1222,7 @@ class MainWindow(QMainWindow):
                         et = ElementTree.ElementTree(self.templateRootElement)
                         ElementTree.indent(et)
                         try:
-                            et.write(fd.selectedFiles()[0], "utf-8", True)
+                            et.write(fd.selectedFiles()[0], "utf_8", True)
                             self.ungesichertesTemplate = False
                         except Exception as e:
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Sepichern des Templates: " + str(e), QMessageBox.StandardButton.Ok)
@@ -1186,7 +1259,7 @@ class MainWindow(QMainWindow):
                 et = ElementTree.ElementTree(rootElement)
                 ElementTree.indent(et)
                 try:
-                    et.write(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"), "utf-8", True)
+                    et.write(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"), "utf_8", True)
                     logger.logger.info("Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + " geändert")
                 except Exception as e:
                     mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + ": " + str(e), QMessageBox.StandardButton.Ok)
@@ -1536,17 +1609,21 @@ class MainWindow(QMainWindow):
     def optimierenMenuInhalteZusammenfuehren(self, checked, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
             feldkennung = ""
+            einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen.Kein_Zeichen
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
                     if str(optimierungElement.get("id")) == optimierungsId:
                         feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
+                        # Ab 2.9.0
+                        if optimierungElement.find("einzufuegendeszeichen") != None:
+                            einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen[str(optimierungElement.find("einzufuegendeszeichen").text)] # type: ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(feldkennung)
+                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(feldkennung, einzufuegendesZeichen)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), class_Enums.EinzufuegendeZeichen[do.comboBoxZeichenEinfuegen.currentText().replace(" ", "_")], self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten

@@ -15,7 +15,6 @@ from PySide6.QtWidgets import (
     QComboBox
 )
 
-zeichensatz = ["7Bit", "IBM (Standard) CP 437", "ISO8859-1 (ANSI) CP 1252"]
 reZahlPattern = r"^\d+$"
 class EinstellungenOptimierung(QDialog):
     def __init__(self, configPath):
