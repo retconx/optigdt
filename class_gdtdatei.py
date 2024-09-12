@@ -131,7 +131,7 @@ class GdtDatei():
         self.zeilen = []
         feldkennung8000Vorhanden = False
         try:
-            with open(dateipfad, "r", encoding=self.enc, newline="") as gdtDatei:
+            with open(dateipfad, "r", encoding=self.enc) as gdtDatei:
                 for zeile in gdtDatei:
                     if zeile[:7] == "0138000":
                         feldkennung8000Vorhanden = True
@@ -161,7 +161,7 @@ class GdtDatei():
             enc = "cp1252"
 
         try:
-            with open(pfad, "w", encoding=enc) as fobj:
+            with open(pfad, "w", encoding=enc, newline="") as fobj:
                 for zeile in self.zeilen:
                     fobj.write(zeile + "\r\n")
             return True
