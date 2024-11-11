@@ -1530,7 +1530,7 @@ class MainWindow(QMainWindow):
                     do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOriginal, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
                     if do.exec() == 1:
                         self.templateRootDefinieren()
-                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.lineEditNtesVorkommen.text()), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
+                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.labelNtesVorkommen.text().split(".")[0]), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
                         if optimierungsId == "": # Neue zeile
                             self.templateRootElement.append(optimierungElement.getXml())
                         else: # Zeile bearbeiten

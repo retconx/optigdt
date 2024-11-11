@@ -78,6 +78,8 @@ class OptimierungTestAus6228(QDialog):
         self.lineEditErkennungstext = QLineEdit(self.erkennungstext)
         self.lineEditErkennungstext.setFont(self.fontNormal)
         self.lineEditErkennungstext.textEdited.connect(self.lineEditPruefung) 
+        self.labelNtesVorkommen = QLabel(str(self.ntesVorkommen) + ". Vorkommen innerhalb der GDT-Datei")
+        self.labelNtesVorkommen.setFont(self.fontNormal)
         labelErkennungsspalte = QLabel("Erkennungsspalte")
         labelErkennungsspalte.setFont(self.fontNormal)
         self.lineEditErkennungsspalte = QLineEdit(str(self.erkennungsspalte))
@@ -91,20 +93,6 @@ class OptimierungTestAus6228(QDialog):
         self.checkBoxEindeutigkeitErzwingen.setFont(self.fontNormal)
         self.checkBoxEindeutigkeitErzwingen.setChecked(self.eindeutigkeitErzwingen)
         self.checkBoxEindeutigkeitErzwingen.clicked.connect(self.checkBoxEindeutigkeitErzwingenClicked)
-        self.lineEditNtesVorkommen = QLineEdit(str(self.ntesVorkommen))
-        self.lineEditNtesVorkommen.setFont(self.fontNormal)
-        self.lineEditNtesVorkommen.setReadOnly(True)
-        self.lineEditNtesVorkommen.setFixedWidth(26)
-        self.lineEditNtesVorkommen.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.labelNtesVorkommen = QLabel(". Vorkommen innerhalb der GDT-Datei")
-        self.labelNtesVorkommen.setFont(self.fontNormal)
-        # self.comboBoxNtesVorkommen = QComboBox()
-        # self.comboBoxNtesVorkommen.setFont(self.fontNormal)
-        # gefundene6228s = self.getGefundene6228s(self.trennRegexPattern)
-        # self.comboBoxNtesVorkommen.addItem("1")
-        # self.comboBoxNtesVorkommen.addItems([str(i + 1) for i in range(1, gefundene6228s)])
-        # self.comboBoxNtesVorkommen.setCurrentText(str(self.ntesVorkommen))
-        # self.comboBoxNtesVorkommen.setEnabled(not self.eindeutigkeitErzwingen)
 
         dialogLayoutG.addWidget(label6228Zeile, 0, 0, 1, 2)
         dialogLayoutG.addWidget(self.comboBox6228, 1, 0, 1, self.maxAnzahl6228Spalten + 1)
@@ -116,13 +104,12 @@ class OptimierungTestAus6228(QDialog):
         dialogLayoutG.addWidget(self.lineEditTrennRegexPattern, 4, 1, 1, self.maxAnzahl6228Spalten)
         dialogLayoutG.addWidget(labelErkennungstext, 5, 0, 1, 1)
         dialogLayoutG.addWidget(self.lineEditErkennungstext, 5, 1, 1, self.maxAnzahl6228Spalten)
-        dialogLayoutG.addWidget(labelErkennungsspalte, 6, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditErkennungsspalte, 6, 1, 1, self.maxAnzahl6228Spalten)
-        dialogLayoutG.addWidget(labelErkennungEindeutig, 7, 0, 1, 1)
-        dialogLayoutG.addWidget(self.labelHaekchen, 7, 1, 1, self.maxAnzahl6228Spalten)
-        dialogLayoutG.addWidget(self.checkBoxEindeutigkeitErzwingen, 8, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditNtesVorkommen, 8, 1, 1, 1)
-        dialogLayoutG.addWidget(self.labelNtesVorkommen, 8, 2, 1, 1)
+        dialogLayoutG.addWidget(self.labelNtesVorkommen, 6, 1)
+        dialogLayoutG.addWidget(labelErkennungsspalte, 7, 0, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditErkennungsspalte, 7, 1, 1, self.maxAnzahl6228Spalten)
+        dialogLayoutG.addWidget(labelErkennungEindeutig, 8, 0, 1, 1)
+        dialogLayoutG.addWidget(self.labelHaekchen, 8, 1, 1, self.maxAnzahl6228Spalten)
+        dialogLayoutG.addWidget(self.checkBoxEindeutigkeitErzwingen, 9, 0, 1, 1)
 
         dialogLayoutG = QGridLayout()
         groupBoxTestDefinition = QGroupBox("Test-Definition")
@@ -213,7 +200,7 @@ class OptimierungTestAus6228(QDialog):
         for i in range(self.comboBox6228.currentIndex() + 1):
             if re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text():
                 n += 1
-        self.lineEditNtesVorkommen.setText(str(n))
+        self.labelNtesVorkommen.setText(str(n) + ". Vorkommen innerhalb der GDT-Datei")
         self.setErkennungEindeutig(gefundene6228s == 1 and re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text())
         if self.lineEditErkennungsspalte.text() != "":
             self.setErkennungshintergrund(int(self.lineEditErkennungsspalte.text()))
@@ -229,7 +216,7 @@ class OptimierungTestAus6228(QDialog):
 
     def checkBoxEindeutigkeitErzwingenClicked(self, checked):
         if checked:
-            self.lineEditNtesVorkommen.setText("1")
+            self.labelNtesVorkommen.setText("1. Vorkommen innerhalb der GDT-Datei")
         else:
             self.lineEditPruefung()
 
