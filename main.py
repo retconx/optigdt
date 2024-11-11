@@ -1504,6 +1504,8 @@ class MainWindow(QMainWindow):
             erkennungstext = ""
             erkennungsspalte = 0
             ergebnisspalte = 0
+            eindeutigkeitErzwingen = True
+            ntesVorkommen = 1
             testIdent = ""
             testBezeichnung = ""
             testEinheit = ""
@@ -1515,16 +1517,20 @@ class MainWindow(QMainWindow):
                         erkennungstext = str(optimierungElement.find("erkennungstext").text) # type:ignore
                         erkennungsspalte = int(optimierungElement.find("erkennungsspalte").text) # type:ignore
                         ergebnisspalte = int(optimierungElement.find("ergebnisspalte").text) # type:ignore
+                        if optimierungElement.find("eindeutigkeiterzwingen") != None: # ab 2.10.1
+                            eindeutigkeitErzwingen = optimierungElement.find("eindeutigkeiterzwingen").text == "True" # type:ignore
+                        if optimierungElement.find("ntesvorkommen") != None: # ab 2.10.1
+                            ntesVorkommen = int(optimierungElement.find("ntesvorkommen").text) # type:ignore
                         testIdent = str(optimierungElement.find("testIdent").text) # type:ignore
                         testBezeichnung = str(optimierungElement.find("testBezeichnung").text) # type:ignore
                         testEinheit = str(optimierungElement.find("testEinheit").text) # type:ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
                 if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
-                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOriginal, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
+                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOriginal, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
                     if do.exec() == 1:
                         self.templateRootDefinieren()
-                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
+                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.lineEditNtesVorkommen.text()), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
                         if optimierungsId == "": # Neue zeile
                             self.templateRootElement.append(optimierungElement.getXml())
                         else: # Zeile bearbeiten
@@ -1532,7 +1538,7 @@ class MainWindow(QMainWindow):
                         try:
                             exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                             if len(exceptions) == 0:
-                                self.setStatusMessage("Test geändert")
+                                self.setStatusMessage("Test aus 6228 erstellt")
                             else:
                                 exceptionsListe = "\n-".join(exceptions)
                                 class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))

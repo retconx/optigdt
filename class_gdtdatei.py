@@ -229,7 +229,7 @@ class GdtDatei():
 
     def get6228s(self, trennRegexPattern:str):
         """
-        Gibt eine Liste aller 6228-Zeilen zurück
+        Gibt eine Liste aller 6228-Zeilen zurück, wobei die 6228-Zeilen als Liste gesplitter Abschnitte zurückgegeben werden
         Parameter:
             trennRegexPattern: Reglulärer Ausdruck, der die Trennung zwischen den Befundspalten definiert    
         Return:
@@ -479,7 +479,7 @@ class GdtDatei():
                 raise GdtFehlerException("Zu löschenden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
         else:
             raise GdtFehlerException("Löschen des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
-    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, testbezeichnung:str, testeinheit:str, testident:str):
+    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen: int, testbezeichnung:str, testeinheit:str, testident:str):
         """
         Erzeugt einen Test aus einem 6228-Befundtext
         Parameter:
@@ -487,6 +487,8 @@ class GdtDatei():
             erkennungstext:str 
             erkennungsspalte:int
             ergebnisspalte:int (8420 im erzeugten Test)
+            eindeutigkeitErzwingen:bool
+            ntesVorkommen:int
             testbezeichnung:str (8411 im erzeugten Test)
             testeinheit:str (8421 im erzeugten Test)
             testident:str (8410 im erzeugten Test)    
@@ -496,13 +498,16 @@ class GdtDatei():
         alle6228s = self.get6228s(trennRegexPattern)
         neuerTest = Test(testident)
         erkennungstextGefunden = False
+        gefundenN = 0
         for inhalt6228 in alle6228s:
             if erkennungsspalte < len(inhalt6228) and inhalt6228[erkennungsspalte] == erkennungstext:
                 erkennungstextGefunden = True
-                neuerTest.setZeile("8411", testbezeichnung)
-                neuerTest.setZeile("8420", inhalt6228[ergebnisspalte])
-                neuerTest.setZeile("8421", testeinheit)
-                break
+                gefundenN += 1
+                if gefundenN == ntesVorkommen:
+                    neuerTest.setZeile("8411", testbezeichnung)
+                    neuerTest.setZeile("8420", inhalt6228[ergebnisspalte])
+                    neuerTest.setZeile("8421", testeinheit)
+                    break
         if not erkennungstextGefunden:
             raise GdtFehlerException("6228-Erkennungstext " + erkennungstext + " zur Umwandlung in Test nicht gefunden")
         return neuerTest
@@ -636,11 +641,17 @@ class GdtDatei():
                     erkennungstext = str(optimierungElement.find("erkennungstext").text) # type: ignore
                     erkennungsspalte = int(str(optimierungElement.find("erkennungsspalte").text)) # type: ignore
                     ergebnisspalte = int(str(optimierungElement.find("ergebnisspalte").text)) # type: ignore
+                    eindeutigkeitErzwingen = True
+                    if optimierungElement.find("eindeutigkeiterzwingen") != None: # ab 2.10.1
+                        eindeutigkeitErzwingen = optimierungElement.find("eindeutigkeiterzwingen").text == "True" # type:ignore
+                    ntesVorkommen = 1
+                    if optimierungElement.find("ntesvorkommen") != None: # ab 2.10.1
+                        ntesVorkommen = int(optimierungElement.find("ntesvorkommen").text) # type:ignore
                     testident = str(optimierungElement.find("testIdent").text) # type: ignore
                     testbezeichnung = str(optimierungElement.find("testBezeichnung").text) # type: ignore
                     testeinheit = str(optimierungElement.find("testEinheit").text) # type: ignore
                     try:
-                        neuerTest = self.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, testbezeichnung, testeinheit, testident)
+                        neuerTest = self.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testbezeichnung, testeinheit, testident)
                         testZeilen = neuerTest.getTestzeilen()
                         for zeile in testZeilen:
                             if vorschau:

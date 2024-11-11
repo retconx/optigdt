@@ -212,12 +212,14 @@ class OptiChangeTest(Optimierung):
         return optimierungElement
     
 class OptiTestAus6228(Optimierung):
-    def __init__(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, testIdent:str, testBezeichnung:str, testEinheit:str, bisherigesRoot:ElementTree.Element):
+    def __init__(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, bisherigesRoot:ElementTree.Element):
         super().__init__("testAus6228", bisherigesRoot)
         self.trenRegexPattern = trennRegexPattern
         self.erkennungstext = erkennungstext
         self.erkennungsspalte = erkennungsspalte
         self.ergebnisspalte = ergebnisspalte
+        self.eindeutigkeitErzwingen = eindeutigkeitErzwingen
+        self.ntesVorkommen = ntesVorkommen
         self.testIdent = testIdent
         self.testBezeichnung = testBezeichnung
         self.testEinheit = testEinheit
@@ -239,6 +241,12 @@ class OptiTestAus6228(Optimierung):
         ergebnisspalteElement = ElementTree.Element("ergebnisspalte")
         ergebnisspalteElement.text = str(self.ergebnisspalte)
         optimierungElement.append(ergebnisspalteElement)
+        eindeutigkeiterzwingenElement = ElementTree.Element("eindeutigkeiterzwingen")
+        eindeutigkeiterzwingenElement.text = str(self.eindeutigkeitErzwingen)
+        optimierungElement.append(eindeutigkeiterzwingenElement)
+        ntesVorkommenElement = ElementTree.Element("ntesvorkommen")
+        ntesVorkommenElement.text = str(self.ntesVorkommen)
+        optimierungElement.append(ntesVorkommenElement)
         testIdentElement = ElementTree.Element("testIdent")
         testIdentElement.text = self.testIdent
         optimierungElement.append(testIdentElement)
