@@ -1199,7 +1199,7 @@ class MainWindow(QMainWindow):
                 fd.setLabelText(QFileDialog.DialogLabel.Reject, "Abbrechen")
                 if fd.exec() == 1:
                     speichernOk = True
-                    if os.path.exists(pfad):
+                    if os.path.exists(fd.selectedFiles()[0]):
                         mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Das Template \"" + self.lineEditName.text().strip() + "\" existiert bereits.\nSoll es überschrieben werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                         mb.setDefaultButton(QMessageBox.StandardButton.No)
                         mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
@@ -1222,7 +1222,7 @@ class MainWindow(QMainWindow):
                         et = ElementTree.ElementTree(self.templateRootElement)
                         ElementTree.indent(et)
                         try:
-                            et.write(fd.selectedFiles()[0], "utf_8", True)
+                            et.write(fd.selectedFiles()[0], "utf-8", True)
                             self.ungesichertesTemplate = False
                         except Exception as e:
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Sepichern des Templates: " + str(e), QMessageBox.StandardButton.Ok)
@@ -1259,7 +1259,7 @@ class MainWindow(QMainWindow):
                 et = ElementTree.ElementTree(rootElement)
                 ElementTree.indent(et)
                 try:
-                    et.write(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"), "utf_8", True)
+                    et.write(os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt"), "utf-8", True)
                     logger.logger.info("Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + " geändert")
                 except Exception as e:
                     mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Speichern der Info-Attribute von Template " + os.path.join(self.standardTemplateVerzeichnis, dg.lineEditName[i].text() + ".ogt") + ": " + str(e), QMessageBox.StandardButton.Ok)
@@ -1515,6 +1515,8 @@ class MainWindow(QMainWindow):
                     if str(optimierungElement.get("id")) == optimierungsId:
                         trennRegexPattern = str(optimierungElement.find("trennRegexPattern").text) # type:ignore
                         erkennungstext = str(optimierungElement.find("erkennungstext").text) # type:ignore
+                        if erkennungstext == "None":
+                            erkennungstext = ""
                         erkennungsspalte = int(optimierungElement.find("erkennungsspalte").text) # type:ignore
                         ergebnisspalte = int(optimierungElement.find("ergebnisspalte").text) # type:ignore
                         if optimierungElement.find("eindeutigkeiterzwingen") != None: # ab 2.10.1
@@ -1524,6 +1526,8 @@ class MainWindow(QMainWindow):
                         testIdent = str(optimierungElement.find("testIdent").text) # type:ignore
                         testBezeichnung = str(optimierungElement.find("testBezeichnung").text) # type:ignore
                         testEinheit = str(optimierungElement.find("testEinheit").text) # type:ignore
+                        if testEinheit == "None":
+                            testEinheit = ""
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
                 if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:

@@ -639,6 +639,8 @@ class GdtDatei():
                 elif typ == "testAus6228":
                     trennRegexPattern = str(optimierungElement.find("trennRegexPattern").text) # type: ignore
                     erkennungstext = str(optimierungElement.find("erkennungstext").text) # type: ignore
+                    if erkennungstext == "None":
+                        erkennungstext = ""
                     erkennungsspalte = int(str(optimierungElement.find("erkennungsspalte").text)) # type: ignore
                     ergebnisspalte = int(str(optimierungElement.find("ergebnisspalte").text)) # type: ignore
                     eindeutigkeitErzwingen = True
@@ -650,6 +652,8 @@ class GdtDatei():
                     testident = str(optimierungElement.find("testIdent").text) # type: ignore
                     testbezeichnung = str(optimierungElement.find("testBezeichnung").text) # type: ignore
                     testeinheit = str(optimierungElement.find("testEinheit").text) # type: ignore
+                    if testeinheit == "None":
+                        testeinheit = ""
                     try:
                         neuerTest = self.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testbezeichnung, testeinheit, testident)
                         testZeilen = neuerTest.getTestzeilen()

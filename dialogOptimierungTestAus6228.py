@@ -68,7 +68,7 @@ class OptimierungTestAus6228(QDialog):
             self.lineEdit6228Spalten.append(QLineEdit())
             self.lineEdit6228Spalten[i].setFont(self.fontNormal)
             self.lineEdit6228Spalten[i].setReadOnly(True)
-        labelTrennzeichen = QLabel("Trennzeichen")
+        labelTrennzeichen = QLabel("Trennzeichen (regulärer Ausdruck)")
         labelTrennzeichen.setFont(self.fontNormal)
         self.lineEditTrennRegexPattern = QLineEdit(self.trennRegexPattern)
         self.lineEditTrennRegexPattern.setFont(self.fontNormal)
@@ -149,6 +149,7 @@ class OptimierungTestAus6228(QDialog):
         self.setErkennungEindeutig(False)
         self.comboBox6228.currentTextChanged.connect(self.lineEditPruefung) # type: ignore
         self.comboBox6228.setCurrentIndex(self.ntesVorkommenIndexInCombobox(self.ntesVorkommen))
+        self.lineEditPruefung()
     
     def ntesVorkommenIndexInCombobox(self, ntesVorkommen:int):
         index = 0
@@ -197,10 +198,12 @@ class OptimierungTestAus6228(QDialog):
                 self.lineEdit6228Spalten[i].setText("")
         gefundene6228s = self.getGefundene6228s(regexPattern)
         n = 0
-        for i in range(self.comboBox6228.currentIndex() + 1):
-            if re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text():
-                n += 1
-        self.labelNtesVorkommen.setText(str(n) + ". Vorkommen innerhalb der GDT-Datei")
+        if self.lineEditErkennungstext.text() in self.comboBox6228.currentText().replace("\u2423", " "):
+            for i in range(self.comboBox6228.currentIndex() + 1):
+                if re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text():
+                    
+                    n += 1
+        self.setLabelNtesVorkommen(n)
         self.setErkennungEindeutig(gefundene6228s == 1 and re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text())
         if self.lineEditErkennungsspalte.text() != "":
             self.setErkennungshintergrund(int(self.lineEditErkennungsspalte.text()))
@@ -216,9 +219,17 @@ class OptimierungTestAus6228(QDialog):
 
     def checkBoxEindeutigkeitErzwingenClicked(self, checked):
         if checked:
-            self.labelNtesVorkommen.setText("1. Vorkommen innerhalb der GDT-Datei")
+            self.labelNtesVorkommen.setText("")
         else:
             self.lineEditPruefung()
+
+    def setLabelNtesVorkommen(self, n:int):
+        if n == 0:
+            self.labelNtesVorkommen.setText("Kein Vorkommen in gewählter 6228-Zeile")
+        elif n == -1:
+            self.labelNtesVorkommen.setText("")
+        else:
+            self.labelNtesVorkommen.setText(str(n) + ". Vorkommen innerhalb der GDT-Datei")
 
     def accept(self):
         fehler = []
