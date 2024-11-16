@@ -1,4 +1,5 @@
 import re
+import xml.etree.ElementTree as ElementTree
 import  class_gdtdatei
 from PySide6.QtGui import Qt, QFont, QAction
 from PySide6.QtWidgets import (
@@ -25,12 +26,35 @@ class Testuebernahme:
         self.platzhalterFeldkennung = platzhalterFeldkennung
 
 class OptimierungBefundAusTest(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str, templateRoot:ElementTree.Element):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.maxeindeutigkeitskriterien = maxeindeutigkeitskriterien
         self.testuebernahmen = testuebernahmen # Liste von Testuebernmahmen
         self.befundzeile = befundzeile
+        # self.hinzugefuegteTestAus6228Zeilen = 0
+        # for optimierungElement in templateRoot:
+        #     if str(optimierungElement.get("typ")) == "testAus6228":
+        #         trennRegexPattern = str(optimierungElement.findtext("trennRegexPattern"))
+        #         erkennungstext = str(optimierungElement.findtext("erkennungstext"))
+        #         if erkennungstext == "None":
+        #             erkennungstext = ""
+        #         erkennungsspalte = int(str(optimierungElement.findtext("erkennungsspalte")))
+        #         ergebnisspalte = int(str(optimierungElement.findtext("ergebnisspalte")))
+        #         eindeutigkeitErzwingen = str(optimierungElement.findtext("eindeutigkeiterzwingen")) == "True"
+        #         ntesVorkommen = int(str(optimierungElement.findtext("ntesvorkommen")))
+        #         testIdent = str(optimierungElement.findtext("testIdent"))
+        #         testBezeichnung = str(optimierungElement.findtext("testBezeichnung"))
+        #         testEinheit = str(optimierungElement.findtext("testEinheit"))
+        #         if testEinheit == "None":
+        #             testEinheit = ""
+        #         testAus6228Befund = self.gdtDateiOriginal.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testBezeichnung, testEinheit, testIdent)
+        #         self.gdtDateiOriginal.addZeile("8410", testAus6228Befund.getInhalt("8410"))
+        #         self.gdtDateiOriginal.addZeile("8411", testAus6228Befund.getInhalt("8411"))
+        #         self.gdtDateiOriginal.addZeile("8420", testAus6228Befund.getInhalt("8420"))
+        #         self.gdtDateiOriginal.addZeile("8421", testAus6228Befund.getInhalt("8421"))
+        #         self.hinzugefuegteTestAus6228Zeilen += 4
+
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -102,7 +126,10 @@ class OptimierungBefundAusTest(QDialog):
         self.comboBoxTextVariable.width
         i = 0
         for zeile in gdtDateiOriginal.getZeilen():
-            self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:])
+            if re.match(r"^.+__\d{4}__$", zeile):
+                self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:-8])
+            else:
+                self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:])
             i += 1
         dialogLayoutHTextVariable.addWidget(labelTextVariable)
         dialogLayoutHTextVariable.addWidget(self.comboBoxTextVariable)
@@ -327,7 +354,7 @@ class OptimierungBefundAusTest(QDialog):
 
 
     def pushButtonUebernahmeEinfuegenClicked(self):
-        if not self.listWidgetTestuebernahmen.currentItem().text():
+        if len(self.listWidgetTestuebernahmen.selectedItems()) == 0:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine Testübernahme ausgewählt.", QMessageBox.StandardButton.Ok)
             mb.exec()
         else:

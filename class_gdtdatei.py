@@ -75,10 +75,13 @@ class Test():
         return self.testzeilen
         
     def __eq__(self, other):
+        tempTest = other
+        if re.match(r"^.+__\d{4}__$", tempTest.testzeilen["8410"]) != None: # Test aus 6228-Zeile
+            tempTest.setZeile("8410", tempTest.testzeilen["8410"][0:-8])
         gleich = True
         for fk in self.eindeutigkeitsFeldkennungen:
-            if fk in self.testzeilen and fk in other.testzeilen:
-                if self.testzeilen[fk] != other.testzeilen[fk]:
+            if fk in self.testzeilen and fk in tempTest.testzeilen:
+                if self.testzeilen[fk] != tempTest.testzeilen[fk]:
                     gleich = False
                     break
             else:
@@ -176,6 +179,9 @@ class GdtDatei():
         elif zeichensatz == GdtZeichensatz.ANSI_CP1252:
             self.enc = "cp1252"
 
+    def getZeichensatz(self):
+        return self.zeichensatz
+
     def getZeichensatzAlsPythonString(self):
         return self.enc
     
@@ -226,6 +232,39 @@ class GdtDatei():
                     i -= 1 # Damit dieser Test nicht übersprungen wird
             i += 1
         return tests
+    
+    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen: int, testbezeichnung:str, testeinheit:str, testident:str):
+        """
+        Erzeugt einen Test aus einem 6228-Befundtext
+        Parameter:
+            trennRegexPattern:str Reglulärer Ausdruck, der die Trennung zwischen den Befundspalten definiert 
+            erkennungstext:str 
+            erkennungsspalte:int
+            ergebnisspalte:int (8420 im erzeugten Test)
+            eindeutigkeitErzwingen:bool
+            ntesVorkommen:int
+            testbezeichnung:str (8411 im erzeugten Test)
+            testeinheit:str (8421 im erzeugten Test)
+            testident:str (8410 im erzeugten Test)    
+        Return:
+            Test:Test  
+        """
+        alle6228s = self.get6228s(trennRegexPattern)
+        neuerTest = Test(testident)
+        erkennungstextGefunden = False
+        gefundenN = 0
+        for inhalt6228 in alle6228s:
+            if erkennungsspalte < len(inhalt6228) and inhalt6228[erkennungsspalte] == erkennungstext:
+                erkennungstextGefunden = True
+                gefundenN += 1
+                if gefundenN == ntesVorkommen:
+                    neuerTest.setZeile("8411", testbezeichnung)
+                    neuerTest.setZeile("8420", inhalt6228[ergebnisspalte])
+                    neuerTest.setZeile("8421", testeinheit)
+                    break
+        if not erkennungstextGefunden:
+            raise GdtFehlerException("6228-Erkennungstext " + erkennungstext + " zur Umwandlung in Test nicht gefunden")
+        return neuerTest
 
     def get6228s(self, trennRegexPattern:str):
         """
@@ -479,38 +518,6 @@ class GdtDatei():
                 raise GdtFehlerException("Zu löschenden Test mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht gefunden")
         else:
             raise GdtFehlerException("Löschen des Tests mit der ID " + zuAendernderTest.getInhalt("8410") + " nicht möglich, da GDT-Datei keine gültigen Tests enthält (keine Feldkennung 8410)")
-    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen: int, testbezeichnung:str, testeinheit:str, testident:str):
-        """
-        Erzeugt einen Test aus einem 6228-Befundtext
-        Parameter:
-            trennRegexPattern:str Reglulärer Ausdruck, der die Trennung zwischen den Befundspalten definiert 
-            erkennungstext:str 
-            erkennungsspalte:int
-            ergebnisspalte:int (8420 im erzeugten Test)
-            eindeutigkeitErzwingen:bool
-            ntesVorkommen:int
-            testbezeichnung:str (8411 im erzeugten Test)
-            testeinheit:str (8421 im erzeugten Test)
-            testident:str (8410 im erzeugten Test)    
-        Return:
-            Test:Test  
-        """
-        alle6228s = self.get6228s(trennRegexPattern)
-        neuerTest = Test(testident)
-        erkennungstextGefunden = False
-        gefundenN = 0
-        for inhalt6228 in alle6228s:
-            if erkennungsspalte < len(inhalt6228) and inhalt6228[erkennungsspalte] == erkennungstext:
-                erkennungstextGefunden = True
-                gefundenN += 1
-                if gefundenN == ntesVorkommen:
-                    neuerTest.setZeile("8411", testbezeichnung)
-                    neuerTest.setZeile("8420", inhalt6228[ergebnisspalte])
-                    neuerTest.setZeile("8421", testeinheit)
-                    break
-        if not erkennungstextGefunden:
-            raise GdtFehlerException("6228-Erkennungstext " + erkennungstext + " zur Umwandlung in Test nicht gefunden")
-        return neuerTest
 
     def getBefundAusTest(self, test:Test, befund:str):
         """
@@ -683,7 +690,10 @@ class GdtDatei():
                         testGefunden = False
                         for pruefTest in self.getTests():
                             if test == pruefTest:
-                                variablenInhalt[name] = pruefTest.getInhalt(feldkennung)
+                                if re.match(r"^.+__\d{4}__$", pruefTest.getInhalt(feldkennung)) != None:
+                                    variablenInhalt[name] = pruefTest.getInhalt(feldkennung)[0:-8]
+                                else:
+                                    variablenInhalt[name] = pruefTest.getInhalt(feldkennung)
                                 testGefunden = True
                                 break
                         if not testGefunden:
@@ -853,5 +863,4 @@ class GdtDatei():
         gdtDateiname = str(root.get("gdtDateiname"))
         exportverzeichnis = str(root.get("exportverzeichnis"))
         immerGdtAlsExportDateiendung = root.get("immergdtalsexportdateiendung") == "True"
-        
         return kennfeld, gdtIdGeraet, gdtDateiname, exportverzeichnis, immerGdtAlsExportDateiendung

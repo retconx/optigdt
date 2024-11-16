@@ -104,14 +104,14 @@ class MainWindow(QMainWindow):
     def closeEvent(self, e):
         if self.ungesichertesTemplate:
             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Beenden des Programms gehen derzeit nicht gesicherte Daten verloren.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.No:
                 e.ignore()
         if self.ueberwachungAktiv:
             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die GDT-Verzeichnisübrewachung ist aktiv.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.No:
@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
         self.pushButtonZeileAendern = QPushButton("Zeile ändern")
         self.pushButtonZeileAendern.setFont(self.fontNormal)
         self.pushButtonZeileAendern.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) 
-        self.pushButtonZeileEntfernen = QPushButton("Zeile entfernen")
+        self.pushButtonZeileEntfernen = QPushButton("Zeile(n) entfernen")
         self.pushButtonZeileEntfernen.setFont(self.fontNormal)
         self.pushButtonZeileEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) 
         self.pushButtonTestAendern = QPushButton("Test ändern")
@@ -558,7 +558,7 @@ class MainWindow(QMainWindow):
         optimierenMenuZeileHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileHinzufuegen(checked, optimierungsId))
         optimierenMenuZeileAendernAction = QAction("Zeile ändern", self)
         optimierenMenuZeileAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileAendern(checked, optimierungsId)) 
-        optimierenMenuZeileEntfernenAction = QAction("Zeile entfernen", self)
+        optimierenMenuZeileEntfernenAction = QAction("Zeile(n) entfernen", self)
         optimierenMenuZeileEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuZeileEntfernen(checked, optimierungsId)) 
         optimierenMenuTestAendernAction = QAction("Test ändern", self)
         optimierenMenuTestAendernAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAendern(checked, optimierungsId)) 
@@ -977,7 +977,7 @@ class MainWindow(QMainWindow):
         if referenzpfad == "":
             if self.ungesichertesTemplate:
                 mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Öffnen einer GDT-Datei gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-                mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+                mb.setDefaultButton(QMessageBox.StandardButton.No)
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.No:
@@ -1045,8 +1045,8 @@ class MainWindow(QMainWindow):
     def gdtDateiMenuSchliessen(self):
         schliessenOk = True
         if self.ungesichertesTemplate:
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Schließen defr GDT-Datei gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Schließen der GDT-Datei gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.No:
@@ -1070,7 +1070,7 @@ class MainWindow(QMainWindow):
         ladenOk = True
         if self.ungesichertesTemplate:
             mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Laden eines Templates gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
             if mb.exec() == QMessageBox.StandardButton.No:
@@ -1587,7 +1587,7 @@ class MainWindow(QMainWindow):
                         befundzeile = str(befundElement.text) # type: ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungBefundAusTest.OptimierungBefundAusTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, testuebernahmen, befundzeile)
+                do = dialogOptimierungBefundAusTest.OptimierungBefundAusTest(self.gdtDateiOptimiert, self.maxeindeutigkeitskriterien, testuebernahmen, befundzeile, self.templateRootElement)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
                     optimierungElement = class_optimierung.OptiBefundAusTest(do.testuebernahmen, do.lineEditBefundzeile.text(), self.templateRootElement)
@@ -1756,22 +1756,45 @@ class MainWindow(QMainWindow):
         mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
         mb.button(QMessageBox.StandardButton.No).setText("Nein")
         if mb.exec() == QMessageBox.StandardButton.Yes:
-            try:
-                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, optimierungsId)
-                self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
-                self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
-                self.setStatusMessage("Optimierung entfernt")
-                self.ungesichertesTemplate = True
-            except class_gdtdatei.GdtFehlerException as e:
-                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entfernen der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
-                mb.exec()
+            optimierungEntfernen = True
+            testIdentWirdVerwendet = False
+            verwendeteOptimierungsId = ""
+            verwendeterBefundtext = ""
+            if class_optimierung.Optimierung.getTypVonId(self.templateRootElement, optimierungsId) == "testAus6228":
+                testIdent = str(self.templateRootElement.findtext("optimierung[@id='" + optimierungsId + "']/testIdent"))
+                for optimierungElement in self.templateRootElement.findall("optimierung[@typ='befundAusTest']"):
+                    verwendeteOptimierungsId = str(optimierungElement.get("id"))
+                    verwendeterBefundtext = str(optimierungElement.findtext("befund"))
+                    for kriteriumElement in optimierungElement.findall("test/eindeutigkeitskriterien/kriterium"):
+                        if testIdent == str(kriteriumElement.text):
+                            testIdentWirdVerwendet = True
+                            break
+                if testIdentWirdVerwendet:
+                    mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Der Test-Ident \"" + testIdent + "\" wird als Eindeutigkeitskriterium in einem Befundtext verwendet. Sollen die ausgewählte Optimierung dennoch entfernt werden? Der davon abhängige Befundtext \"" + verwendeterBefundtext + "\" wird dadurch ebenfalls entfernt.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    mb.setDefaultButton(QMessageBox.StandardButton.No)
+                    mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                    mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                    if mb.exec() == QMessageBox.StandardButton.No:
+                        optimierungEntfernen = False
+            if optimierungEntfernen:
+                try:
+                    class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, optimierungsId)
+                    if testIdentWirdVerwendet:
+                        class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, verwendeteOptimierungsId)
+                    self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                    self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                    self.setStatusMessage("Optimierung entfernt")
+                    self.ungesichertesTemplate = True
+                except class_gdtdatei.GdtFehlerException as e:
+                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entfernen der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                    mb.exec()
 
     def pushButtonUeberwachungStartenClicked(self, checked):
         if self.addOnsFreigeschaltet:
             fortfahren = True
             if self.ungesichertesTemplate:
                 mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Starten der Verzeichnisübrerwachung gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-                mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+                mb.setDefaultButton(QMessageBox.StandardButton.No)
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                 mb.button(QMessageBox.StandardButton.No).setText("Nein")
                 if mb.exec() == QMessageBox.StandardButton.No:

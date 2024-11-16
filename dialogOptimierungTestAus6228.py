@@ -124,6 +124,7 @@ class OptimierungTestAus6228(QDialog):
         labelTestIdent.setFont(self.fontNormal)
         self.lineEditTestIdent = QLineEdit(self.testIdent)
         self.lineEditTestIdent.setFont(self.fontNormal)
+        self.lineEditTestIdent.setEnabled(self.testIdent == "")
         labelTestBezeichnung = QLabel("Test-Bezeichnung")
         labelTestBezeichnung.setFont(self.fontNormal)
         self.lineEditTestBezeichnung = QLineEdit(str(self.testBezeichnung))
@@ -235,6 +236,8 @@ class OptimierungTestAus6228(QDialog):
         fehler = []
         if self.checkBoxEindeutigkeitErzwingen.isChecked() and not self.erkennungIsEindeutig():
             fehler.append("6228-Erkennung ist nicht eindeutig.")
+        if self.labelNtesVorkommen.text().startswith("Kein"):
+            fehler.append("Der Erkennungstext kommt in der ausgewählten 6228-Zeile nicht vor.")
         if self.lineEditErkennungsspalte.text() == self.lineEditErgebnisspalte.text():
             fehler.append("Erkennungsspalte und Ergebnisspalte dürfen nicht gleich sein.")
         if self.lineEditErgebnisspalte.text() == "":
