@@ -387,6 +387,9 @@ class MainWindow(QMainWindow):
         self.optimierungBearbeitenAction = QAction("Optimierung bearbeiten", self)
         self.optimierungBearbeitenAction.triggered.connect(self.optimierungBearbeiten) # type:ignore
         self.treeWidgetOptimiert.addAction(self.optimierungBearbeitenAction)
+        self.optimierungDuplizierenAction = QAction("Optimierung duplizieren", self)
+        self.optimierungDuplizierenAction.triggered.connect(self.optimierungDuplizieren) # type:ignore
+        self.treeWidgetOptimiert.addAction(self.optimierungDuplizierenAction)
         self.optimierungEntfernenAction = QAction("Optimierung entfernen", self)
         self.optimierungEntfernenAction.triggered.connect(self.optimierungEntfernen) # type:ignore
         self.treeWidgetOptimiert.addAction(self.optimierungEntfernenAction)
@@ -411,7 +414,7 @@ class MainWindow(QMainWindow):
         self.pushButtonTestEntfernen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) 
         self.pushButtonTestAus6228 = QPushButton("Test aus 6228-Zeile")
         self.pushButtonTestAus6228.setFont(self.fontNormal)
-        self.pushButtonTestAus6228.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId))
+        self.pushButtonTestAus6228.clicked.connect(lambda checked=False, duplizieren=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, duplizieren, optimierungsId))
         self.pushButtonBefundAusTest = QPushButton("Befund aus Test")
         self.pushButtonBefundAusTest.setFont(self.fontNormal)
         self.pushButtonBefundAusTest.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId))
@@ -526,6 +529,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
         
         self.optimierungBearbeitenAction.setEnabled(False)
+        self.optimierungDuplizierenAction.setEnabled(False)
         self.optimierungEntfernenAction.setEnabled(False)
 
         logger.logger.info("Eingabeformular aufgebaut")
@@ -565,7 +569,7 @@ class MainWindow(QMainWindow):
         optimierenMenuTestEntfernenAction = QAction("Test entfernen", self)
         optimierenMenuTestEntfernenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestEntfernen(checked, optimierungsId)) 
         optimierenMenuTestAus6228Action = QAction("Test aus 6228-Zeile", self)
-        optimierenMenuTestAus6228Action.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, optimierungsId)) 
+        optimierenMenuTestAus6228Action.triggered.connect(lambda checked=False, duplizieren=False, optimierungsId="": self.optimierenMenuTestAus6228(checked, duplizieren, optimierungsId)) 
         optimierenMenuBefundAusTestAction = QAction("Befundzeile aus Test(s)", self)
         optimierenMenuBefundAusTestAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuBefundAusTest(checked, optimierungsId))
         optimierenMenuInhalteZusammenfuehrenAction = QAction("Inhalte zusammenführen", self)
@@ -721,6 +725,9 @@ class MainWindow(QMainWindow):
             # Contextmenus (de)aktivieren
             self.optimierungBearbeitenAction.setEnabled(current.text(0).strip() in self.optimierungsIds)
             self.optimierungEntfernenAction.setEnabled(current.text(0).strip() in self.optimierungsIds)
+            if current.text(0).strip() in self.optimierungsIds:
+                optimierungstyp = class_optimierung.Optimierung.getTypVonId(self.templateRootElement, self.optimierungsIds[current.text(0).strip()])
+                self.optimierungDuplizierenAction.setEnabled(optimierungstyp == "testAus6228")
             treeWidget = current.treeWidget()
             # Farbiger Hintergrund für Tests
             for index in range(treeWidget.topLevelItemCount()):
@@ -752,6 +759,7 @@ class MainWindow(QMainWindow):
                             self.setTreeWidgetZeileHintergrund(treeWidget, i + ersteTestItemNummer, testauswahlHintergrund)
         else:
             self.optimierungBearbeitenAction.setEnabled(False)
+            self.optimierungDuplizierenAction.setEnabled(False)
             self.optimierungEntfernenAction.setEnabled(False)
 
     def lineEditTemplateInfoChanged(self):
@@ -1498,7 +1506,7 @@ class MainWindow(QMainWindow):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
             mb.exec()
 
-    def optimierenMenuTestAus6228(self, checked, optimierungsId:str=""):
+    def optimierenMenuTestAus6228(self, checked, duplizieren:bool, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
             trennRegexPattern = ""
             erkennungstext = ""
@@ -1531,11 +1539,11 @@ class MainWindow(QMainWindow):
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
                 if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
-                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOriginal, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
+                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
                     if do.exec() == 1:
                         self.templateRootDefinieren()
                         optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.labelNtesVorkommen.text().split(".")[0]), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
-                        if optimierungsId == "": # Neue zeile
+                        if optimierungsId == "" or duplizieren: # Neue zeile
                             self.templateRootElement.append(optimierungElement.getXml())
                         else: # Zeile bearbeiten
                             class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
@@ -1737,7 +1745,7 @@ class MainWindow(QMainWindow):
             elif optimierungstyp == "deleteTest":
                 self.optimierenMenuTestEntfernen(False, optimierungsId)
             elif optimierungstyp == "testAus6228":
-                self.optimierenMenuTestAus6228(False, optimierungsId)
+                self.optimierenMenuTestAus6228(False, False, optimierungsId)
             elif optimierungstyp == "befundAusTest":
                 self.optimierenMenuBefundAusTest(False, optimierungsId)
             elif optimierungstyp == "concatInhalte":
@@ -1748,6 +1756,34 @@ class MainWindow(QMainWindow):
         except class_gdtdatei.GdtFehlerException as e:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Bebrbeiten der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
             mb.exec()
+
+    def optimierungDuplizieren(self):
+        try:
+            optimierungsId = self.optimierungsIds[self.treeWidgetOptimiert.currentItem().text(0).strip()]
+            optimierungstyp = class_optimierung.Optimierung.getTypVonId(self.templateRootElement, optimierungsId)
+            if optimierungstyp == "addZeile":
+                self.optimierenMenuZeileHinzufuegen(False, optimierungsId)
+            elif optimierungstyp == "changeZeile":
+                self.optimierenMenuZeileAendern(False, optimierungsId)
+            elif optimierungstyp == "deleteZeile":
+                self.optimierenMenuZeileEntfernen(False, optimierungsId)
+            elif optimierungstyp == "changeTest":
+                self.optimierenMenuTestAendern(False, optimierungsId)
+            elif optimierungstyp == "deleteTest":
+                self.optimierenMenuTestEntfernen(False, optimierungsId)
+            elif optimierungstyp == "testAus6228":
+                self.optimierenMenuTestAus6228(False, True, optimierungsId)
+            elif optimierungstyp == "befundAusTest":
+                self.optimierenMenuBefundAusTest(False, optimierungsId)
+            elif optimierungstyp == "concatInhalte":
+                self.optimierenMenuInhalteZusammenfuehren(False, optimierungsId)
+            elif optimierungstyp == "addPdf":
+                self.optimierenMenuPdfHinzufuegen(False, optimierungsId)
+            self.setStatusMessage("Optimierung bearbeitet")
+        except class_gdtdatei.GdtFehlerException as e:
+            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Bebrbeiten der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
+            mb.exec()
+
 
     def optimierungEntfernen(self):
         optimierungsId = self.optimierungsIds[self.treeWidgetOptimiert.currentItem().text(0).strip()]
@@ -1792,7 +1828,7 @@ class MainWindow(QMainWindow):
     def pushButtonUeberwachungStartenClicked(self, checked):
         if self.addOnsFreigeschaltet:
             fortfahren = True
-            if self.ungesichertesTemplate:
+            if self.ungesichertesTemplate and checked:
                 mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Beim Starten der Verzeichnisübrerwachung gehen derzeit nicht gesicherte Daten verloren.\nWollen Sie dennoch fortfahren?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                 mb.setDefaultButton(QMessageBox.StandardButton.No)
                 mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
@@ -1800,7 +1836,6 @@ class MainWindow(QMainWindow):
                 if mb.exec() == QMessageBox.StandardButton.No:
                     fortfahren = False
             if fortfahren:
-                self.ungesichertesTemplate = False
                 if self.importWorker == None:
                     logger.logger.info("Bisher kein ImportWorker instanziert")
                     self.importWorker = class_importWorker.ImportWorker(self.gdtImportVerzeichnisSekundaer)
@@ -1809,6 +1844,7 @@ class MainWindow(QMainWindow):
                     self.importWorker.signals.importWorkerRunning.connect(self.importWorkerRunning)
                     logger.logger.info("ImportWorker-Signale verbunden")
                 if checked:
+                    self.ungesichertesTemplate = False
                     logger.logger.info("Verzeichnungsüberwachungsbutton checked")
                     if os.path.exists(self.gdtImportVerzeichnis):
                         # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen

@@ -26,34 +26,12 @@ class Testuebernahme:
         self.platzhalterFeldkennung = platzhalterFeldkennung
 
 class OptimierungBefundAusTest(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str, templateRoot:ElementTree.Element):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str, templateRoot:ElementTree.Element):
         super().__init__()
-        self.gdtDateiOriginal = gdtDateiOriginal
+        self.gdtDateiOptimiert = gdtDateiOptimiert
         self.maxeindeutigkeitskriterien = maxeindeutigkeitskriterien
         self.testuebernahmen = testuebernahmen # Liste von Testuebernmahmen
         self.befundzeile = befundzeile
-        # self.hinzugefuegteTestAus6228Zeilen = 0
-        # for optimierungElement in templateRoot:
-        #     if str(optimierungElement.get("typ")) == "testAus6228":
-        #         trennRegexPattern = str(optimierungElement.findtext("trennRegexPattern"))
-        #         erkennungstext = str(optimierungElement.findtext("erkennungstext"))
-        #         if erkennungstext == "None":
-        #             erkennungstext = ""
-        #         erkennungsspalte = int(str(optimierungElement.findtext("erkennungsspalte")))
-        #         ergebnisspalte = int(str(optimierungElement.findtext("ergebnisspalte")))
-        #         eindeutigkeitErzwingen = str(optimierungElement.findtext("eindeutigkeiterzwingen")) == "True"
-        #         ntesVorkommen = int(str(optimierungElement.findtext("ntesvorkommen")))
-        #         testIdent = str(optimierungElement.findtext("testIdent"))
-        #         testBezeichnung = str(optimierungElement.findtext("testBezeichnung"))
-        #         testEinheit = str(optimierungElement.findtext("testEinheit"))
-        #         if testEinheit == "None":
-        #             testEinheit = ""
-        #         testAus6228Befund = self.gdtDateiOriginal.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testBezeichnung, testEinheit, testIdent)
-        #         self.gdtDateiOriginal.addZeile("8410", testAus6228Befund.getInhalt("8410"))
-        #         self.gdtDateiOriginal.addZeile("8411", testAus6228Befund.getInhalt("8411"))
-        #         self.gdtDateiOriginal.addZeile("8420", testAus6228Befund.getInhalt("8420"))
-        #         self.gdtDateiOriginal.addZeile("8421", testAus6228Befund.getInhalt("8421"))
-        #         self.hinzugefuegteTestAus6228Zeilen += 4
 
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
@@ -125,7 +103,7 @@ class OptimierungBefundAusTest(QDialog):
         self.comboBoxTextVariable.setFixedWidth(300)
         self.comboBoxTextVariable.width
         i = 0
-        for zeile in gdtDateiOriginal.getZeilen():
+        for zeile in gdtDateiOptimiert.getZeilen():
             if re.match(r"^.+__\d{4}__$", zeile):
                 self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:-8])
             else:
@@ -287,7 +265,7 @@ class OptimierungBefundAusTest(QDialog):
         for i in range(self.maxeindeutigkeitskriterien):
             feldkennung = self.lineEditFeldkennungen[i].text()
             if feldkennung != "":
-                kriterium = self.gdtDateiOriginal.replaceFkVariablen(self.lineEditKriterien[i].text())
+                kriterium = self.gdtDateiOptimiert.replaceFkVariablen(self.lineEditKriterien[i].text())
                 if re.match(reFeldkennung, feldkennung) != None:
                     try:
                         test.setZeile(feldkennung, kriterium)
@@ -299,7 +277,7 @@ class OptimierungBefundAusTest(QDialog):
         if unzulässigeFeldkennung == -1:
             test.setEindeutigkeitsFeldkennungen(eindeutigkeitsFeldkennungen)
             anzahlGefundeneTests = 0
-            for prueftest in self.gdtDateiOriginal.getTests():
+            for prueftest in self.gdtDateiOptimiert.getTests():
                 if test == prueftest:
                     anzahlGefundeneTests += 1
             listWidgetItemTexte = [self.listWidgetTestuebernahmen.item(i).text() for i in range(self.listWidgetTestuebernahmen.count())]

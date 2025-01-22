@@ -254,7 +254,8 @@ class GdtDatei():
         erkennungstextGefunden = False
         gefundenN = 0
         for inhalt6228 in alle6228s:
-            if erkennungsspalte < len(inhalt6228) and inhalt6228[erkennungsspalte] == erkennungstext:
+            print(erkennungsspalte, inhalt6228)
+            if erkennungsspalte < len(inhalt6228) and erkennungstext in inhalt6228[erkennungsspalte]:
                 erkennungstextGefunden = True
                 gefundenN += 1
                 if gefundenN == ntesVorkommen:

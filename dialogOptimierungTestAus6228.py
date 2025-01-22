@@ -17,9 +17,10 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungTestAus6228(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int):
         super().__init__()
-        self.gdtDateiOriginal = gdtDateiOriginal
+        self.gdtDateiOptimiert = gdtDateiOptimiert
+        self.duplizieren = duplizieren
         self.trennRegexPattern = trennRegexPattern
         if trennRegexPattern == "":
             self.trennRegexPattern = standard6228Trennzeichen
@@ -28,7 +29,10 @@ class OptimierungTestAus6228(QDialog):
         self.ergebnisspalte = ergebnisspalte
         self.eindeutigkeitErzwingen = eindeutigkeitErzwingen
         self.ntesVorkommen = ntesVorkommen
-        self.testIdent = testIdent
+        if duplizieren:
+            self.testIdent = ""
+        else:
+            self.testIdent = testIdent
         self.testBezeichnung = testBezeichnung
         self.testEinheit = testEinheit
         self.maxAnzahl6228Spalten = maxAnzahl6228Spalten
@@ -53,7 +57,7 @@ class OptimierungTestAus6228(QDialog):
         groupBox6228Erkennung.setLayout(dialogLayoutG)
         self.comboBox6228 = QComboBox()
         self.comboBox6228.setFont(self.fontNormal)
-        for zeile in self.gdtDateiOriginal.getZeilen():
+        for zeile in self.gdtDateiOptimiert.getZeilen():
             if zeile[3:7] == "6228":
                 self.comboBox6228.addItem(zeile[7:].replace(" ", "\u2423")) 
         label6228Zeile = QLabel("6228-Zeile:")
@@ -155,8 +159,8 @@ class OptimierungTestAus6228(QDialog):
     def ntesVorkommenIndexInCombobox(self, ntesVorkommen:int):
         index = 0
         n = 0
-        for inhalt6228 in self.gdtDateiOriginal.get6228s(self.trennRegexPattern):
-            if self.erkennungsspalte < len(inhalt6228) and inhalt6228[self.erkennungsspalte] == self.erkennungstext:
+        for inhalt6228 in self.gdtDateiOptimiert.get6228s(self.trennRegexPattern):
+            if self.erkennungsspalte < len(inhalt6228) and self.erkennungstext in inhalt6228[self.erkennungsspalte]:
                 n += 1
                 if n == ntesVorkommen:
                     break
@@ -199,13 +203,12 @@ class OptimierungTestAus6228(QDialog):
                 self.lineEdit6228Spalten[i].setText("")
         gefundene6228s = self.getGefundene6228s(regexPattern)
         n = 0
-        if self.lineEditErkennungstext.text() in self.comboBox6228.currentText().replace("\u2423", " "):
+        if self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in self.comboBox6228.currentText().replace("\u2423", " "):
             for i in range(self.comboBox6228.currentIndex() + 1):
-                if re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text():
-                    
+                if self.lineEditErkennungstext.text() in re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())]:
                     n += 1
         self.setLabelNtesVorkommen(n)
-        self.setErkennungEindeutig(gefundene6228s == 1 and re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text())
+        self.setErkennungEindeutig(gefundene6228s == 1 and self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())])
         if self.lineEditErkennungsspalte.text() != "":
             self.setErkennungshintergrund(int(self.lineEditErkennungsspalte.text()))
         if self.lineEditErgebnisspalte.text() != "":
@@ -213,8 +216,8 @@ class OptimierungTestAus6228(QDialog):
 
     def getGefundene6228s(self, regexPattern:str):
         gefundene6228s = 0
-        for inhalt6228 in self.gdtDateiOriginal.get6228s(regexPattern):
-            if self.lineEditErkennungsspalte.text() != "" and int(self.lineEditErkennungsspalte.text()) < len(inhalt6228) and inhalt6228[int(self.lineEditErkennungsspalte.text())] == self.lineEditErkennungstext.text():
+        for inhalt6228 in self.gdtDateiOptimiert.get6228s(regexPattern):
+            if self.lineEditErkennungsspalte.text() != "" and int(self.lineEditErkennungsspalte.text()) < len(inhalt6228) and self.lineEditErkennungstext.text() in inhalt6228[int(self.lineEditErkennungsspalte.text())]:
                 gefundene6228s += 1
         return gefundene6228s
 
@@ -244,10 +247,16 @@ class OptimierungTestAus6228(QDialog):
             fehler.append("Keine Ergebnisspalte eingetragen.")
         elif int(self.lineEditErgebnisspalte.text()) < 0 or int(self.lineEditErgebnisspalte.text()) >= self.maxAnzahl6228Spalten:
             fehler.append("Ergebnisspalte ist ungültig.")
-        alleTestIdents = self.gdtDateiOriginal.getInhalte("8410")
-        testIdentIsEindeutig = self.lineEditTestIdent.text() not in alleTestIdents
-        if not testIdentIsEindeutig:
-            fehler.append("Test-Ident ist nicht eindeutig.")
+        if self.lineEditTestIdent.text() == "":
+            fehler.append("Kein Test-Ident eingetragen.")
+        else:
+            alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+            for i in range(len(alleTestIdents) - 1):
+                if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
+                    alleTestIdents[i] = alleTestIdents[i][:-8]
+            testIdentIsEindeutig = self.lineEditTestIdent.text() not in alleTestIdents
+            if not testIdentIsEindeutig and self.lineEditTestIdent.isEnabled():
+                fehler.append("Test-Ident ist nicht eindeutig.")
         if self.lineEditTestBezeichnung.text() == "":
             fehler.append("Keine Test-Bezeichnung eingetragen.")
         if len(fehler) == 0:
