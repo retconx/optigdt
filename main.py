@@ -1414,96 +1414,104 @@ class MainWindow(QMainWindow):
             mb.exec()
 
     def optimierenMenuTestAendern(self, checked, optimierungsId:str=""):
-        if self.addOnsFreigeschaltet:
-            eindeutigkeitskriterien = {}
-            aenderungen = {}
-            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
-            if optimierungsId != "":
-                for optimierungElement in self.templateRootElement.findall("optimierung"):
-                    if str(optimierungElement.get("id")) == optimierungsId:
-                        eindeutigkeitskriterienElement = optimierungElement.find("eindeutigkeitskriterien")
-                        for kriteriumElement in eindeutigkeitskriterienElement.findall("kriterium"): # type: ignore
-                            feldkennung = str(kriteriumElement.get("feldkennung"))
-                            inhalt = kriteriumElement.text
-                            eindeutigkeitskriterien[feldkennung] = inhalt
-                        for aenderungElement in optimierungElement.findall("aenderung"):
-                            feldkennung = str(aenderungElement.get("feldkennung"))
-                            inhalt = aenderungElement.text
-                            aenderungen[feldkennung] = inhalt
-                        break
-            if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungChangeTest.OptimierungChangeTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, self.maxtestaenderungen, eindeutigkeitskriterien, aenderungen)
-                if do.exec() == 1:
-                    exceptions = []
-                    self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiChangeTest(do.eindeutigkeitskriterien, do.aenderungen, self.templateRootElement)
-                    if optimierungsId == "": # Neue zeile
-                        self.templateRootElement.append(optimierungElement.getXml())
-                    else: # Zeile bearbeiten
-                        class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
-                    try:
-                        exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
-                        if len(exceptions) == 0:
-                            self.setStatusMessage("Test geändert")
-                        else:
-                            exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
-                            mb.exec() 
-                        self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
-                        self.ungesichertesTemplate = True
-                    except class_gdtdatei.GdtFehlerException as e:
-                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
-                        mb.exec()
+        if len(self.gdtDateiOriginal.getTests()) > 0:
+            if self.addOnsFreigeschaltet:
+                eindeutigkeitskriterien = {}
+                aenderungen = {}
+                # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+                if optimierungsId != "":
+                    for optimierungElement in self.templateRootElement.findall("optimierung"):
+                        if str(optimierungElement.get("id")) == optimierungsId:
+                            eindeutigkeitskriterienElement = optimierungElement.find("eindeutigkeitskriterien")
+                            for kriteriumElement in eindeutigkeitskriterienElement.findall("kriterium"): # type: ignore
+                                feldkennung = str(kriteriumElement.get("feldkennung"))
+                                inhalt = kriteriumElement.text
+                                eindeutigkeitskriterien[feldkennung] = inhalt
+                            for aenderungElement in optimierungElement.findall("aenderung"):
+                                feldkennung = str(aenderungElement.get("feldkennung"))
+                                inhalt = aenderungElement.text
+                                aenderungen[feldkennung] = inhalt
+                            break
+                if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                    do = dialogOptimierungChangeTest.OptimierungChangeTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, self.maxtestaenderungen, eindeutigkeitskriterien, aenderungen)
+                    if do.exec() == 1:
+                        exceptions = []
+                        self.templateRootDefinieren()
+                        optimierungElement = class_optimierung.OptiChangeTest(do.eindeutigkeitskriterien, do.aenderungen, self.templateRootElement)
+                        if optimierungsId == "": # Neue zeile
+                            self.templateRootElement.append(optimierungElement.getXml())
+                        else: # Zeile bearbeiten
+                            class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                        try:
+                            exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                            if len(exceptions) == 0:
+                                self.setStatusMessage("Test geändert")
+                            else:
+                                exceptionsListe = "\n-".join(exceptions)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                                mb.exec() 
+                            self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                            self.ungesichertesTemplate = True
+                        except class_gdtdatei.GdtFehlerException as e:
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                            mb.exec()
+                else:
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                    mb.exec()
             else:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
         else:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält keine Tests.", QMessageBox.StandardButton.Ok)
             mb.exec()
 
     def optimierenMenuTestEntfernen(self, checked, optimierungsId:str=""):
-        if self.addOnsFreigeschaltet:
-            eindeutigkeitskriterien = {}
-            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
-            if optimierungsId != "":
-                for optimierungElement in self.templateRootElement.findall("optimierung"):
-                    if str(optimierungElement.get("id")) == optimierungsId:
-                        eindeutigkeitskriterienElement = optimierungElement.find("eindeutigkeitskriterien")
-                        for kriteriumElement in eindeutigkeitskriterienElement.findall("kriterium"): # type: ignore
-                            feldkennung = str(kriteriumElement.get("feldkennung"))
-                            inhalt = kriteriumElement.text
-                            eindeutigkeitskriterien[feldkennung] = inhalt
-                        break
-            if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungDeleteTest.OptimierungDeleteTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, eindeutigkeitskriterien)
-                if do.exec() == 1:
-                    exceptions = []
-                    self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiDeleteTest(do.eindeutigkeitskriterien, self.templateRootElement)
-                    if optimierungsId == "": # Neue zeile
-                        self.templateRootElement.append(optimierungElement.getXml())
-                    else: # Zeile bearbeiten
-                        class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
-                    try:
-                        exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
-                        if len(exceptions) == 0:
-                            self.setStatusMessage("Test entfernt")
-                        else:
-                            exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
-                            mb.exec() 
-                        self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
-                        self.ungesichertesTemplate = True
-                    except class_gdtdatei.GdtFehlerException as e:
-                        mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
-                        mb.exec()
+        if len(self.gdtDateiOriginal.getTests()) > 0:
+            if self.addOnsFreigeschaltet:
+                eindeutigkeitskriterien = {}
+                # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+                if optimierungsId != "":
+                    for optimierungElement in self.templateRootElement.findall("optimierung"):
+                        if str(optimierungElement.get("id")) == optimierungsId:
+                            eindeutigkeitskriterienElement = optimierungElement.find("eindeutigkeitskriterien")
+                            for kriteriumElement in eindeutigkeitskriterienElement.findall("kriterium"): # type: ignore
+                                feldkennung = str(kriteriumElement.get("feldkennung"))
+                                inhalt = kriteriumElement.text
+                                eindeutigkeitskriterien[feldkennung] = inhalt
+                            break
+                if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                    do = dialogOptimierungDeleteTest.OptimierungDeleteTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, eindeutigkeitskriterien)
+                    if do.exec() == 1:
+                        exceptions = []
+                        self.templateRootDefinieren()
+                        optimierungElement = class_optimierung.OptiDeleteTest(do.eindeutigkeitskriterien, self.templateRootElement)
+                        if optimierungsId == "": # Neue zeile
+                            self.templateRootElement.append(optimierungElement.getXml())
+                        else: # Zeile bearbeiten
+                            class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                        try:
+                            exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                            if len(exceptions) == 0:
+                                self.setStatusMessage("Test entfernt")
+                            else:
+                                exceptionsListe = "\n-".join(exceptions)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                                mb.exec() 
+                            self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                            self.ungesichertesTemplate = True
+                        except class_gdtdatei.GdtFehlerException as e:
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                            mb.exec()
+                else:
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                    mb.exec()
             else:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
         else:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält keine Tests.", QMessageBox.StandardButton.Ok)
             mb.exec()
 
     def optimierenMenuTestAus6228(self, checked, duplizieren:bool, optimierungsId:str=""):

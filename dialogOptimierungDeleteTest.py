@@ -94,8 +94,10 @@ class OptimierungDeleteTest(QDialog):
         self.comboBoxTextVariable.width
         i = 0
         for zeile in self.gdtDateiOriginal.getZeilen():
-            self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:])
-            i += 1
+            feldkennung = zeile[3:7]
+            if feldkennung != "8402" and feldkennung[:2] == "84":
+                self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:])
+                i += 1
         dialogLayoutHTextVariable.addWidget(labelTextVariable)
         dialogLayoutHTextVariable.addWidget(self.comboBoxTextVariable)
         dialogLayoutG.addWidget(groupBoxTextVariableEinfuegen, (self.maxeindeutigkeitskriterien - 1) * 2 + 2, 0, 1, 4)
