@@ -212,7 +212,7 @@ class OptiChangeTest(Optimierung):
         return optimierungElement
     
 class OptiTestAus6228(Optimierung):
-    def __init__(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, bisherigesRoot:ElementTree.Element):
+    def __init__(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, bisherigesRoot:ElementTree.Element, angepassteErgebnisse:dict):
         super().__init__("testAus6228", bisherigesRoot)
         self.trenRegexPattern = trennRegexPattern
         self.erkennungstext = erkennungstext
@@ -223,6 +223,7 @@ class OptiTestAus6228(Optimierung):
         self.testIdent = testIdent
         self.testBezeichnung = testBezeichnung
         self.testEinheit = testEinheit
+        self.angepassteErgebnisseDict = angepassteErgebnisse
         self.Id = self.neueId
 
     def getXml(self) -> ElementTree.Element:
@@ -256,6 +257,18 @@ class OptiTestAus6228(Optimierung):
         testEinheitElement = ElementTree.Element("testEinheit")
         testEinheitElement.text = self.testEinheit
         optimierungElement.append(testEinheitElement)
+        if len(self.angepassteErgebnisseDict) > 0: # ab 2.12.0
+            angepassteErgebnisseElement = ElementTree.Element("angepassteergebnisse")
+            for ergebnis in self.angepassteErgebnisseDict:
+                ergebnisElement = ElementTree.Element("ergebnis")
+                originalElement = ElementTree.Element("original")
+                angepasstElement = ElementTree. Element("angepasst")
+                originalElement.text = ergebnis
+                angepasstElement.text = self.angepassteErgebnisseDict[ergebnis]
+                ergebnisElement.append(originalElement)
+                ergebnisElement.append(angepasstElement)
+                angepassteErgebnisseElement.append(ergebnisElement)
+            optimierungElement.append(angepassteErgebnisseElement)
         return optimierungElement
     
 class OptiBefundAusTest(Optimierung):

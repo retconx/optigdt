@@ -1,5 +1,5 @@
 import re
-import  class_gdtdatei
+import  class_gdtdatei, dialogErgebnisAnpassen
 from PySide6.QtGui import Qt, QFont, QColor
 from PySide6.QtWidgets import (
     QDialogButtonBox,
@@ -11,13 +11,14 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QComboBox,
-    QCheckBox
+    QCheckBox,
+    QPushButton
 )
 
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungTestAus6228(QDialog):
-    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int, angepassteErgebnisse:dict):
         super().__init__()
         self.gdtDateiOptimiert = gdtDateiOptimiert
         self.duplizieren = duplizieren
@@ -36,6 +37,7 @@ class OptimierungTestAus6228(QDialog):
         self.testBezeichnung = testBezeichnung
         self.testEinheit = testEinheit
         self.maxAnzahl6228Spalten = maxAnzahl6228Spalten
+        self.angepassteErgebnisseDict = angepassteErgebnisse
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontBold = QFont()
@@ -133,18 +135,29 @@ class OptimierungTestAus6228(QDialog):
         labelTestBezeichnung.setFont(self.fontNormal)
         self.lineEditTestBezeichnung = QLineEdit(str(self.testBezeichnung))
         self.lineEditTestBezeichnung.setFont(self.fontNormal)
+        labelTestErgebnis = QLabel("Test-Ergebnis")
+        labelTestErgebnis.setFont(self.fontNormal)
+        self.lineEditTestErgebnis = QLineEdit()
+        self.lineEditTestErgebnis.setFont(self.fontNormal)
+        self.lineEditTestErgebnis.setReadOnly(True)
+        self.pushButtonErgebnisAnpassen = QPushButton("Ergebnis anpassen...")
+        self.pushButtonErgebnisAnpassen.setFont(self.fontNormal)
+        self.pushButtonErgebnisAnpassen.clicked.connect(self.pushButtonErgebnisAnpassenClicked)
         labelTestEinheit = QLabel("Test-Einheit")
         labelTestEinheit.setFont(self.fontNormal)
         self.lineEditTestEinheit = QLineEdit(str(self.testEinheit))
         self.lineEditTestEinheit.setFont(self.fontNormal)
         dialogLayoutG.addWidget(labelErgebnisspalte, 0, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditErgebnisspalte, 0, 1, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditErgebnisspalte, 0, 1, 1, 2)
         dialogLayoutG.addWidget(labelTestIdent, 1, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditTestIdent, 1, 1, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditTestIdent, 1, 1, 1, 2)
         dialogLayoutG.addWidget(labelTestBezeichnung, 2, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditTestBezeichnung, 2, 1, 1, 1)
-        dialogLayoutG.addWidget(labelTestEinheit, 3, 0, 1, 1)
-        dialogLayoutG.addWidget(self.lineEditTestEinheit, 3, 1, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditTestBezeichnung, 2, 1, 1, 2)
+        dialogLayoutG.addWidget(labelTestErgebnis, 3, 0, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditTestErgebnis, 3, 1, 1, 1)
+        dialogLayoutG.addWidget(self.pushButtonErgebnisAnpassen, 3, 2, 1, 1)
+        dialogLayoutG.addWidget(labelTestEinheit, 4, 0, 1, 1)
+        dialogLayoutG.addWidget(self.lineEditTestEinheit, 4, 1, 1, 2)
 
         dialogLayoutV.addWidget(groupBox6228Erkennung)
         dialogLayoutV.addWidget(groupBoxTestDefinition)
@@ -178,41 +191,60 @@ class OptimierungTestAus6228(QDialog):
     def erkennungIsEindeutig(self):
         return self.labelHaekchen.text() == "\u2713"
     
-    def setErkennungshintergrund(self, spalte:int):
+    def setErkennungshintergrund(self, spalte:str):
         for i in range(self.maxAnzahl6228Spalten):
             if self.lineEditErgebnisspalte.text() != "" and i != int(self.lineEditErgebnisspalte.text()):
                 self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
-        if spalte < self.maxAnzahl6228Spalten:
-            self.lineEdit6228Spalten[spalte].setStyleSheet("background:rgb(220,255,220)")
+        if re.match(r"^\d+$",spalte) != None:
+            spalteInt = int(spalte)
+            if spalteInt < self.maxAnzahl6228Spalten:
+                self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,255,220)")
 
-    def setErgebnisshintergrund(self, spalte:int):
+    def setErgebnisshintergrund(self, spalte:str):
         for i in range(self.maxAnzahl6228Spalten):
             if self.lineEditErkennungsspalte.text() != "" and i != int(self.lineEditErkennungsspalte.text()):
                 self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
-        if spalte < self.maxAnzahl6228Spalten:
-            self.lineEdit6228Spalten[spalte].setStyleSheet("background:rgb(220,220,255)")
+        if re.match(r"^\d+$",spalte) != None:
+            spalteInt = int(spalte)        
+            if spalteInt < self.maxAnzahl6228Spalten:
+                self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,220,255)")
 
     def lineEditPruefung(self):
-        regexPattern = self.lineEditTrennRegexPattern.text()
-        aufgeteilteZeile = re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))
-        # Leerzeichen ersetzen und nicht genutzte Spalten leeren
-        for i in range(self.maxAnzahl6228Spalten):
-            if i < len(aufgeteilteZeile):
-                self.lineEdit6228Spalten[i].setText(aufgeteilteZeile[i].replace(" ", "\u2423"))
-            else:
-                self.lineEdit6228Spalten[i].setText("")
-        gefundene6228s = self.getGefundene6228s(regexPattern)
-        n = 0
-        if self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in self.comboBox6228.currentText().replace("\u2423", " "):
-            for i in range(self.comboBox6228.currentIndex() + 1):
-                if self.lineEditErkennungstext.text() in re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())]:
-                    n += 1
-        self.setLabelNtesVorkommen(n)
-        self.setErkennungEindeutig(gefundene6228s == 1 and self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())])
+        if re.match(r"^(\d+)?$", self.lineEditErkennungsspalte.text()) != None and re.match(r"^(\d+)?$", self.lineEditErgebnisspalte.text()) != None:
+            regexPattern = self.lineEditTrennRegexPattern.text()
+            aufgeteilteZeile = re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))
+            # Leerzeichen ersetzen und nicht genutzte Spalten leeren
+            for i in range(self.maxAnzahl6228Spalten):
+                if i < len(aufgeteilteZeile):
+                    self.lineEdit6228Spalten[i].setText(aufgeteilteZeile[i].replace(" ", "\u2423"))
+                else:
+                    self.lineEdit6228Spalten[i].setText("")
+            gefundene6228s = self.getGefundene6228s(regexPattern)
+            n = 0
+            if self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in self.comboBox6228.currentText().replace("\u2423", " "):
+                for i in range(self.comboBox6228.currentIndex() + 1):
+                    erkennungsspalte = int(self.lineEditErkennungsspalte.text())
+                    regexSplit = re.split(regexPattern, self.comboBox6228.itemText(i).replace("\u2423", " "))
+                    if erkennungsspalte < len(regexSplit):
+                        if self.lineEditErkennungstext.text() in regexSplit[erkennungsspalte]:
+                            n += 1
+            self.setLabelNtesVorkommen(n)
+            self.setErkennungEindeutig(gefundene6228s == 1 and self.lineEditErkennungstext.text() != "" and self.lineEditErkennungstext.text() in re.split(regexPattern, self.comboBox6228.currentText().replace("\u2423", " "))[int(self.lineEditErkennungsspalte.text())])
+            self.lineEditTestErgebnis.setText(self.lineEdit6228Spalten[int(self.lineEditErgebnisspalte.text())].text())
+        elif re.match(r"^(\d+)?$", self.lineEditErkennungsspalte.text()) == None:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Ungültige Angabe für die Erkennungsspalte", QMessageBox.StandardButton.Ok)
+            mb.exec()
+            self.lineEditErkennungsspalte.setFocus()
+            self.lineEditErkennungsspalte.selectAll()
+        elif re.match(r"^(\d+)?$", self.lineEditErgebnisspalte.text()) == None:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Ungültige Angabe für die Ergebnisspalte", QMessageBox.StandardButton.Ok)
+            mb.exec()
+            self.lineEditErgebnisspalte.setFocus()
+            self.lineEditErgebnisspalte.selectAll()
         if self.lineEditErkennungsspalte.text() != "":
-            self.setErkennungshintergrund(int(self.lineEditErkennungsspalte.text()))
+            self.setErkennungshintergrund(self.lineEditErkennungsspalte.text())
         if self.lineEditErgebnisspalte.text() != "":
-            self.setErgebnisshintergrund(int(self.lineEditErgebnisspalte.text()))
+            self.setErgebnisshintergrund(self.lineEditErgebnisspalte.text())
 
     def getGefundene6228s(self, regexPattern:str):
         gefundene6228s = 0
@@ -234,6 +266,13 @@ class OptimierungTestAus6228(QDialog):
             self.labelNtesVorkommen.setText("")
         else:
             self.labelNtesVorkommen.setText(str(n) + ". Vorkommen innerhalb der GDT-Datei")
+
+    def pushButtonErgebnisAnpassenClicked(self):
+        if len(self.angepassteErgebnisseDict) == 0 and re.match(r"^\d+$", self.lineEditErgebnisspalte.text()) != None and int(self.lineEditErgebnisspalte.text()) < self.maxAnzahl6228Spalten and re.match(r"^(\s+)?$", self.lineEdit6228Spalten[int(self.lineEditErgebnisspalte.text())].text()) == None:
+            self.angepassteErgebnisseDict[self.lineEdit6228Spalten[int(self.lineEditErgebnisspalte.text())].text()] = ""
+        dea = dialogErgebnisAnpassen.ErgebnisAnpassen(self.lineEditTestBezeichnung.text(), self.angepassteErgebnisseDict)
+        if dea.exec() == 1:
+            self.angepassteErgebnisseDict = dea.angepassteErgebnisseDict
 
     def accept(self):
         fehler = []

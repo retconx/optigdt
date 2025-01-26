@@ -233,7 +233,7 @@ class GdtDatei():
             i += 1
         return tests
     
-    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen: int, testbezeichnung:str, testeinheit:str, testident:str):
+    def getTestAus6228Befund(self, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen: int, testbezeichnung:str, testeinheit:str, testident:str, angepassteErgebnisse:dict):
         """
         Erzeugt einen Test aus einem 6228-Befundtext
         Parameter:
@@ -246,6 +246,7 @@ class GdtDatei():
             testbezeichnung:str (8411 im erzeugten Test)
             testeinheit:str (8421 im erzeugten Test)
             testident:str (8410 im erzeugten Test)    
+            angepassteErgebnisse:dict (k: Original-Ergebnis, v: angepasstes Ergebnis)
         Return:
             Test:Test  
         """
@@ -259,7 +260,10 @@ class GdtDatei():
                 gefundenN += 1
                 if gefundenN == ntesVorkommen:
                     neuerTest.setZeile("8411", testbezeichnung)
-                    neuerTest.setZeile("8420", inhalt6228[ergebnisspalte])
+                    testErgebnis = inhalt6228[ergebnisspalte]
+                    if testErgebnis in angepassteErgebnisse:
+                        testErgebnis = angepassteErgebnisse[testErgebnis]
+                    neuerTest.setZeile("8420", testErgebnis)
                     neuerTest.setZeile("8421", testeinheit)
                     break
         if not erkennungstextGefunden:
@@ -661,8 +665,15 @@ class GdtDatei():
                     testeinheit = str(optimierungElement.find("testEinheit").text) # type: ignore
                     if testeinheit == "None":
                         testeinheit = ""
+                    if optimierungElement.find("angepassteergebnisse"): # ab 2.12.0
+                        angepassteErgebnisseElement = optimierungElement.find("angepassteergebnisse")
+                        angepassteErgebnisseDict = {}
+                        for ergebnisElement in angepassteErgebnisseElement.findall("ergebnis"): # type: ignore
+                            original = ergebnisElement.find("original").text # type: ignore
+                            angepasst = ergebnisElement.find("angepasst").text # type: ignore
+                            angepassteErgebnisseDict[original] = angepasst
                     try:
-                        neuerTest = self.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testbezeichnung, testeinheit, testident)
+                        neuerTest = self.getTestAus6228Befund(trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testbezeichnung, testeinheit, testident, angepassteErgebnisseDict)
                         testZeilen = neuerTest.getTestzeilen()
                         for zeile in testZeilen:
                             if vorschau:

@@ -1525,6 +1525,7 @@ class MainWindow(QMainWindow):
             testIdent = ""
             testBezeichnung = ""
             testEinheit = ""
+            angepassteErgebnisseDict = {}
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
@@ -1544,13 +1545,19 @@ class MainWindow(QMainWindow):
                         testEinheit = str(optimierungElement.find("testEinheit").text) # type:ignore
                         if testEinheit == "None":
                             testEinheit = ""
+                        if optimierungElement.find("angepassteergebnisse") != None: # ab 2.12.0
+                            angepassteErgebnisseElement = optimierungElement.find("angepassteergebnisse")
+                            for ergebnisElement in angepassteErgebnisseElement.findall("ergebnis"): # type:ignore
+                                original = ergebnisElement.find("original").text # type:ignore
+                                angepasst = ergebnisElement.find("angepasst").text # type:ignore
+                                angepassteErgebnisseDict[original] = angepasst
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
                 if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
-                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten)
+                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten, angepassteErgebnisseDict)
                     if do.exec() == 1:
                         self.templateRootDefinieren()
-                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.labelNtesVorkommen.text().split(".")[0]), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement)
+                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.labelNtesVorkommen.text().split(".")[0]), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement, do.angepassteErgebnisseDict)
                         if optimierungsId == "" or duplizieren: # Neue zeile
                             self.templateRootElement.append(optimierungElement.getXml())
                         else: # Zeile bearbeiten
