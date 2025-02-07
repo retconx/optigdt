@@ -255,7 +255,7 @@ class GdtDatei():
         erkennungstextGefunden = False
         gefundenN = 0
         for inhalt6228 in alle6228s:
-            if erkennungsspalte < len(inhalt6228) and erkennungstext in inhalt6228[erkennungsspalte]:
+            if erkennungsspalte < len(inhalt6228) and ergebnisspalte < len(inhalt6228) and erkennungstext in inhalt6228[erkennungsspalte]:
                 erkennungstextGefunden = True
                 gefundenN += 1
                 if gefundenN == ntesVorkommen:
@@ -665,9 +665,9 @@ class GdtDatei():
                     testeinheit = str(optimierungElement.find("testEinheit").text) # type: ignore
                     if testeinheit == "None":
                         testeinheit = ""
+                    angepassteErgebnisseDict = {}
                     if optimierungElement.find("angepassteergebnisse"): # ab 2.12.0
                         angepassteErgebnisseElement = optimierungElement.find("angepassteergebnisse")
-                        angepassteErgebnisseDict = {}
                         for ergebnisElement in angepassteErgebnisseElement.findall("ergebnis"): # type: ignore
                             original = ergebnisElement.find("original").text # type: ignore
                             angepasst = ergebnisElement.find("angepasst").text # type: ignore

@@ -1,5 +1,5 @@
 import sys, configparser, os, datetime, shutil, logger, re, time, atexit, subprocess
-import class_gdtdatei, class_optimierung, class_importWorker, class_Enums
+import class_gdtdatei, class_optimierung, class_importWorker, class_Enums, farbe
 ## Nur mit Lizenz
 import gdttoolsL
 ## /Nur mit Lizenz
@@ -35,14 +35,14 @@ reGdtId = r"^[0-9A-Za-z_\-]{8}$"
 reGdtDateiendungSequentiell = r"^\.\d{3}$"
 reGdtDateiendung = r"^\.gdt|\.\d{3}$"
 
-# Farbdefinitionen
-testauswahlHintergrund = QColor(220,220,220)
-concatHintergrund = QColor(255,220,255)
-addZeileHintergrund =  QColor(220,255,220)
-changeZeileHintergrund = QColor(255,220,220)
-changeTestHintergrund = QColor(220,220,255)
-testAus6228Hintergrund = QColor(255,255,220)
-befundAusTestHintergrund = QColor(220,255,255)
+# Farbdefinitionen (bis 2.12.0)
+#testauswahlHintergrund = QColor(220,220,220)
+#concatHintergrund = QColor(255,220,255)
+#addZeileHintergrund =  QColor(220,255,220)
+# changeZeileHintergrund = QColor(255,220,220)
+# changeTestHintergrund = QColor(220,220,255)
+# testAus6228Hintergrund = QColor(255,255,220)
+# befundAusTestHintergrund = QColor(220,255,255)
 
 # Gegebenenfalls log-Verzeichnis anlegen
 if not os.path.exists(os.path.join(basedir, "log")):
@@ -695,21 +695,22 @@ class MainWindow(QMainWindow):
                 typ = class_optimierung.Optimierung.getTypVonId(self.templateRootElement, id)
                 item.setText(2, zeile[7:-8])
                 if typ == "addZeile" or typ == "addPdf":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), addZeileHintergrund)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.ADDZEILE, self.palette()))
                 elif typ == "changeZeile":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), changeZeileHintergrund)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CHANGEZEILE, self.palette()))
                 elif typ == "deleteZeile":
                     item.setFont(2, self.fontDurchgestrichen)
                 elif typ == "deleteTest":
                     item.setFont(2, self.fontDurchgestrichen)
                 elif typ == "changeTest":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), changeTestHintergrund)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CHANGETEST, self.palette()))
                 elif typ == "testAus6228":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), testAus6228Hintergrund)
+                    #self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), testAus6228Hintergrund) (bis 2.12.0)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.TESTAUS6228, self.palette()))
                 elif typ == "befundAusTest":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), befundAusTestHintergrund)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.BEFUNDAUSTEST, self.palette()))
                 elif typ == "concatInhalte":
-                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), concatHintergrund)
+                    self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CONCAT, self.palette()))
                 self.optimierungsIds[str(zeilennummer).strip()] = id
             else:
                 item.setText(2, zeile[7:])
@@ -731,8 +732,8 @@ class MainWindow(QMainWindow):
             treeWidget = current.treeWidget()
             # Farbiger Hintergrund für Tests
             for index in range(treeWidget.topLevelItemCount()):
-                if treeWidget.topLevelItem(index).background(0).color() == testauswahlHintergrund:
-                    self.setTreeWidgetZeileHintergrund(treeWidget, index, QColor(255,255,255))
+                if treeWidget.topLevelItem(index).background(0).color() == farbe.getTextColor(farbe.farben.TESTAUSAHL, self.palette()):
+                    self.setTreeWidgetZeileHintergrund(treeWidget, index, farbe.getTextColor(farbe.farben.NORMAL, self.palette()))
             itemIndex = int(current.text(0)) - 1
             currentFeldkennung = current.text(1)
             ersteTestItemNummer = itemIndex
@@ -755,8 +756,8 @@ class MainWindow(QMainWindow):
                     tempFeldkennung = treeWidget.topLevelItem(letzteTestItemNummer).text(1)
                 if istTest:
                     for i in range(letzteTestItemNummer - ersteTestItemNummer):
-                        if treeWidget.topLevelItem(i + ersteTestItemNummer).background(0).color() != changeTestHintergrund and treeWidget.topLevelItem(i + ersteTestItemNummer).background(0).color() != testAus6228Hintergrund:
-                            self.setTreeWidgetZeileHintergrund(treeWidget, i + ersteTestItemNummer, testauswahlHintergrund)
+                        if treeWidget.topLevelItem(i + ersteTestItemNummer).background(0).color() != farbe.getTextColor(farbe.farben.CHANGETEST, self.palette()) and treeWidget.topLevelItem(i + ersteTestItemNummer).background(0).color() != farbe.getTextColor(farbe.farben.TESTAUS6228, self.palette()):
+                            self.setTreeWidgetZeileHintergrund(treeWidget, i + ersteTestItemNummer, farbe.getTextColor(farbe.farben.TESTAUSAHL, self.palette()))
         else:
             self.optimierungBearbeitenAction.setEnabled(False)
             self.optimierungDuplizierenAction.setEnabled(False)
@@ -2129,11 +2130,6 @@ class MainWindow(QMainWindow):
             sys.exit()
     
     # Statische Methoden
-    @staticmethod
-    def setTreeWidgetZeileSchriftfarbe(treeWidget:QTreeWidget, index:int, r:int, g:int, b:int):
-            for i in range(treeWidget.columnCount()):
-                treeWidget.topLevelItem(index).setForeground(i, QColor(r, g, b))
-
     @staticmethod
     def setTreeWidgetZeileHintergrund(treeWidget:QTreeWidget, index:int, farbe:QColor):
         for i in range(treeWidget.columnCount()):

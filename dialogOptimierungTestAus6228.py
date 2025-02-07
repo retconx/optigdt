@@ -1,6 +1,6 @@
 import re
-import  class_gdtdatei, dialogErgebnisAnpassen
-from PySide6.QtGui import Qt, QFont, QColor
+import  class_gdtdatei, dialogErgebnisAnpassen, farbe
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialogButtonBox,
     QDialog,
@@ -194,20 +194,24 @@ class OptimierungTestAus6228(QDialog):
     def setErkennungshintergrund(self, spalte:str):
         for i in range(self.maxAnzahl6228Spalten):
             if self.lineEditErgebnisspalte.text() != "" and i != int(self.lineEditErgebnisspalte.text()):
-                self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
+                #self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
+                self.lineEdit6228Spalten[i].setPalette(farbe.getTextPalette(farbe.farben.NORMAL, self.palette()))
         if re.match(r"^\d+$",spalte) != None:
             spalteInt = int(spalte)
             if spalteInt < self.maxAnzahl6228Spalten:
-                self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,255,220)")
+                #self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,255,220)")
+                self.lineEdit6228Spalten[spalteInt].setPalette(farbe.getTextPalette(farbe.farben.GRUEN, self.palette()))
 
     def setErgebnisshintergrund(self, spalte:str):
         for i in range(self.maxAnzahl6228Spalten):
             if self.lineEditErkennungsspalte.text() != "" and i != int(self.lineEditErkennungsspalte.text()):
-                self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
+                #self.lineEdit6228Spalten[i].setStyleSheet("background:rgb(255,255,255)")
+                self.lineEdit6228Spalten[i].setPalette(farbe.getTextPalette(farbe.farben.NORMAL, self.palette()))
         if re.match(r"^\d+$",spalte) != None:
             spalteInt = int(spalte)        
             if spalteInt < self.maxAnzahl6228Spalten:
-                self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,220,255)")
+                #self.lineEdit6228Spalten[spalteInt].setStyleSheet("background:rgb(220,220,255)")
+                self.lineEdit6228Spalten[spalteInt].setPalette(farbe.getTextPalette(farbe.farben.BLAU, self.palette()))
 
     def lineEditPruefung(self):
         if re.match(r"^(\d+)?$", self.lineEditErkennungsspalte.text()) != None and re.match(r"^(\d+)?$", self.lineEditErgebnisspalte.text()) != None:
@@ -270,7 +274,7 @@ class OptimierungTestAus6228(QDialog):
     def pushButtonErgebnisAnpassenClicked(self):
         if len(self.angepassteErgebnisseDict) == 0 and re.match(r"^\d+$", self.lineEditErgebnisspalte.text()) != None and int(self.lineEditErgebnisspalte.text()) < self.maxAnzahl6228Spalten and re.match(r"^(\s+)?$", self.lineEdit6228Spalten[int(self.lineEditErgebnisspalte.text())].text()) == None:
             self.angepassteErgebnisseDict[self.lineEdit6228Spalten[int(self.lineEditErgebnisspalte.text())].text()] = ""
-        dea = dialogErgebnisAnpassen.ErgebnisAnpassen(self.lineEditTestBezeichnung.text(), self.angepassteErgebnisseDict)
+        dea = dialogErgebnisAnpassen.ErgebnisAnpassen(self.lineEdit6228Spalten[int(self.lineEditErkennungsspalte.text())].text(), self.angepassteErgebnisseDict)
         if dea.exec() == 1:
             self.angepassteErgebnisseDict = dea.angepassteErgebnisseDict
 
