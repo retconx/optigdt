@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QLabel,
     QComboBox,
-    QPushButton
+    QPushButton,
+    QMessageBox
 )
 
 reFeldkennung = r"^\d{4}$"
@@ -119,3 +120,19 @@ class OptimierungChangeZeile(QDialog):
         lineEdit.setText(neuerInhalt)
         lineEdit.setFocus()
         lineEdit.setCursorPosition(cursorPosition + len(variable))
+
+    def accept(self):
+        zuAenderndeFeldkennung = self.comboBoxZeile.currentText()[0:4]
+        hinweis = ""
+        if zuAenderndeFeldkennung == "8000":
+            hinweis = "Die Zeile mit der Feldkennung 8000 sollte nicht geändert werden, da diese die Satzart der GDT-Datei einthält."
+        elif zuAenderndeFeldkennung == "3000":
+            hinweis = "Die Zeile mit der Feldkennung 3000 sollte nicht geändert werden, da diese die PatientInnen-ID enthält."
+        if hinweis != "":
+            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", hinweis + "\nSoll die Änderung dennoch übernommen werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, self)
+            mb.setDefaultButton(QMessageBox.StandardButton.No)
+            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+            mb.button(QMessageBox.StandardButton.No).setText("Nein")
+            if mb.exec() == QMessageBox.StandardButton.Yes:
+                self.done(1)
+        self.done(1)

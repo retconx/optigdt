@@ -2120,7 +2120,7 @@ class MainWindow(QMainWindow):
 
     def trayMenuBeenden(self):
         if self.ueberwachungAktiv:
-            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "trayDie GDT-Verzeichnisübrewachung ist aktiv.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, self)
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die GDT-Verzeichnisübrewachung ist aktiv.\nSoll OptiGDT dennoch beendet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, self)
             mb.setDefaultButton(QMessageBox.StandardButton.No)
             mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
             mb.button(QMessageBox.StandardButton.No).setText("Nein")
