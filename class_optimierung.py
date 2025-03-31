@@ -102,10 +102,11 @@ class Optimierung:
             raise class_gdtdatei.GdtFehlerException("Fehler in der Funktion removeOptimierungElement (Id: " + id + ")")
 
 class OptiAddZeile(Optimierung):
-    def __init__(self, feldkennung:str, inhalt:str, bisherigesRoot:ElementTree.Element):
+    def __init__(self, feldkennung:str, inhalt:str, zeilennummer:int, bisherigesRoot:ElementTree.Element):
         super().__init__("addZeile", bisherigesRoot)
         self.feldkennung = feldkennung
         self.inhalt = inhalt
+        self.zeilennummer = zeilennummer
         self.Id = self.neueId
     
     def getXml(self) -> ElementTree.Element:
@@ -116,8 +117,11 @@ class OptiAddZeile(Optimierung):
         feldkennungElement.text = self.feldkennung
         inhaltElement = ElementTree.Element("inhalt")
         inhaltElement.text = self.inhalt
+        zeilennummerElement = ElementTree.Element("zeilennummer")
+        zeilennummerElement.text = str(self.zeilennummer)
         optimierungElement.append(feldkennungElement)
         optimierungElement.append(inhaltElement)
+        optimierungElement.append(zeilennummerElement)
         return optimierungElement
     
 class OptiChangeZeile(Optimierung):

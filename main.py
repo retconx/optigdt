@@ -1293,18 +1293,24 @@ class MainWindow(QMainWindow):
         if self.addOnsFreigeschaltet:
             feldkennung = ""
             inhalt = ""
+            zeilennummer = -1
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
                     if str(optimierungElement.get("id")) == optimierungsId:
                         feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
                         inhalt = str(optimierungElement.find("inhalt").text) # type:ignore
+                        if optimierungElement.find("zeilennummer") != None: #  ab 2.13.0
+                            zeilennummer = int(str(optimierungElement.find("zeilennummer").text)) # type:ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungAddZeile.OptimierungAddZeile(self.gdtDateiOriginal, feldkennung, inhalt)
+                do = dialogOptimierungAddZeile.OptimierungAddZeile(self.gdtDateiOriginal, feldkennung, inhalt, zeilennummer)
                 if do.exec() == 1:
+                    zeilennummer = -1
+                    if do.lineEditZeilennummer.text() != "":
+                        zeilennummer = int(do.lineEditZeilennummer.text())
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiAddZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text(), self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiAddZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text(), zeilennummer, self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten

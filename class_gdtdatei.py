@@ -310,14 +310,16 @@ class GdtDatei():
         #     raise GdtFehlerException("Felkennung " + feldkennung + " nicht vorhanden")
         return inhalte
     
-    def addZeile(self, feldkennung:str, inhalt:str):
+    def addZeile(self, feldkennung:str, inhalt:str, position:int=-1):
         """
         Fügt der GDT-Datei eine Zeile hinzu
         Parameter:
             feldkennung:str
             inhalt:str
         """
-        self.zeilen.append(GdtDatei.getZeile(feldkennung, inhalt))
+        if position == -1:
+            position = len(self.zeilen)
+        self.zeilen.insert(position, GdtDatei.getZeile(feldkennung, inhalt))
     
     def changeZeile(self, id:str, feldkennung:str, neuerInhalt:str, alleVorkommen:bool=False, vorschau:bool=False):
         """
@@ -590,11 +592,16 @@ class GdtDatei():
                 if typ == "addZeile":
                     feldkennung = optimierungElement.find("feldkennung").text # type: ignore
                     inhalt = self.replaceFkVariablen(optimierungElement.find("inhalt").text) # type: ignore
+                    zeilennummer = -1
+                    if optimierungElement.find("zeilennummer") != None: #  ab 2.13.0
+                            zeilennummer = int(str(optimierungElement.find("zeilennummer").text)) - 1 # type:ignore
+                    if zeilennummer == -1 or zeilennummer > len(self.zeilen):
+                        zeilennummer = len(self.zeilen)
                     if feldkennung and inhalt:
                         if vorschau:
-                            self.addZeile(feldkennung, inhalt + "__" + id + "__")
+                            self.addZeile(feldkennung, inhalt + "__" + id + "__", zeilennummer)
                         else:
-                            self.addZeile(feldkennung, inhalt)
+                            self.addZeile(feldkennung, inhalt, zeilennummer)
                     else:
                         exceptions.append("Zeile mit Feldkennung " + str(feldkennung) + " und Inhalt " + str(inhalt) + " nicht hinzugefügt (xml-Datei fehlerhaft)")
                 elif typ == "changeZeile":

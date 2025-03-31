@@ -18,11 +18,12 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungAddZeile(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str="", inhalt:str=""):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str, inhalt:str, zeilennummer:int):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.feldkennung = feldkennung
         self.inhalt = inhalt
+        self.zeilennummer = zeilennummer
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -62,12 +63,21 @@ class OptimierungAddZeile(QDialog):
         self.pushButtonVariable.setFont(self.fontNormal)
         self.pushButtonVariable.setToolTip("Variable einfügen")
         self.pushButtonVariable.clicked.connect(lambda checked = False, lineEditInhalt = self.lineEditInhalt: self.pushButtonVariableClicked(checked, lineEditInhalt)) # type: ignore
+        labelZeilennummer = QLabel("Zeilennummer")
+        labelZeilennummer.setFont(self.fontNormal)
+        zeilennummerString = str(self.zeilennummer)
+        if zeilennummerString == "-1":
+            zeilennummerString = ""
+        self.lineEditZeilennummer = QLineEdit(zeilennummerString)
+        self.lineEditZeilennummer.setFont(self.fontNormal)
         dialogLayoutG.addWidget(labelFeldkennung, 0, 0)
         dialogLayoutG.addWidget(self.lineEditFeldkennung, 0, 1, 1, 3)
         dialogLayoutG.addWidget(labelInhalt, 1, 0)
         dialogLayoutG.addWidget(self.lineEditInhalt, 1, 1, 1, 1)
         dialogLayoutG.addWidget(self.pushButtonText, 1, 2, 1, 1)
         dialogLayoutG.addWidget(self.pushButtonVariable, 1, 3, 1, 1)
+        dialogLayoutG.addWidget(labelZeilennummer, 2, 0)
+        dialogLayoutG.addWidget(self.lineEditZeilennummer, 2, 1)
         
         dialogLayoutH = QHBoxLayout()
         groupBoxTextVariableEinfuegen = QGroupBox("Als Text (T) oder Variable (V) einfügen")
@@ -85,7 +95,7 @@ class OptimierungAddZeile(QDialog):
             i += 1
         dialogLayoutH.addWidget(labelTextVariable)
         dialogLayoutH.addWidget(self.comboBoxTextVariable)
-        dialogLayoutG.addWidget(groupBoxTextVariableEinfuegen, 2, 0, 1, 4)
+        dialogLayoutG.addWidget(groupBoxTextVariableEinfuegen, 3, 0, 1, 4)
 
         dialogLayoutV.addWidget(groupBoxZeileHinzufuegen)
         dialogLayoutV.addWidget(self.buttonBox)
@@ -113,12 +123,17 @@ class OptimierungAddZeile(QDialog):
         lineEdit.setCursorPosition(cursorPosition + len(variable))
 
     def accept(self):
-        if self.lineEditFeldkennung.text() == "" and self.lineEditFeldkennung.text() == "":
+        if self.lineEditFeldkennung.text() == "" and self.lineEditFeldkennung.text() == "" and self.lineEditZeilennummer.text() == "":
             self.done(1)
         elif not re.match(reFeldkennung, self.lineEditFeldkennung.text()):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditFeldkennung.setFocus()
             self.lineEditFeldkennung.selectAll()
+        elif re.match(r"^\d+$", self.lineEditZeilennummer.text()) == None or int(self.lineEditZeilennummer.text()) == 0:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Zeilennummer ungültig", QMessageBox.StandardButton.Ok)
+            mb.exec()
+            self.lineEditZeilennummer.setFocus()
+            self.lineEditZeilennummer.selectAll()
         else:
             self.done(1)

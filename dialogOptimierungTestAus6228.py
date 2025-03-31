@@ -130,7 +130,6 @@ class OptimierungTestAus6228(QDialog):
         labelTestIdent.setFont(self.fontNormal)
         self.lineEditTestIdent = QLineEdit(self.testIdent)
         self.lineEditTestIdent.setFont(self.fontNormal)
-        self.lineEditTestIdent.setEnabled(self.testIdent == "")
         labelTestBezeichnung = QLabel("Test-Bezeichnung")
         labelTestBezeichnung.setFont(self.fontNormal)
         self.lineEditTestBezeichnung = QLineEdit(str(self.testBezeichnung))
@@ -294,7 +293,7 @@ class OptimierungTestAus6228(QDialog):
             fehler.append("Kein Test-Ident eingetragen.")
         else:
             alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
-            for i in range(len(alleTestIdents) - 1):
+            for i in range(len(alleTestIdents)):
                 if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                     alleTestIdents[i] = alleTestIdents[i][:-8]
             testIdentIsEindeutig = self.lineEditTestIdent.text() not in alleTestIdents
@@ -302,8 +301,16 @@ class OptimierungTestAus6228(QDialog):
                 fehler.append("Test-Ident ist nicht eindeutig.")
         if self.lineEditTestBezeichnung.text() == "":
             fehler.append("Keine Test-Bezeichnung eingetragen.")
-        if len(fehler) == 0:
+        testOhneEinheitOk = True
+        if self.lineEditTestEinheit.text() == "":
+            mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Keine Test-Einheit eingetragen. Soll der Test dennoch erzeugt werden?\nHinweis: Einige Praxisverwaltungssysteme setzen eine Test-Einheit für den Import voraus. In diesem Fall kann ein Leerzeichen eintragen werden.", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            mb.setDefaultButton(QMessageBox.StandardButton.Yes)
+            mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+            mb.button(QMessageBox.StandardButton.No).setText("Nein")
+            if mb.exec() == QMessageBox.StandardButton.No:
+                testOhneEinheitOk = False
+        if len(fehler) == 0 and testOhneEinheitOk:
             self.done(1)
-        else:
+        elif len(fehler) > 0:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Formular nicht korrekt ausgefüllt:\n- " + "\n- ".join(fehler), QMessageBox.StandardButton.Ok)
             mb.exec()
