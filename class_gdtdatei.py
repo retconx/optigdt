@@ -310,16 +310,30 @@ class GdtDatei():
         #     raise GdtFehlerException("Felkennung " + feldkennung + " nicht vorhanden")
         return inhalte
     
-    def addZeile(self, feldkennung:str, inhalt:str, position:int=-1):
+    def addZeile(self, feldkennung:str, inhalt:str, zeileEinfuegen:class_Enums.ZeileEinfuegen=class_Enums.ZeileEinfuegen(0, 1, "")):
         """
         Fügt der GDT-Datei eine Zeile hinzu
         Parameter:
             feldkennung:str
             inhalt:str
+            zeileEinfuegen:dialogOptimierungAddZeile.ZeileEinfuegen
         """
-        if position == -1:
-            position = len(self.zeilen)
-        self.zeilen.insert(position, GdtDatei.getZeile(feldkennung, inhalt))
+        einfuegePosition = len(self.zeilen)
+        position = 0
+        vorkommen = 0
+        if zeileEinfuegen.feldkennung != "":
+            for zeile in self.zeilen:
+                fk = zeile[3:7]
+                if zeileEinfuegen.feldkennung == fk:
+                    vorkommen += 1
+                    if zeileEinfuegen.vorkommen == vorkommen:
+                        if zeileEinfuegen.vorNach == 0:
+                            einfuegePosition = position
+                        else:
+                            einfuegePosition = position + 1
+                        break
+                position += 1
+        self.zeilen.insert(einfuegePosition, GdtDatei.getZeile(feldkennung, inhalt))
     
     def changeZeile(self, id:str, feldkennung:str, neuerInhalt:str, alleVorkommen:bool=False, vorschau:bool=False):
         """
@@ -592,16 +606,18 @@ class GdtDatei():
                 if typ == "addZeile":
                     feldkennung = optimierungElement.find("feldkennung").text # type: ignore
                     inhalt = self.replaceFkVariablen(optimierungElement.find("inhalt").text) # type: ignore
-                    zeilennummer = -1
-                    if optimierungElement.find("zeilennummer") != None: #  ab 2.13.0
-                            zeilennummer = int(str(optimierungElement.find("zeilennummer").text)) - 1 # type:ignore
-                    if zeilennummer == -1 or zeilennummer > len(self.zeilen):
-                        zeilennummer = len(self.zeilen)
+                    zeileEinfuegen = class_Enums.ZeileEinfuegen(0, 1, "")
+                    if optimierungElement.find("zeileeinfuegen") != None: #  ab 2.13.1
+                            zeileEinfuegenElement = optimierungElement.find("zeileeinfuegen")
+                            vorNach = int(str(zeileEinfuegenElement.get("vornach"))) # type:ignore
+                            vorkommen = int(str(zeileEinfuegenElement.find("vorkommen").text)) # type:ignore
+                            einfuegenFeldkennung = str(zeileEinfuegenElement.find("feldkennung").text) # type:ignore
+                            zeileEinfuegen = class_Enums.ZeileEinfuegen(vorNach, vorkommen, einfuegenFeldkennung)
                     if feldkennung and inhalt:
                         if vorschau:
-                            self.addZeile(feldkennung, inhalt + "__" + id + "__", zeilennummer)
+                            self.addZeile(feldkennung, inhalt + "__" + id + "__", zeileEinfuegen)
                         else:
-                            self.addZeile(feldkennung, inhalt, zeilennummer)
+                            self.addZeile(feldkennung, inhalt, zeileEinfuegen)
                     else:
                         exceptions.append("Zeile mit Feldkennung " + str(feldkennung) + " und Inhalt " + str(inhalt) + " nicht hinzugefügt (xml-Datei fehlerhaft)")
                 elif typ == "changeZeile":

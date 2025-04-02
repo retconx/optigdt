@@ -102,11 +102,11 @@ class Optimierung:
             raise class_gdtdatei.GdtFehlerException("Fehler in der Funktion removeOptimierungElement (Id: " + id + ")")
 
 class OptiAddZeile(Optimierung):
-    def __init__(self, feldkennung:str, inhalt:str, zeilennummer:int, bisherigesRoot:ElementTree.Element):
+    def __init__(self, feldkennung:str, inhalt:str, zeileEinfuegen:class_Enums.ZeileEinfuegen, bisherigesRoot:ElementTree.Element):
         super().__init__("addZeile", bisherigesRoot)
         self.feldkennung = feldkennung
         self.inhalt = inhalt
-        self.zeilennummer = zeilennummer
+        self.zeileEinfuegen = zeileEinfuegen
         self.Id = self.neueId
     
     def getXml(self) -> ElementTree.Element:
@@ -117,11 +117,18 @@ class OptiAddZeile(Optimierung):
         feldkennungElement.text = self.feldkennung
         inhaltElement = ElementTree.Element("inhalt")
         inhaltElement.text = self.inhalt
-        zeilennummerElement = ElementTree.Element("zeilennummer")
-        zeilennummerElement.text = str(self.zeilennummer)
         optimierungElement.append(feldkennungElement)
         optimierungElement.append(inhaltElement)
-        optimierungElement.append(zeilennummerElement)
+        if self.zeileEinfuegen.feldkennung != "":
+            zeileeinfuegenElement = ElementTree.Element("zeileeinfuegen")
+            zeileeinfuegenElement.set("vornach", str(self.zeileEinfuegen.vorNach))
+            vorkommenElement = ElementTree.Element("vorkommen")
+            vorkommenElement.text = str(self.zeileEinfuegen.vorkommen)
+            einfuegenFeldkennungElement = ElementTree.Element("feldkennung")
+            einfuegenFeldkennungElement.text = self.zeileEinfuegen.feldkennung
+            zeileeinfuegenElement.append(vorkommenElement)
+            zeileeinfuegenElement.append(einfuegenFeldkennungElement)
+            optimierungElement.append(zeileeinfuegenElement)
         return optimierungElement
     
 class OptiChangeZeile(Optimierung):

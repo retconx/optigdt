@@ -1,5 +1,5 @@
 import re
-import  class_gdtdatei
+import  class_gdtdatei, class_Enums
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialogButtonBox,
@@ -18,12 +18,12 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungAddZeile(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str, inhalt:str, zeilennummer:int):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str, inhalt:str, zeileEinfuegen:class_Enums.ZeileEinfuegen):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.feldkennung = feldkennung
         self.inhalt = inhalt
-        self.zeilennummer = zeilennummer
+        self.zeileEinfuegen = zeileEinfuegen
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -63,21 +63,31 @@ class OptimierungAddZeile(QDialog):
         self.pushButtonVariable.setFont(self.fontNormal)
         self.pushButtonVariable.setToolTip("Variable einfügen")
         self.pushButtonVariable.clicked.connect(lambda checked = False, lineEditInhalt = self.lineEditInhalt: self.pushButtonVariableClicked(checked, lineEditInhalt)) # type: ignore
-        labelZeilennummer = QLabel("Zeilennummer")
-        labelZeilennummer.setFont(self.fontNormal)
-        zeilennummerString = str(self.zeilennummer)
-        if zeilennummerString == "-1":
-            zeilennummerString = ""
-        self.lineEditZeilennummer = QLineEdit(zeilennummerString)
-        self.lineEditZeilennummer.setFont(self.fontNormal)
+        einfuegenLayoutH =QHBoxLayout()
+        labelEinfuegen = QLabel("Einfügen")
+        labelEinfuegen.setFont(self.fontNormal)
+        self.comboBoxVorNach = QComboBox()
+        self.comboBoxVorNach.addItems(["vor", "nach"])
+        self.comboBoxVorNach.setFont(self.fontNormal)
+        self.comboBoxVorNach.setCurrentIndex(self.zeileEinfuegen.vorNach)
+        self.lineEditVorkommen = QLineEdit(str(self.zeileEinfuegen.vorkommen))
+        self.lineEditVorkommen.setFont(self.fontNormal)
+        labelPunkt = QLabel(". Vorkommen von Feldkennung")
+        labelPunkt.setFont(self.fontNormal)
+        self.lineEditEinfuegenFeldkennung = QLineEdit(self.zeileEinfuegen.feldkennung)
+        self.lineEditEinfuegenFeldkennung.setFont(self.fontNormal)
+        einfuegenLayoutH.addWidget(labelEinfuegen)
+        einfuegenLayoutH.addWidget(self.comboBoxVorNach)
+        einfuegenLayoutH.addWidget(self.lineEditVorkommen)
+        einfuegenLayoutH.addWidget(labelPunkt)
+        einfuegenLayoutH.addWidget(self.lineEditEinfuegenFeldkennung)
         dialogLayoutG.addWidget(labelFeldkennung, 0, 0)
         dialogLayoutG.addWidget(self.lineEditFeldkennung, 0, 1, 1, 3)
         dialogLayoutG.addWidget(labelInhalt, 1, 0)
         dialogLayoutG.addWidget(self.lineEditInhalt, 1, 1, 1, 1)
         dialogLayoutG.addWidget(self.pushButtonText, 1, 2, 1, 1)
         dialogLayoutG.addWidget(self.pushButtonVariable, 1, 3, 1, 1)
-        dialogLayoutG.addWidget(labelZeilennummer, 2, 0)
-        dialogLayoutG.addWidget(self.lineEditZeilennummer, 2, 1)
+        dialogLayoutG.addLayout(einfuegenLayoutH, 2, 0, 1, 4)
         
         dialogLayoutH = QHBoxLayout()
         groupBoxTextVariableEinfuegen = QGroupBox("Als Text (T) oder Variable (V) einfügen")
@@ -123,17 +133,30 @@ class OptimierungAddZeile(QDialog):
         lineEdit.setCursorPosition(cursorPosition + len(variable))
 
     def accept(self):
-        if self.lineEditFeldkennung.text() == "" and self.lineEditFeldkennung.text() == "" and self.lineEditZeilennummer.text() == "":
+        if self.lineEditFeldkennung.text() == "" and self.lineEditFeldkennung.text() == "":
             self.done(1)
         elif not re.match(reFeldkennung, self.lineEditFeldkennung.text()):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
             mb.exec()
             self.lineEditFeldkennung.setFocus()
             self.lineEditFeldkennung.selectAll()
-        elif re.match(r"^\d+$", self.lineEditZeilennummer.text()) == None or int(self.lineEditZeilennummer.text()) == 0:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Zeilennummer ungültig", QMessageBox.StandardButton.Ok)
+        elif self.lineEditEinfuegenFeldkennung.text() != "" and not re.match(reFeldkennung, self.lineEditEinfuegenFeldkennung.text()):
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
             mb.exec()
-            self.lineEditZeilennummer.setFocus()
-            self.lineEditZeilennummer.selectAll()
+            self.lineEditEinfuegenFeldkennung.setFocus()
+            self.lineEditEinfuegenFeldkennung.selectAll()
+        elif self.lineEditEinfuegenFeldkennung.text() != "":
+            korrekt = True
+            if not re.match(r"^\d+$", self.lineEditVorkommen.text()):
+                korrekt = False
+            elif int(self.lineEditVorkommen.text()) == 0:
+                korrekt = False
+            if not korrekt:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Das Vorkommen muss eine Zahl > 0 sein.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditVorkommen.setFocus()
+                self.lineEditVorkommen.selectAll()
+            else:
+                self.done(1)
         else:
             self.done(1)

@@ -700,8 +700,10 @@ class MainWindow(QMainWindow):
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CHANGEZEILE, self.palette()))
                 elif typ == "deleteZeile":
                     item.setFont(2, self.fontDurchgestrichen)
+                    zeileZaehlen = False
                 elif typ == "deleteTest":
                     item.setFont(2, self.fontDurchgestrichen)
+                    zeileZaehlen = False
                 elif typ == "changeTest":
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CHANGETEST, self.palette()))
                 elif typ == "testAus6228":
@@ -1293,24 +1295,26 @@ class MainWindow(QMainWindow):
         if self.addOnsFreigeschaltet:
             feldkennung = ""
             inhalt = ""
-            zeilennummer = -1
+            zeileEinfuegen = class_Enums.ZeileEinfuegen(0, 1, "")
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
                     if str(optimierungElement.get("id")) == optimierungsId:
                         feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
                         inhalt = str(optimierungElement.find("inhalt").text) # type:ignore
-                        if optimierungElement.find("zeilennummer") != None: #  ab 2.13.0
-                            zeilennummer = int(str(optimierungElement.find("zeilennummer").text)) # type:ignore
+                        if optimierungElement.find("zeileeinfuegen") != None: #  ab 2.13.1
+                            zeileEinfuegenElement = optimierungElement.find("zeileeinfuegen")
+                            vorNach = int(str(zeileEinfuegenElement.get("vornach"))) # type: ignore
+                            vorkommen = int(str(zeileEinfuegenElement.find("vorkommen").text)) # type: ignore
+                            einfuegenFeldkennung = str(zeileEinfuegenElement.find("feldkennung").text) # type: ignore
+                            zeileEinfuegen = class_Enums.ZeileEinfuegen(vorNach, vorkommen, einfuegenFeldkennung)
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungAddZeile.OptimierungAddZeile(self.gdtDateiOriginal, feldkennung, inhalt, zeilennummer)
+                do = dialogOptimierungAddZeile.OptimierungAddZeile(self.gdtDateiOriginal, feldkennung, inhalt, zeileEinfuegen)
                 if do.exec() == 1:
-                    zeilennummer = -1
-                    if do.lineEditZeilennummer.text() != "":
-                        zeilennummer = int(do.lineEditZeilennummer.text())
+                    zeileEinfuegen = class_Enums.ZeileEinfuegen(do.comboBoxVorNach.currentIndex(), int(do.lineEditVorkommen.text()), do.lineEditEinfuegenFeldkennung.text())
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiAddZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text(), zeilennummer, self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiAddZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text(), zeileEinfuegen, self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten
