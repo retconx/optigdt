@@ -733,12 +733,15 @@ class GdtDatei():
                         if not testGefunden:
                             exceptions.append("Test mit der ID " + test.getInhalt("8410") + " zur Befunderstellung nicht gefunden")
                     befund = str(optimierungElement.find("befund").text) # type: ignore
+                    alternativeFeldkennung = "6220"
+                    if optimierungElement.find("alternativefeldkennung") != None: # ab 2.14.0
+                        alternativeFeldkennung = str(optimierungElement.find("alternativefeldkennung").text) # type: ignore
                     for inhalt in variablenInhalt:
                         befund = befund.replace("${" + inhalt + "}", variablenInhalt[inhalt])
                     if vorschau:
                         # Auf gesetzte Zeilenumbrüche prüfen
                         for befundzeile in befund.split("//"):
-                            self.addZeile("6220", befundzeile + "__" + id + "__")
+                            self.addZeile(alternativeFeldkennung, befundzeile + "__" + id + "__")
                     else:
                         # Auf gesetzte Zeilenumbrüche wird in directoryChanged in main.py geüprüft
                         # Nicht ersetzte Variablen durch "-" ersetzen
@@ -750,7 +753,7 @@ class GdtDatei():
                                 befundBereinigt = befundBereinigt.replace("-" + einheit, "-")
                             elif ("- " + einheit) in befundBereinigt:
                                 befundBereinigt = befundBereinigt.replace("- " + einheit, "-")
-                        self.addZeile("6220", befundBereinigt)
+                        self.addZeile(alternativeFeldkennung, befundBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
                     einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen.Kein_Zeichen

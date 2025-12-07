@@ -283,10 +283,11 @@ class OptiTestAus6228(Optimierung):
         return optimierungElement
     
 class OptiBefundAusTest(Optimierung):
-    def __init__(self, testuebernahmen:list, befundzeile:str, bisherigesRoot:ElementTree.Element):
+    def __init__(self, testuebernahmen:list, befundzeile:str, alternativeFeldkennung:str, bisherigesRoot:ElementTree.Element):
         super().__init__("befundAusTest", bisherigesRoot)
         self.testuebernahmen = testuebernahmen
         self.befundzeile = befundzeile
+        self.alternativeFeldkennung = alternativeFeldkennung
         self.Id = self.neueId
 
     def getXml(self) -> ElementTree.Element:
@@ -313,7 +314,10 @@ class OptiBefundAusTest(Optimierung):
             optimierungElement.append(testElement)
         befundElement = ElementTree.Element("befund")
         befundElement.text = self.befundzeile
+        alternativeFeldkennungElement = ElementTree.Element("alternativefeldkennung")
+        alternativeFeldkennungElement.text = self.alternativeFeldkennung
         optimierungElement.append(befundElement)
+        optimierungElement.append(alternativeFeldkennungElement)
         return optimierungElement
 
 class OptiConcatInhalte(Optimierung):

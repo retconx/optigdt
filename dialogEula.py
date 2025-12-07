@@ -21,6 +21,7 @@ class Eula(QDialog):
 
         dialogLayoutV = QVBoxLayout()
         labelAktualisiert = QLabel("OptiGDT wurde erfolgreich auf Version " + neueVersion + " aktualisiert.")
+        labelAktualisiert.setStyleSheet("font-weight:bold")
         response = requests.get("https://api.github.com/repos/retconx/optigdt/releases/latest")
         body = response.json()["body"]
         aenderungen = str.split(body, "###")[1]

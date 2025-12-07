@@ -1601,6 +1601,7 @@ class MainWindow(QMainWindow):
         if self.addOnsFreigeschaltet:
             testuebernahmen = [dialogOptimierungBefundAusTest.Testuebernahme("", "", {})]
             befundzeile = ""
+            alternativeFeldkennung = ""
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
@@ -1619,12 +1620,15 @@ class MainWindow(QMainWindow):
                             testuebernahmen.append(testuebernahme)
                         befundElement = optimierungElement.find("befund")
                         befundzeile = str(befundElement.text) # type: ignore
+                        if optimierungElement.find("alternativefeldkennung") != None: # ab 2.14.0
+                            alternativeFeldkennungElement = optimierungElement.find("alternativefeldkennung")
+                            alternativeFeldkennung = str(alternativeFeldkennungElement.text) # type: ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungBefundAusTest.OptimierungBefundAusTest(self.gdtDateiOptimiert, self.maxeindeutigkeitskriterien, testuebernahmen, befundzeile, self.templateRootElement)
+                do = dialogOptimierungBefundAusTest.OptimierungBefundAusTest(self.gdtDateiOptimiert, self.maxeindeutigkeitskriterien, testuebernahmen, befundzeile, alternativeFeldkennung, self.templateRootElement)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiBefundAusTest(do.testuebernahmen, do.lineEditBefundzeile.text(), self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiBefundAusTest(do.testuebernahmen, do.lineEditBefundzeile.text(), do.lineEditAlterativeFeldkennung.text(), self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten
@@ -1632,7 +1636,7 @@ class MainWindow(QMainWindow):
                     try:
                         exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                         if len(exceptions) == 0:
-                            self.setStatusMessage("Befundzeile erzeugt")
+                            self.setStatusMessage("Befundzeile erzeugt (alternative Feldkennung:" + do.lineEditAlterativeFeldkennung.text() + ")")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
                             class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))

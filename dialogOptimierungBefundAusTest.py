@@ -26,12 +26,13 @@ class Testuebernahme:
         self.platzhalterFeldkennung = platzhalterFeldkennung
 
 class OptimierungBefundAusTest(QDialog):
-    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str, templateRoot:ElementTree.Element):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, testuebernahmen:list, befundzeile:str, alternativeFeldkennung:str, templateRoot:ElementTree.Element):
         super().__init__()
         self.gdtDateiOptimiert = gdtDateiOptimiert
         self.maxeindeutigkeitskriterien = maxeindeutigkeitskriterien
         self.testuebernahmen = testuebernahmen # Liste von Testuebernmahmen
         self.befundzeile = befundzeile
+        self.alternativeFeldkennung = alternativeFeldkennung
 
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
@@ -152,17 +153,24 @@ class OptimierungBefundAusTest(QDialog):
         self.testuebernahmeEntfernenAction.triggered.connect(self.testuebernahmeEntfernen) # type:ignore
         self.listWidgetTestuebernahmen.addAction(self.testuebernahmeEntfernenAction)
 
-        dialogLayoutVBefundzeile = QVBoxLayout()
+        dialogLayoutGBefundzeile = QGridLayout()
         groupBoxBefundzeile = QGroupBox("Befundzeile (Zeilenumbruch mit \"//\")")
         groupBoxBefundzeile.setFont(self.fontBold)
-        groupBoxBefundzeile.setLayout(dialogLayoutVBefundzeile)
+        groupBoxBefundzeile.setLayout(dialogLayoutGBefundzeile)
         self.lineEditBefundzeile = QLineEdit(self.befundzeile)
         self.lineEditBefundzeile.setFont(self.fontNormal)
+        labelAlternativeFeldkennung = QLabel("Alternative Feldkennung")
+        labelAlternativeFeldkennung.setFont(self.fontNormal)
+        self.lineEditAlterativeFeldkennung = QLineEdit(self.alternativeFeldkennung)
+        self.lineEditAlterativeFeldkennung.setFont(self.fontNormal)
+        self.lineEditAlterativeFeldkennung.setPlaceholderText("6220")
         self.pushButtonUebernahmeEinfuegen = QPushButton("Testübernahme einfügen")
         self.pushButtonUebernahmeEinfuegen.setFont(self.fontNormal)
         self.pushButtonUebernahmeEinfuegen.clicked.connect(self.pushButtonUebernahmeEinfuegenClicked) # type:ignore
-        dialogLayoutVBefundzeile.addWidget(self.lineEditBefundzeile)
-        dialogLayoutVBefundzeile.addWidget(self.pushButtonUebernahmeEinfuegen)
+        dialogLayoutGBefundzeile.addWidget(self.lineEditBefundzeile, 0, 0, 1, 2)
+        dialogLayoutGBefundzeile.addWidget(labelAlternativeFeldkennung, 1, 0, 1, 1)
+        dialogLayoutGBefundzeile.addWidget(self.lineEditAlterativeFeldkennung, 1, 1, 1, 1)
+        dialogLayoutGBefundzeile.addWidget(self.pushButtonUebernahmeEinfuegen, 2, 0, 1, 2)
 
         dialogLayoutHMain.addWidget(groupBoxTestuebernahmeDefinieren)
         dialogLayoutHMain.addWidget(groupBoxTestuebernahmen)
@@ -346,19 +354,20 @@ class OptimierungBefundAusTest(QDialog):
             self.lineEditBefundzeile.setCursorPosition(cursorPosition + len(variable))
 
     def listWidgetTestuebernahmeItemChanged(self,current):
-        self.testuebernahmeEntfernenAction.setEnabled(self.listWidgetTestuebernahmen.currentItem() != None)
-        platzhalterName = current.text()
-        index = self.getTestuebernahmeIndex(platzhalterName)
-        for i in range(self.maxeindeutigkeitskriterien):    
-            self.lineEditFeldkennungen[i].setText("")
-            self.lineEditKriterien[i].setText("")
-        i = 0
-        for kriterium in self.testuebernahmen[index].eindeutigkeitskriterien:
-            self.lineEditFeldkennungen[i].setText(kriterium)
-            self.lineEditKriterien[i].setText(self.testuebernahmen[index].eindeutigkeitskriterien[kriterium])
-            i += 1
-        self.lineEditPlatzhalterName.setText(self.testuebernahmen[index].platzhalterName)
-        self.lineEditPlatzhalterFeldkennung.setText(self.testuebernahmen[index].platzhalterFeldkennung)
+        if current != None:
+            self.testuebernahmeEntfernenAction.setEnabled(self.listWidgetTestuebernahmen.currentItem() != None)
+            platzhalterName = current.text()
+            index = self.getTestuebernahmeIndex(platzhalterName)
+            for i in range(self.maxeindeutigkeitskriterien):    
+                self.lineEditFeldkennungen[i].setText("")
+                self.lineEditKriterien[i].setText("")
+            i = 0
+            for kriterium in self.testuebernahmen[index].eindeutigkeitskriterien:
+                self.lineEditFeldkennungen[i].setText(kriterium)
+                self.lineEditKriterien[i].setText(self.testuebernahmen[index].eindeutigkeitskriterien[kriterium])
+                i += 1
+            self.lineEditPlatzhalterName.setText(self.testuebernahmen[index].platzhalterName)
+            self.lineEditPlatzhalterFeldkennung.setText(self.testuebernahmen[index].platzhalterFeldkennung)
 
     def testuebernahmeEntfernen(self):
         currentRow = self.listWidgetTestuebernahmen.currentIndex().row()
@@ -372,4 +381,13 @@ class OptimierungBefundAusTest(QDialog):
             self.listWidgetTestuebernahmen.setCurrentRow(currentRow)
 
     def accept(self):
-            self.done(1)
+            feldkennungPattern = r"^\d{4}$"
+            if self.lineEditAlterativeFeldkennung.text() == "" or re.match(feldkennungPattern, self.lineEditAlterativeFeldkennung.text()) != None:
+                if self.lineEditAlterativeFeldkennung.text() == "":
+                    self.lineEditAlterativeFeldkennung.setText("6220")
+                self.done(1)
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Eine Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+                self.lineEditAlterativeFeldkennung.setFocus()
+                self.lineEditAlterativeFeldkennung.selectAll()
+                mb.exec()
