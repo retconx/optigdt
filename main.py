@@ -1774,29 +1774,29 @@ class MainWindow(QMainWindow):
             bmiTest = class_gdtdatei.Test("")
             bmiTest.setZeile("8411", "")
             bmiTest.setZeile("8421", "kg/m\u00b2")
-            if groesseVorhanden or gewichtVorhanden:
-                # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
-                if optimierungsId != "":
-                    for optimierungElement in self.templateRootElement.findall("optimierung"):
-                        if str(optimierungElement.get("id")) == optimierungsId:
-                            groesseElement = optimierungElement.find("groesse")
-                            groesseTest.setZeile("8410", str(groesseElement.findtext("testident"))) # type: ignore
-                            groesseTest.setZeile("8411", str(groesseElement.findtext("testbezeichnung"))) # type: ignore
-                            groesseTest.setZeile("8420", groesse)
-                            groesseTest.setZeile("8421", str(groesseElement.findtext("testeinheit"))) # type: ignore
-                            groesseLoeschen = str(groesseElement.findtext("loeschen")) == "True" # type: ignore
-                            gewichtElement = optimierungElement.find("gewicht")
-                            gewichtTest.setZeile("8410", str(gewichtElement.findtext("testident"))) # type: ignore
-                            gewichtTest.setZeile("8411", str(gewichtElement.findtext("testbezeichnung"))) # type: ignore
-                            gewichtTest.setZeile("8420", gewicht)
-                            gewichtTest.setZeile("8421", str(gewichtElement.findtext("testeinheit"))) # type: ignore
-                            gewichtLoeschen = str(gewichtElement.findtext("loeschen")) == "True" # type: ignore
-                            bmiElement = optimierungElement.find("bmi")
-                            bmiTest.setZeile("8410", str(bmiElement.findtext("testident"))) # type: ignore
-                            bmiTest.setZeile("8411", str(bmiElement.findtext("testbezeichnung"))) # type: ignore
-                            bmiTest.setZeile("8421", str(bmiElement.findtext("testeinheit"))) # type: ignore
-                            break
-                if self.treeWidgetOriginal.topLevelItemCount() > 0:
+            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+            if optimierungsId != "":
+                for optimierungElement in self.templateRootElement.findall("optimierung"):
+                    if str(optimierungElement.get("id")) == optimierungsId:
+                        groesseElement = optimierungElement.find("groesse")
+                        groesseTest.setZeile("8410", str(groesseElement.findtext("testident"))) # type: ignore
+                        groesseTest.setZeile("8411", str(groesseElement.findtext("testbezeichnung"))) # type: ignore
+                        groesseTest.setZeile("8420", groesse)
+                        groesseTest.setZeile("8421", str(groesseElement.findtext("testeinheit"))) # type: ignore
+                        groesseLoeschen = str(groesseElement.findtext("loeschen")) == "True" # type: ignore
+                        gewichtElement = optimierungElement.find("gewicht")
+                        gewichtTest.setZeile("8410", str(gewichtElement.findtext("testident"))) # type: ignore
+                        gewichtTest.setZeile("8411", str(gewichtElement.findtext("testbezeichnung"))) # type: ignore
+                        gewichtTest.setZeile("8420", gewicht)
+                        gewichtTest.setZeile("8421", str(gewichtElement.findtext("testeinheit"))) # type: ignore
+                        gewichtLoeschen = str(gewichtElement.findtext("loeschen")) == "True" # type: ignore
+                        bmiElement = optimierungElement.find("bmi")
+                        bmiTest.setZeile("8410", str(bmiElement.findtext("testident"))) # type: ignore
+                        bmiTest.setZeile("8411", str(bmiElement.findtext("testbezeichnung"))) # type: ignore
+                        bmiTest.setZeile("8421", str(bmiElement.findtext("testeinheit"))) # type: ignore
+                        break
+            if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                if groesseVorhanden or gewichtVorhanden:
                     do = dialogOptimierungTestAusGgb.OptimierungTestAusGgb(self.gdtDateiOptimiert, groesseTest, groesseLoeschen, gewichtTest, gewichtLoeschen, bmiTest)
                     if do.exec() == 1:
                         self.templateRootDefinieren()
@@ -1827,10 +1827,10 @@ class MainWindow(QMainWindow):
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
                             mb.exec()
                 else:
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält weder eine Körpergrößen- noch eine Körpergewichtsangabe (Feldkennungen 3622 und 3623).", QMessageBox.StandardButton.Ok)
                     mb.exec()
             else:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält weder eine Körpergrößen- noch eine Körpergewichtsangabe (Feldkennungen 3622 und 3623).", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
                 mb.exec()
         else:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
