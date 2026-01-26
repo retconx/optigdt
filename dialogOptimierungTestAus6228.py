@@ -163,6 +163,9 @@ class OptimierungTestAus6228(QDialog):
         dialogLayoutV.addWidget(self.buttonBox)
         self.setLayout(dialogLayoutV)
 
+        # Test-Ident merken, falls Bearbeiten-Modus
+        self.testIdentVergeben = self.lineEditTestIdent.text()
+
         self.setErkennungEindeutig(False)
         self.comboBox6228.currentTextChanged.connect(self.lineEditPruefung) # type: ignore
         self.comboBox6228.setCurrentIndex(self.ntesVorkommenIndexInCombobox(self.ntesVorkommen))
@@ -278,6 +281,7 @@ class OptimierungTestAus6228(QDialog):
             self.angepassteErgebnisseDict = dea.angepassteErgebnisseDict
 
     def accept(self):
+        testIdentUnveraendert = self.testIdentVergeben == self.lineEditTestIdent.text()
         fehler = []
         if self.checkBoxEindeutigkeitErzwingen.isChecked() and not self.erkennungIsEindeutig():
             fehler.append("6228-Erkennung ist nicht eindeutig.")
@@ -296,8 +300,8 @@ class OptimierungTestAus6228(QDialog):
             for i in range(len(alleTestIdents)):
                 if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                     alleTestIdents[i] = alleTestIdents[i][:-8]
-            testIdentIsEindeutig = self.lineEditTestIdent.text() not in alleTestIdents
-            if not testIdentIsEindeutig and self.lineEditTestIdent.isEnabled():
+            testIdentIsEindeutig = self.lineEditTestIdent.text() not in alleTestIdents or testIdentUnveraendert
+            if not testIdentIsEindeutig:
                 fehler.append("Test-Ident ist nicht eindeutig.")
         if self.lineEditTestBezeichnung.text() == "":
             fehler.append("Keine Test-Bezeichnung eingetragen.")

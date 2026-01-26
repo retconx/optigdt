@@ -4,7 +4,7 @@ import class_gdtdatei, class_optimierung, class_importWorker, class_Enums, farbe
 import gdttoolsL
 ## /Nur mit Lizenz
 import xml.etree.ElementTree as ElementTree
-import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf, dialogEinstellungenImportExport, dialogEinstellungenAllgemein
+import dialogUeberOptiGdt, dialogEinstellungenGdt, dialogEinstellungenOptimierung, dialogEinstellungenLanrLizenzschluessel, dialogOptimierungAddZeile, dialogOptimierungDeleteZeile, dialogOptimierungChangeTest, dialogOptimierungTestAus6228, dialogOptimierungBefundAusTest, dialogOptimierungConcatInhalte, dialogOptimierungDeleteTest, dialogTemplatesVerwalten, dialogOptimierungChangeZeile, dialogEula, dialogOptimierungAddPdf, dialogEinstellungenImportExport, dialogEinstellungenAllgemein, dialogOptimierungTestAusGgb
 from PySide6.QtCore import Qt, QTranslator, QLibraryInfo, QFileSystemWatcher, QThreadPool
 from PySide6.QtGui import QFont, QAction, QKeySequence, QIcon, QDesktopServices, QColor
 from PySide6.QtWidgets import (
@@ -424,6 +424,9 @@ class MainWindow(QMainWindow):
         self.pushButtonPdfHinzufuegen = QPushButton("PDF-Datei hinzufügen")
         self.pushButtonPdfHinzufuegen.setFont(self.fontNormal)
         self.pushButtonPdfHinzufuegen.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuPdfHinzufuegen(checked, optimierungsId)) 
+        self.pushButtonTestAusGgb = QPushButton("Test aus Größe/Gewicht/BMI")
+        self.pushButtonTestAusGgb.setFont(self.fontNormal)
+        self.pushButtonTestAusGgb.clicked.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAusGgb(checked, optimierungsId)) 
 
         # Template-Infos
         templateInfosLayout = QGridLayout()
@@ -506,6 +509,7 @@ class MainWindow(QMainWindow):
         optimierungsButtonsLayout.addWidget(self.pushButtonBefundAusTest)
         optimierungsButtonsLayout.addWidget(self.pushButtonInhalteZusammenfuehren)
         optimierungsButtonsLayout.addWidget(self.pushButtonPdfHinzufuegen)
+        optimierungsButtonsLayout.addWidget(self.pushButtonTestAusGgb)
         mainGridLayout.addLayout(optimierungsButtonsLayout, 1, 2, alignment=Qt.AlignmentFlag.AlignTop)
 
         # Überwachung starten-Button
@@ -576,6 +580,8 @@ class MainWindow(QMainWindow):
         optimierenMenuInhalteZusammenfuehrenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuInhalteZusammenfuehren(checked, optimierungsId)) 
         optimierenMenuPdfHinzufuegenAction = QAction("PDF-Datei hinzufügen", self)
         optimierenMenuPdfHinzufuegenAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuPdfHinzufuegen(checked, optimierungsId)) 
+        optimierenMenuTestAusGgbAction = QAction("Test aus Größe/Gewicht/BMI", self)
+        optimierenMenuTestAusGgbAction.triggered.connect(lambda checked=False, optimierungsId="": self.optimierenMenuTestAusGgb(checked, optimierungsId)) 
         self.optimierenMenuVerzeichnisueberwachungStartenAction = QAction("Verzeichnisüberwachung starten", self)
         self.optimierenMenuVerzeichnisueberwachungStartenAction.triggered.connect(self.optimierenMenuVerzeichnisueberwachungStarten) 
         self.optimierenMenuInDenHintergrundAction = QAction("OptiGDT im Hintergrund ausführen", self)
@@ -631,6 +637,7 @@ class MainWindow(QMainWindow):
         optimierenMenu.addAction(optimierenMenuBefundAusTestAction)
         optimierenMenu.addAction(optimierenMenuInhalteZusammenfuehrenAction)
         optimierenMenu.addAction(optimierenMenuPdfHinzufuegenAction)
+        optimierenMenu.addAction(optimierenMenuTestAusGgbAction)
         optimierenMenu.addSeparator()
         optimierenMenu.addAction(self.optimierenMenuVerzeichnisueberwachungStartenAction)
         optimierenMenu.addAction(self.optimierenMenuInDenHintergrundAction)
@@ -706,7 +713,7 @@ class MainWindow(QMainWindow):
                     zeileZaehlen = False
                 elif typ == "changeTest":
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.CHANGETEST, self.palette()))
-                elif typ == "testAus6228":
+                elif typ == "testAus6228" or typ == "testAusGgb":
                     #self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), testAus6228Hintergrund) (bis 2.12.0)
                     self.setTreeWidgetItemHintergrund(item, treeWidget.columnCount(), farbe.getTextColor(farbe.farben.TESTAUS6228, self.palette()))
                 elif typ == "befundAusTest":
@@ -1743,6 +1750,91 @@ class MainWindow(QMainWindow):
         else:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
             mb.exec()
+
+    def optimierenMenuTestAusGgb(self, checked, optimierungsId:str=""):
+        if self.addOnsFreigeschaltet:
+            groesse = ""
+            gewicht = ""
+            if len(self.gdtDateiOriginal.getZeilennummern("3622")) > 0:
+                groesse = self.gdtDateiOriginal.getInhalte("3622")[0]
+            if len(self.gdtDateiOriginal.getZeilennummern("3623")) > 0:
+                gewicht = self.gdtDateiOriginal.getInhalte("3623")[0]
+            groesseVorhanden = groesse != ""
+            gewichtVorhanden = gewicht != ""
+            groesseTest = class_gdtdatei.Test("")
+            groesseTest.setZeile("8411", "")
+            groesseTest.setZeile("8420", groesse)
+            groesseTest.setZeile("8421", "")
+            groesseLoeschen = False
+            gewichtTest = class_gdtdatei.Test("")
+            gewichtTest.setZeile("8411", "")
+            gewichtTest.setZeile("8420", gewicht)
+            gewichtTest.setZeile("8421", "")
+            gewichtLoeschen = False
+            bmiTest = class_gdtdatei.Test("")
+            bmiTest.setZeile("8411", "")
+            bmiTest.setZeile("8421", "kg/m\u00b2")
+            if groesseVorhanden or gewichtVorhanden:
+                # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+                if optimierungsId != "":
+                    for optimierungElement in self.templateRootElement.findall("optimierung"):
+                        if str(optimierungElement.get("id")) == optimierungsId:
+                            groesseElement = optimierungElement.find("groesse")
+                            groesseTest.setZeile("8410", str(groesseElement.findtext("testident"))) # type: ignore
+                            groesseTest.setZeile("8411", str(groesseElement.findtext("testbezeichnung"))) # type: ignore
+                            groesseTest.setZeile("8420", groesse)
+                            groesseTest.setZeile("8421", str(groesseElement.findtext("testeinheit"))) # type: ignore
+                            groesseLoeschen = str(groesseElement.findtext("loeschen")) == "True" # type: ignore
+                            gewichtElement = optimierungElement.find("gewicht")
+                            gewichtTest.setZeile("8410", str(gewichtElement.findtext("testident"))) # type: ignore
+                            gewichtTest.setZeile("8411", str(gewichtElement.findtext("testbezeichnung"))) # type: ignore
+                            gewichtTest.setZeile("8420", gewicht)
+                            gewichtTest.setZeile("8421", str(gewichtElement.findtext("testeinheit"))) # type: ignore
+                            gewichtLoeschen = str(gewichtElement.findtext("loeschen")) == "True" # type: ignore
+                            bmiElement = optimierungElement.find("bmi")
+                            bmiTest.setZeile("8410", str(bmiElement.findtext("testident"))) # type: ignore
+                            bmiTest.setZeile("8411", str(bmiElement.findtext("testbezeichnung"))) # type: ignore
+                            bmiTest.setZeile("8421", str(bmiElement.findtext("testeinheit"))) # type: ignore
+                            break
+                if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                    do = dialogOptimierungTestAusGgb.OptimierungTestAusGgb(self.gdtDateiOptimiert, groesseTest, groesseLoeschen, gewichtTest, gewichtLoeschen, bmiTest)
+                    if do.exec() == 1:
+                        self.templateRootDefinieren()
+                        optimierungElement = class_optimierung.OptiTestAusGgb(do.groesseTest, do.checkBoxStatusGroesse, do.gewichtTest, do.checkBoxStatusGewicht, do.bmiTest, self.templateRootElement)
+                        if optimierungsId == "": # Neue zeile
+                            self.templateRootElement.append(optimierungElement.getXml())
+                        else: # Zeile bearbeiten
+                            class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                        try:
+                            exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                            if len(exceptions) == 0:
+                                testErzeugtAus = []
+                                if do.groesseVorhanden:
+                                    testErzeugtAus.append("Größe")
+                                if do.gewichtVorhanden:
+                                    testErzeugtAus.append("Gewicht")
+                                if len(testErzeugtAus) == 2:
+                                    testErzeugtAus.append("BMI")
+                                self.setStatusMessage("Tests erzeugt aus " + ", ".join(testErzeugtAus))
+                            else:
+                                exceptionsListe = "\n-".join(exceptions)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                                mb.exec() 
+                            self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                            self.ungesichertesTemplate = True
+                        except class_gdtdatei.GdtFehlerException as e:
+                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                            mb.exec()
+                else:
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                    mb.exec()
+            else:
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält weder eine Körpergrößen- noch eine Körpergewichtsangabe (Feldkennungen 3622 und 3623).", QMessageBox.StandardButton.Ok)
+                mb.exec()
+        else:
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb.exec()
                 
     def optimierenMenuVerzeichnisueberwachungStarten(self):
         self.pushButtonUeberwachungStartenClicked(True)
@@ -1782,6 +1874,8 @@ class MainWindow(QMainWindow):
                 self.optimierenMenuInhalteZusammenfuehren(False, optimierungsId)
             elif optimierungstyp == "addPdf":
                 self.optimierenMenuPdfHinzufuegen(False, optimierungsId)
+            elif optimierungstyp == "testAusGgb":
+                self.optimierenMenuTestAusGgb(False, optimierungsId)
             self.setStatusMessage("Optimierung bearbeitet")
         except class_gdtdatei.GdtFehlerException as e:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Bebrbeiten der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
@@ -1809,6 +1903,8 @@ class MainWindow(QMainWindow):
                 self.optimierenMenuInhalteZusammenfuehren(False, optimierungsId)
             elif optimierungstyp == "addPdf":
                 self.optimierenMenuPdfHinzufuegen(False, optimierungsId)
+            elif optimierungstyp == "testAusGgb":
+                self.optimierenMenuTestAusGgb(False, optimierungsId)
             self.setStatusMessage("Optimierung bearbeitet")
         except class_gdtdatei.GdtFehlerException as e:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Bebrbeiten der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)

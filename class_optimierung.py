@@ -365,3 +365,58 @@ class OptiAddPdf(Optimierung):
         dateiformatElement.text = self.dateiformat
         optimierungElement.append(dateiformatElement)
         return optimierungElement
+    
+class OptiTestAusGgb(Optimierung):
+    def __init__(self, groesseTest:class_gdtdatei.Test, groesseZeileLoeschen:bool, gewichtTest:class_gdtdatei.Test, gewichtZeileLoeschen:bool, bmiTest:class_gdtdatei.Test, bisherigesRoot:ElementTree.Element):
+        super().__init__("testAusGgb", bisherigesRoot)
+        self.groesseTest = groesseTest
+        self.groesseZeileLoeschen = groesseZeileLoeschen
+        self.gewichtTest = gewichtTest
+        self.gewichtZeileLoeschen = gewichtZeileLoeschen
+        self.bmiTest = bmiTest
+        self.Id = self.neueId
+
+    def getXml(self) -> ElementTree.Element:
+        optimierungElement = ElementTree.Element("optimierung")
+        optimierungElement.set("id", str(self.Id))
+        optimierungElement.set("typ", self.typ)
+        groesseElement = ElementTree.Element("groesse")
+        groesseTestIdentElement = ElementTree.Element("testident")
+        groesseTestIdentElement.text = self.groesseTest.getInhalt("8410")
+        groesseElement.append(groesseTestIdentElement)
+        groesseTestBezeichnungElement = ElementTree.Element("testbezeichnung")
+        groesseTestBezeichnungElement.text = self.groesseTest.getInhalt("8411")
+        groesseElement.append(groesseTestBezeichnungElement)
+        groesseTestEinheitElement = ElementTree.Element("testeinheit")
+        groesseTestEinheitElement.text = self.groesseTest.getInhalt("8421")
+        groesseElement.append(groesseTestEinheitElement)
+        groesseLoeschenElement = ElementTree.Element("loeschen")
+        groesseLoeschenElement.text = str(self.groesseZeileLoeschen == True)
+        groesseElement.append(groesseLoeschenElement)
+        gewichtElement = ElementTree.Element("gewicht")
+        gewichtTestIdentElement = ElementTree.Element("testident")
+        gewichtTestIdentElement.text = self.gewichtTest.getInhalt("8410")
+        gewichtElement.append(gewichtTestIdentElement)
+        gewichtTestBezeichnungElement = ElementTree.Element("testbezeichnung")
+        gewichtTestBezeichnungElement.text = self.gewichtTest.getInhalt("8411")
+        gewichtElement.append(gewichtTestBezeichnungElement)
+        gewichtTestEinheitElement = ElementTree.Element("testeinheit")
+        gewichtTestEinheitElement.text = self.gewichtTest.getInhalt("8421")
+        gewichtElement.append(gewichtTestEinheitElement)
+        gewichtLoeschenElement = ElementTree.Element("loeschen")
+        gewichtLoeschenElement.text = str(self.gewichtZeileLoeschen == True)
+        gewichtElement.append(gewichtLoeschenElement)
+        bmiElement = ElementTree.Element("bmi")
+        bmiTestIdentElement = ElementTree.Element("testident")
+        bmiTestIdentElement.text = self.bmiTest.getInhalt("8410")
+        bmiElement.append(bmiTestIdentElement)
+        bmiTestBezeichnungElement = ElementTree.Element("testbezeichnung")
+        bmiTestBezeichnungElement.text = self.bmiTest.getInhalt("8411")
+        bmiElement.append(bmiTestBezeichnungElement)
+        bmiTestEinheitElement = ElementTree.Element("testeinheit")
+        bmiTestEinheitElement.text = self.bmiTest.getInhalt("8421")
+        bmiElement.append(bmiTestEinheitElement)
+        optimierungElement.append(groesseElement)
+        optimierungElement.append(gewichtElement)
+        optimierungElement.append(bmiElement)
+        return optimierungElement

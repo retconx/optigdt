@@ -11,3 +11,9 @@ class ZeileEinfuegen:
         self.vorNach = vorNach # 0 = vor, 1 = nach
         self.vorkommen = vorkommen
         self.feldkennung = feldkennung
+
+class Einheit(Enum):
+    KG = "kg"
+    G = "g"
+    M = "m"
+    CM = "cm"

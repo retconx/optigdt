@@ -306,8 +306,8 @@ class GdtDatei():
             if fk == feldkennung:
                 inhalte.append(inhalt)
             i += 1
-        # if len(inhalte) == 0:
-        #     raise GdtFehlerException("Felkennung " + feldkennung + " nicht vorhanden")
+        if len(inhalte) == 0:
+            raise GdtFehlerException("Felkennung " + feldkennung + " nicht vorhanden")
         return inhalte
     
     def addZeile(self, feldkennung:str, inhalt:str, zeileEinfuegen:class_Enums.ZeileEinfuegen=class_Enums.ZeileEinfuegen(0, 1, "")):
@@ -581,6 +581,70 @@ class GdtDatei():
             zuErsetzen = zuErsetzen.replace("${FK" + feldkennung + "}", ersetzt)
         return zuErsetzen
     
+    def getTestAusGroesse(self, ident:str, bezeichnung:str, einheit:str):
+        """
+        Erzeugt einen Test aus der Körpergröße (Feldkennung 3622)
+        Paramter:
+            ident:str Zu verwendendes Test-Ident
+            bezeichnung:str Zu verwendende Test-Bezeichnung
+            einheit:str Zu verwendende Test-Einheit
+        Rückgabe:
+            Test
+        Exception:
+            GdtFehlerExceptions, falls Feldkennung 3622 nicht vorhanden oder deren Inhalt nicht einer Zahl entsprechend
+        """
+        groesseVorhanden = len(self.getZeilennummern("3622")) > 0
+        if groesseVorhanden:
+            groesse = self.getInhalte("3622")[0]
+            if re.match(r"^\d+([,.]\d+)?$", groesse) != None:
+                groesseFloat = float(groesse.replace(",", "."))
+                if groesseFloat > 3 and einheit == class_Enums.Einheit.M.value:
+                    groesseFloat /= 100
+                test = Test(ident)
+                test.setZeile("8411", bezeichnung)
+                if einheit == class_Enums.Einheit.M.value:
+                    test.setZeile("8420", "{:.2f}".format(groesseFloat).replace(".", ",").replace(",00", ""))
+                elif einheit == class_Enums.Einheit.CM.value:
+                    test.setZeile("8420", "{:.1f}".format(groesseFloat).replace(".", ",").replace(",0", ""))
+                test.setZeile("8421", einheit)
+                return test
+            else:
+                raise GdtFehlerException("Falsches Format der Körpergröße in der GDT-Datei (Feldkennung 3622)")
+        else:
+            raise GdtFehlerException("Keine Körpergröße in der GDT-Datei (Feldkennung 3622)")
+        
+    def getTestAusGewicht(self, ident:str, bezeichnung:str, einheit:str):
+        """
+        Erzeugt einen Test aus dem Körpergewicht (Feldkennung 3623)
+        Paramter:
+            ident:str Zu verwendendes Test-Ident
+            bezeichnung:str Zu verwendende Test-Bezeichnung
+            einheit:str Zu verwendende Test-Einheit
+        Rückgabe:
+            Test
+        Exception:
+            GdtFehlerExceptions, falls Feldkennung 3623 nicht vorhanden oder deren Inhalt nicht einer Zahl entsprechend
+        """
+        gewichtVorhanden = len(self.getZeilennummern("3623")) > 0
+        if gewichtVorhanden:
+            gewicht = self.getInhalte("3623")[0]
+            if re.match(r"^\d+([,.]\d+)?$", gewicht) != None:
+                gewichtFloat = float(gewicht.replace(",", "."))
+                if gewichtFloat > 500 and einheit == class_Enums.Einheit.KG.value:
+                    gewichtFloat /= 1000
+                test = Test(ident)
+                test.setZeile("8411", bezeichnung)
+                if einheit == class_Enums.Einheit.KG.value:
+                    test.setZeile("8420", "{:.1f}".format(gewichtFloat).replace(".", ",").replace(",0", ""))
+                elif einheit == class_Enums.Einheit.G.value:
+                    test.setZeile("8420", "{:.0f}".format(gewichtFloat).replace(".", ","))
+                test.setZeile("8421", einheit)
+                return test
+            else:
+                raise GdtFehlerException("Falsches Format des Körpergewichts in der GDT-Datei (Feldkennung 3623)")
+        else:
+            raise GdtFehlerException("Kein Körpergewicht in der GDT-Datei (Feldkennung 3623)")
+    
     def applyTemplateVonPfad(self,templatePfad:str):
         tree = ElementTree.parse(templatePfad)
         rootElement = tree.getroot()
@@ -808,6 +872,57 @@ class GdtDatei():
                                 exceptions.append("Anhang " + os.path.join(originalpfad, originalname) + ".pdf nicht angehängt, da nicht existiert")
                     else:
                         exceptions.append("PDF anhängen nicht möglich (xml-Datei fehlerhaft)")
+                elif typ == "testAusGgb":
+                    groesseElement = optimierungElement.find("groesse")
+                    gewichtElement = optimierungElement.find("gewicht")
+                    bmiElement = optimierungElement.find("bmi")
+                    groesseVorhanden = groesseElement.findtext("testident") != "" # type: ignore
+                    gewichtVorhanden = gewichtElement.findtext("testident") != "" # type: ignore
+                    if groesseVorhanden:
+                        try:
+                            groesseTest = self.getTestAusGroesse(str(groesseElement.findtext("testident")), str(groesseElement.findtext("testbezeichnung")), str(groesseElement.findtext("testeinheit"))) # type: ignore
+                            testZeilen = groesseTest.getTestzeilen()
+                            for zeile in testZeilen:
+                                if vorschau:
+                                    self.addZeile(zeile, testZeilen[zeile] + "__" + id + "__")
+                                else:
+                                    self.addZeile(zeile, testZeilen[zeile])
+                        except GdtFehlerException as e:
+                            exceptions.append(e.meldung)
+                    if gewichtVorhanden:
+                        try:
+                            gewichtTest = self.getTestAusGewicht(str(gewichtElement.findtext("testident")), str(gewichtElement.findtext("testbezeichnung")), str(gewichtElement.findtext("testeinheit"))) # type: ignore
+                            testZeilen = gewichtTest.getTestzeilen()
+                            for zeile in testZeilen:
+                                if vorschau:
+                                    self.addZeile(zeile, testZeilen[zeile] + "__" + id + "__")
+                                else:
+                                    self.addZeile(zeile, testZeilen[zeile])
+                        except GdtFehlerException as e:
+                            exceptions.append(e.meldung)
+                    if groesseVorhanden and gewichtVorhanden:
+                        bmifloat = 0
+                        bmiTest = Test(str(bmiElement.findtext("testident"))) # type: ignore
+                        groesseFloat = float(groesseTest.getInhalt("8420").replace(",", "."))
+                        gewichtFloat = float(gewichtTest.getInhalt("8420").replace(",", "."))
+                        bmifloat = gewichtFloat / groesseFloat / groesseFloat
+                        if gewichtFloat > 500:
+                            bmifloat /= 1000
+                        if groesseFloat > 3:
+                            bmifloat *= 10000
+                        bmiTest.setZeile("8411", str(bmiElement.findtext("testbezeichnung"))) # type: ignore
+                        bmiTest.setZeile("8420", "{:.1f}".format(bmifloat).replace(".", ",")) # type: ignore
+                        bmiTest.setZeile("8421", str(bmiElement.findtext("testeinheit")).replace("\u00b2", "2")) # type: ignore
+                        testZeilen = bmiTest.getTestzeilen()
+                        for zeile in testZeilen:
+                            if vorschau:
+                                self.addZeile(zeile, testZeilen[zeile] + "__" + id + "__")
+                            else:
+                                self.addZeile(zeile, testZeilen[zeile])
+                        if str(groesseElement.findtext("loeschen")) == "True": # type: ignore
+                            self.deleteZeile(id, "3622")
+                        if str(gewichtElement.findtext("loeschen")) == "True": # type: ignore
+                            self.deleteZeile(id, "3623")
             return exceptions
         else:
             raise GdtFehlerException("Templateanwendung nicht möglich, da GDT-Dateipfad unbekannt")
