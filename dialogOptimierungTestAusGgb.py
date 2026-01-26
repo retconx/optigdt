@@ -56,7 +56,7 @@ class OptimierungTestAusGgb(QDialog):
         self.fontKlein= QFont()
         self.fontKlein.setBold(False)
         self.fontKlein.setItalic(False)
-        self.fontKlein.setPointSize(12)
+        self.fontKlein.setPixelSize(12)
         self.setMinimumWidth(400)
 
         self.setWindowTitle("GDT-Optimierung: Test aus Größe/Gewicht/BMI")
@@ -257,7 +257,11 @@ class OptimierungTestAusGgb(QDialog):
             if self.lineEditGroesseTestIdent.text() == "":
                 fehler.append("Kein Test-Ident für Größe eingetragen")
             else:
-                alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                alleTestIdents = []
+                try:
+                    alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                except:
+                    pass
                 for i in range(len(alleTestIdents)):
                     if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                         alleTestIdents[i] = alleTestIdents[i][:-8]
@@ -273,7 +277,11 @@ class OptimierungTestAusGgb(QDialog):
             elif self.lineEditGewichtTestIdent.text() == self.lineEditGroesseTestIdent.text():
                 fehler.append("Test-Ident für Gewicht ist nicht eindeutig.")
             else:
-                alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                alleTestIdents = []
+                try:
+                    alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                except:
+                    pass
                 for i in range(len(alleTestIdents)):
                     if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                         alleTestIdents[i] = alleTestIdents[i][:-8]
@@ -289,7 +297,11 @@ class OptimierungTestAusGgb(QDialog):
             elif self.lineEditBmiTestIdent.text() == self.lineEditGroesseTestIdent.text() or self.lineEditBmiTestIdent.text() == self.lineEditGewichtTestIdent.text():
                 fehler.append("Test-Ident für BMI ist nicht eindeutig.")
             else:
-                alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                alleTestIdents = []
+                try:
+                    alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+                except:
+                    pass
                 for i in range(len(alleTestIdents)):
                     if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                         alleTestIdents[i] = alleTestIdents[i][:-8]

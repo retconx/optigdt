@@ -296,7 +296,11 @@ class OptimierungTestAus6228(QDialog):
         if self.lineEditTestIdent.text() == "":
             fehler.append("Kein Test-Ident eingetragen.")
         else:
-            alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+            alleTestIdents = []
+            try:
+                alleTestIdents = self.gdtDateiOptimiert.getInhalte("8410")
+            except:
+                pass
             for i in range(len(alleTestIdents)):
                 if re.match(r"^.+__\d{4}__$", alleTestIdents[i]) != None:
                     alleTestIdents[i] = alleTestIdents[i][:-8]
