@@ -321,9 +321,18 @@ class OptiBefundAusTest(Optimierung):
         return optimierungElement
 
 class OptiConcatInhalte(Optimierung):
-    def __init__(self, feldkennung:str, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, bisherigesRoot:ElementTree.Element):
+    def __init__(self, feldkennung:str, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, bisherigesRoot:ElementTree.Element):
         super().__init__("concatInhalte", bisherigesRoot)
         self.feldkennung = feldkennung
+        self.feldkennungAnfang = feldkennungAnfang
+        self.inhaltAnfang = inhaltAnfang
+        self.inkludiertAnfang = inkludiertAnfang
+        self.feldkennungEnde = feldkennungEnde
+        self.inhaltEnde = inhaltEnde
+        self.inkludiertEnde = inkludiertEnde
+        self.feldkennungZu = feldkennungZu
+        self.leerzeichenAnfangEntfernen = leerzeichenAnfangEntfernen
+        self.leerzeichenEndeEntfernen = leerzeichenEndeEntfernen
         self.einzufuegendesZeichen = einzufuegendesZeichen
         self.Id = self.neueId
 
@@ -331,9 +340,34 @@ class OptiConcatInhalte(Optimierung):
         optimierungElement = ElementTree.Element("optimierung")
         optimierungElement.set("id", str(self.Id))
         optimierungElement.set("typ", self.typ)
+        optimierungElement.set("leerzeichenanfangentfernen", str(self.leerzeichenAnfangEntfernen)) # ab 2.16.2
+        optimierungElement.set("leerzeichenendeentfernen", str(self.leerzeichenEndeEntfernen)) # ab 2.16.2
         feldkennungElement = ElementTree.Element("feldkennung") 
         feldkennungElement.text = self.feldkennung
         optimierungElement.append(feldkennungElement)
+        begrenzungenElement = ElementTree.Element("begrenzungen") # ab 2.16.0
+        anfangElement = ElementTree.Element("anfang")
+        anfangElement.set("inkludiert", str(self.inkludiertAnfang))
+        feldkennungAnfangElement = ElementTree.Element("feldkennung")
+        feldkennungAnfangElement.text = self.feldkennungAnfang
+        inhaltAnfangElement = ElementTree.Element("inhalt")
+        inhaltAnfangElement.text = self.inhaltAnfang
+        anfangElement.append(feldkennungAnfangElement)
+        anfangElement.append(inhaltAnfangElement)
+        begrenzungenElement.append(anfangElement)
+        endeElement = ElementTree. Element("ende")
+        endeElement.set("inkludiert", str(self.inkludiertEnde))
+        feldkennungEndeElement = ElementTree.Element("feldkennung")
+        feldkennungEndeElement.text = self.feldkennungEnde
+        inhaltendeElement = ElementTree.Element("inhalt")
+        inhaltendeElement.text = self.inhaltEnde
+        endeElement.append(feldkennungEndeElement)
+        endeElement.append(inhaltendeElement)
+        begrenzungenElement.append(endeElement)
+        optimierungElement.append(begrenzungenElement)
+        feldkennungZuElement = ElementTree.Element("feldkennungzu") 
+        feldkennungZuElement.text = self.feldkennungZu
+        optimierungElement.append(feldkennungZuElement)
         einzufuegendesZeichenElement = ElementTree.Element("einzufuegendeszeichen") 
         einzufuegendesZeichenElement.text = self.einzufuegendesZeichen.name
         optimierungElement.append(einzufuegendesZeichenElement)

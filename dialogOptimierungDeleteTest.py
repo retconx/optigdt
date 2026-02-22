@@ -18,11 +18,12 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungDeleteTest(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, eindeutigkeitskriterien:dict={}):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, maxeindeutigkeitskriterien:int, eindeutigkeitskriterien:dict, ausgewaehlteZeilennummer:str):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.maxeindeutigkeitskriterien = maxeindeutigkeitskriterien
         self.eindeutigkeitskriterien = eindeutigkeitskriterien
+        self.ausgewaehlteZeilennummer = ausgewaehlteZeilennummer
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -91,13 +92,19 @@ class OptimierungDeleteTest(QDialog):
         self.comboBoxTextVariable.setFont(self.fontNormal)
         self.comboBoxTextVariable.setEditable(False)
         self.comboBoxTextVariable.setFixedWidth(300)
-        self.comboBoxTextVariable.width
         i = 0
+        gdtzeilennummer = 1
+        ausgewaehlterIndex = -1
         for zeile in self.gdtDateiOriginal.getZeilen():
             feldkennung = zeile[3:7]
+            inhalt = zeile[7:]
             if feldkennung != "8402" and feldkennung[:2] == "84":
-                self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + zeile[7:])
+                self.comboBoxTextVariable.addItem(zeile[3:7] + ": " + inhalt)
+                if self.ausgewaehlteZeilennummer != "" and int(self.ausgewaehlteZeilennummer) - 1 < len(self.gdtDateiOriginal.getZeilen()) and int(self.ausgewaehlteZeilennummer) == gdtzeilennummer: # Combobox-Auswahl entsprechend Treeview-Auswahl
+                    ausgewaehlterIndex = i
                 i += 1
+            gdtzeilennummer += 1
+        self.comboBoxTextVariable.setCurrentIndex(ausgewaehlterIndex)
         dialogLayoutHTextVariable.addWidget(labelTextVariable)
         dialogLayoutHTextVariable.addWidget(self.comboBoxTextVariable)
         dialogLayoutG.addWidget(groupBoxTextVariableEinfuegen, (self.maxeindeutigkeitskriterien - 1) * 2 + 2, 0, 1, 4)

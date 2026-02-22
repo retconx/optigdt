@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungDeleteZeile(QDialog):
-    def __init__(self, alleVorkommen:bool=False, feldkennung:str=""):
+    def __init__(self, alleVorkommen:bool, feldkennung:str):
         super().__init__()
         self.alleVorkommen = alleVorkommen
         self.feldkennung = feldkennung

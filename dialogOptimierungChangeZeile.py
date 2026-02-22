@@ -19,12 +19,13 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungChangeZeile(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, alleVorkommen:bool=False, feldkennung:str="", neuerInhalt:str=""):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, alleVorkommen:bool, feldkennung:str, neuerInhalt:str, ausgewaehlteZeilennummer:int):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.alleVorkommen = alleVorkommen
         self.feldkennung = feldkennung
         self.neuerInhalt = neuerInhalt
+        self.ausgewaehlteZeilennummer = ausgewaehlteZeilennummer
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontNormal.setItalic(False)
@@ -56,6 +57,7 @@ class OptimierungChangeZeile(QDialog):
         for zeile in gdtDateiOriginal.getZeilen():
             self.comboBoxZeile.addItem(zeile[3:7] + ": " + zeile[7:])
             i += 1
+        self.comboBoxZeile.setCurrentIndex(ausgewaehlteZeilennummer)
         labelNeuerInhalt = QLabel("Neuer Inhalt")
         labelNeuerInhalt.setFont(self.fontNormal)
         self.lineEditNeuerInhalt = QLineEdit(self.neuerInhalt)

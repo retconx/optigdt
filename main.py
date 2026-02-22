@@ -917,18 +917,6 @@ class MainWindow(QMainWindow):
         else:
             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Log-Verzeichnis wurde nicht gefunden.", QMessageBox.StandardButton.Ok)
             mb.exec() 
-                
-    # def updatePruefung(self, meldungNurWennUpdateVerfuegbar = False):
-    #     response = requests.get("https://api.github.com/repos/retconx/optigdt/releases/latest")
-    #     githubRelaseTag = response.json()["tag_name"]
-    #     latestVersion = githubRelaseTag[1:] # ohne v
-    #     if versionVeraltet(self.version, latestVersion):
-    #         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die aktuellere OptiGDT-Version " + latestVersion + " ist auf <a href='https://github.com/retconx/optigdt/releases'>Github</a> verfügbar.", QMessageBox.StandardButton.Ok)
-    #         mb.setTextFormat(Qt.TextFormat.RichText)
-    #         mb.exec()
-    #     elif not meldungNurWennUpdateVerfuegbar:
-    #         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Sie nutzen die aktuelle OptiGDT-Version.", QMessageBox.StandardButton.Ok)
-    #         mb.exec()
 
     def updatePruefung(self, meldungNurWennUpdateVerfuegbar = False):
         logger.logger.info("Updateprüfung")
@@ -1361,7 +1349,8 @@ class MainWindow(QMainWindow):
                         neuerInhalt = str(optimierungElement.find("inhalt").text) # type:ignore
                         break
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungChangeZeile.OptimierungChangeZeile(self.gdtDateiOriginal, alleVorkommen, feldkennung, neuerInhalt)
+                ausgewaehlteZeilennummer = self.treeWidgetOptimiert.currentIndex().row()
+                do = dialogOptimierungChangeZeile.OptimierungChangeZeile(self.gdtDateiOriginal, alleVorkommen, feldkennung, neuerInhalt, ausgewaehlteZeilennummer)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
                     optimierungElement = class_optimierung.OptiChangeZeile(do.comboBoxZeile.currentText()[0:4], do.lineEditNeuerInhalt.text(), do.checkBoxAlle.isChecked(), self.templateRootElement)
@@ -1392,15 +1381,16 @@ class MainWindow(QMainWindow):
 
     def optimierenMenuZeileEntfernen(self, checked, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
-            feldkennung = ""
             alleVorkommen = False
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
                     if str(optimierungElement.get("id")) == optimierungsId:
                         alleVorkommen = optimierungElement.get("alle") == "True"
-                        feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
                         break
+            feldkennung = ""
+            if self.treeWidgetOptimiert.currentItem() != None:
+                feldkennung = self.treeWidgetOptimiert.currentItem().text(1)
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
                 do = dialogOptimierungDeleteZeile.OptimierungDeleteZeile(alleVorkommen, feldkennung)
                 if do.exec() == 1:
@@ -1451,7 +1441,10 @@ class MainWindow(QMainWindow):
                                 aenderungen[feldkennung] = inhalt
                             break
                 if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                    do = dialogOptimierungChangeTest.OptimierungChangeTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, self.maxtestaenderungen, eindeutigkeitskriterien, aenderungen)
+                    ausgewaehlteZeilennummer = ""
+                    if self.treeWidgetOptimiert.currentIndex().row() >= 0 and self.treeWidgetOptimiert.currentItem().text(1)[0:2] == "84":
+                        ausgewaehlteZeilennummer = self.treeWidgetOptimiert.currentItem().text(0)
+                    do = dialogOptimierungChangeTest.OptimierungChangeTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, self.maxtestaenderungen, eindeutigkeitskriterien, aenderungen, ausgewaehlteZeilennummer)
                     if do.exec() == 1:
                         exceptions = []
                         self.templateRootDefinieren()
@@ -1499,7 +1492,10 @@ class MainWindow(QMainWindow):
                                 eindeutigkeitskriterien[feldkennung] = inhalt
                             break
                 if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                    do = dialogOptimierungDeleteTest.OptimierungDeleteTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, eindeutigkeitskriterien)
+                    ausgewaehlteZeilennummer = ""
+                    if self.treeWidgetOptimiert.currentIndex().row() >= 0 and self.treeWidgetOptimiert.currentItem().text(1)[0:2] == "84":
+                        ausgewaehlteZeilennummer = self.treeWidgetOptimiert.currentItem().text(0)
+                    do = dialogOptimierungDeleteTest.OptimierungDeleteTest(self.gdtDateiOriginal, self.maxeindeutigkeitskriterien, eindeutigkeitskriterien, ausgewaehlteZeilennummer)
                     if do.exec() == 1:
                         exceptions = []
                         self.templateRootDefinieren()
@@ -1533,75 +1529,82 @@ class MainWindow(QMainWindow):
             mb.exec()
 
     def optimierenMenuTestAus6228(self, checked, duplizieren:bool, optimierungsId:str=""):
-        if self.addOnsFreigeschaltet:
-            trennRegexPattern = ""
-            erkennungstext = ""
-            erkennungsspalte = 0
-            ergebnisspalte = 0
-            eindeutigkeitErzwingen = True
-            ntesVorkommen = 1
-            testIdent = ""
-            testBezeichnung = ""
-            testEinheit = ""
-            angepassteErgebnisseDict = {}
-            # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
-            if optimierungsId != "":
-                for optimierungElement in self.templateRootElement.findall("optimierung"):
-                    if str(optimierungElement.get("id")) == optimierungsId:
-                        trennRegexPattern = str(optimierungElement.find("trennRegexPattern").text) # type:ignore
-                        erkennungstext = str(optimierungElement.find("erkennungstext").text) # type:ignore
-                        if erkennungstext == "None":
-                            erkennungstext = ""
-                        erkennungsspalte = int(optimierungElement.find("erkennungsspalte").text) # type:ignore
-                        ergebnisspalte = int(optimierungElement.find("ergebnisspalte").text) # type:ignore
-                        if optimierungElement.find("eindeutigkeiterzwingen") != None: # ab 2.10.1
-                            eindeutigkeitErzwingen = optimierungElement.find("eindeutigkeiterzwingen").text == "True" # type:ignore
-                        if optimierungElement.find("ntesvorkommen") != None: # ab 2.10.1
-                            ntesVorkommen = int(optimierungElement.find("ntesvorkommen").text) # type:ignore
-                        testIdent = str(optimierungElement.find("testIdent").text) # type:ignore
-                        testBezeichnung = str(optimierungElement.find("testBezeichnung").text) # type:ignore
-                        testEinheit = str(optimierungElement.find("testEinheit").text) # type:ignore
-                        if testEinheit == "None":
-                            testEinheit = ""
-                        if optimierungElement.find("angepassteergebnisse") != None: # ab 2.12.0
-                            angepassteErgebnisseElement = optimierungElement.find("angepassteergebnisse")
-                            for ergebnisElement in angepassteErgebnisseElement.findall("ergebnis"): # type:ignore
-                                original = ergebnisElement.find("original").text # type:ignore
-                                angepasst = ergebnisElement.find("angepasst").text # type:ignore
-                                angepassteErgebnisseDict[original] = angepasst
-                        break
-            if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
-                    do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten, angepassteErgebnisseDict)
-                    if do.exec() == 1:
-                        self.templateRootDefinieren()
-                        optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), int(do.labelNtesVorkommen.text().split(".")[0]), do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement, do.angepassteErgebnisseDict)
-                        if optimierungsId == "" or duplizieren: # Neue zeile
-                            self.templateRootElement.append(optimierungElement.getXml())
-                        else: # Zeile bearbeiten
-                            class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
-                        try:
-                            exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
-                            if len(exceptions) == 0:
-                                self.setStatusMessage("Test aus 6228 erstellt")
-                            else:
-                                exceptionsListe = "\n-".join(exceptions)
-                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
-                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
-                                mb.exec() 
-                            self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
-                            self.ungesichertesTemplate = True
-                        except class_gdtdatei.GdtFehlerException as e:
-                            mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
-                            mb.exec()
+        if self.gdtDateiOriginal.feldkennungVorhanden("6228"):
+            if self.addOnsFreigeschaltet:
+                trennRegexPattern = ""
+                erkennungstext = ""
+                erkennungsspalte = 0
+                ergebnisspalte = 0
+                eindeutigkeitErzwingen = True
+                ntesVorkommen = 1
+                testIdent = ""
+                testBezeichnung = ""
+                testEinheit = ""
+                angepassteErgebnisseDict = {}
+                # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
+                if optimierungsId != "":
+                    for optimierungElement in self.templateRootElement.findall("optimierung"):
+                        if str(optimierungElement.get("id")) == optimierungsId:
+                            trennRegexPattern = str(optimierungElement.find("trennRegexPattern").text) # type:ignore
+                            erkennungstext = str(optimierungElement.find("erkennungstext").text) # type:ignore
+                            if erkennungstext == "None":
+                                erkennungstext = ""
+                            erkennungsspalte = int(optimierungElement.find("erkennungsspalte").text) # type:ignore
+                            ergebnisspalte = int(optimierungElement.find("ergebnisspalte").text) # type:ignore
+                            if optimierungElement.find("eindeutigkeiterzwingen") != None: # ab 2.10.1
+                                eindeutigkeitErzwingen = optimierungElement.find("eindeutigkeiterzwingen").text == "True" # type:ignore
+                            if optimierungElement.find("ntesvorkommen") != None: # ab 2.10.1
+                                ntesVorkommen = int(optimierungElement.find("ntesvorkommen").text) # type:ignore
+                            testIdent = str(optimierungElement.find("testIdent").text) # type:ignore
+                            testBezeichnung = str(optimierungElement.find("testBezeichnung").text) # type:ignore
+                            testEinheit = str(optimierungElement.find("testEinheit").text) # type:ignore
+                            if testEinheit == "None":
+                                testEinheit = ""
+                            if optimierungElement.find("angepassteergebnisse") != None: # ab 2.12.0
+                                angepassteErgebnisseElement = optimierungElement.find("angepassteergebnisse")
+                                for ergebnisElement in angepassteErgebnisseElement.findall("ergebnis"): # type:ignore
+                                    original = ergebnisElement.find("original").text # type:ignore
+                                    angepasst = ergebnisElement.find("angepasst").text # type:ignore
+                                    angepassteErgebnisseDict[original] = angepasst
+                            break
+                if self.treeWidgetOriginal.topLevelItemCount() > 0:
+                    if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
+                        ausgewaehlteZeilennummer = -1
+                        if self.treeWidgetOptimiert.currentItem() != None and self.treeWidgetOptimiert.currentItem().text(1) == "6228":
+                            ausgewaehlteZeilennummer = int(self.treeWidgetOptimiert.currentItem().text(0) )
+                        do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten, angepassteErgebnisseDict, ausgewaehlteZeilennummer)
+                        if do.exec() == 1:
+                            self.templateRootDefinieren()
+                            optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), do.ntesVorkommen, do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement, do.angepassteErgebnisseDict)
+                            if optimierungsId == "" or duplizieren: # Neue zeile
+                                self.templateRootElement.append(optimierungElement.getXml())
+                            else: # Zeile bearbeiten
+                                class_optimierung.Optimierung.replaceOptimierungElement(self.templateRootElement, optimierungsId, optimierungElement.getXml())
+                            try:
+                                exceptions = self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
+                                if len(exceptions) == 0:
+                                    self.setStatusMessage("Test aus 6228 erstellt")
+                                else:
+                                    exceptionsListe = "\n-".join(exceptions)
+                                    class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                    mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
+                                    mb.exec() 
+                                self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
+                                self.ungesichertesTemplate = True
+                            except class_gdtdatei.GdtFehlerException as e:
+                                mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler bei der Templateanwendung: " + e.meldung, QMessageBox.StandardButton.Ok)
+                                mb.exec()
+                    else:
+                        mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält keine 6228-Zeilen.", QMessageBox.StandardButton.Ok)
+                        mb.exec()
                 else:
-                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält keine 6228-Zeilen.", QMessageBox.StandardButton.Ok)
+                    mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
                     mb.exec()
             else:
-                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Keine GDT-Datei geladen", QMessageBox.StandardButton.Ok)
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
                 mb.exec()
         else:
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Für diese Funktion ist eine gültige Lizenz notwendig.", QMessageBox.StandardButton.Ok)
+            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die geladene GDT-Datei enthält keine 6228-Zeilen.", QMessageBox.StandardButton.Ok)
             mb.exec()
 
     def optimierenMenuBefundAusTest(self, checked, optimierungsId:str=""):
@@ -1663,22 +1666,46 @@ class MainWindow(QMainWindow):
 
     def optimierenMenuInhalteZusammenfuehren(self, checked, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
-            feldkennung = ""
+            feldkennungAnfang = ""
+            inhaltAnfang = ""
+            inkludiertAnfang = False
+            feldkennungEnde = ""
+            inhaltEnde = ""
+            inkludiertEnde = False
+            feldkennungZu = ""
+            leerzeichenAnfangEntfernen = False
+            leerzeichenEndeEntfernen = False
             einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen.Kein_Zeichen
             # Optimierungselement finden, wenn bereits vorhanden (bearbeiten)
             if optimierungsId != "":
                 for optimierungElement in self.templateRootElement.findall("optimierung"):
                     if str(optimierungElement.get("id")) == optimierungsId:
-                        feldkennung = str(optimierungElement.find("feldkennung").text) # type:ignore
+                        if optimierungElement.find("begrenzungen") != None: # ab 2.16.0
+                            begrenzungenElement = optimierungElement.find("begrenzungen")
+                            anfangElement = begrenzungenElement.find("anfang") # type: ignore
+                            feldkennungAnfang = str(anfangElement.findtext("feldkennung")) # type: ignore
+                            inhaltAnfang = str(anfangElement.findtext("inhalt")) # type: ignore
+                            inkludiertAnfang = str(anfangElement.get("inkludiert")) == "True" # type: ignore
+                            endeElement = begrenzungenElement.find("ende") # type: ignore
+                            feldkennungEnde = str(endeElement.findtext("feldkennung")) # type: ignore
+                            inhaltEnde = str(endeElement.findtext("inhalt")) # type: ignore
+                            inkludiertEnde = str(endeElement.get("inkludiert")) == "True" # type: ignore
+                            feldkennungZu = str(optimierungElement.findtext("feldkennungzu")) # type: ignore
+                            if optimierungElement.get("leerzeichenanfangentfernen") != None:
+                                leerzeichenAnfangEntfernen = str(optimierungElement.get("leerzeichenanfangentfernen")) == "True"
+                                leerzeichenEndeEntfernen = str(optimierungElement.get("leerzeichenendeentfernen")) == "True"
                         # Ab 2.9.0
                         if optimierungElement.find("einzufuegendeszeichen") != None:
                             einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen[str(optimierungElement.find("einzufuegendeszeichen").text)] # type: ignore
                         break
+            feldkennung = ""
+            if self.treeWidgetOptimiert.currentItem() != None:
+                feldkennung = self.treeWidgetOptimiert.currentItem().text(1)
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(feldkennung, einzufuegendesZeichen)
+                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(self.gdtDateiOriginal, feldkennung, feldkennungAnfang, inhaltAnfang, inkludiertAnfang, feldkennungEnde, inhaltEnde, inkludiertEnde, feldkennungZu, leerzeichenAnfangEntfernen, leerzeichenEndeEntfernen, einzufuegendesZeichen)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), class_Enums.EinzufuegendeZeichen[do.comboBoxZeichenEinfuegen.currentText().replace(" ", "_")], self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), do.lineEditFeldkennungAnfang.text(), do.lineEditInhaltAnfang.text(), do.checkBoxInkludiertAnfang.isChecked(), do.lineEditFeldkennungEnde.text(), do.lineEditInhaltEnde.text(), do.checkBoxInkludiertEnde.isChecked(), do.lineEditFeldkennungZu.text(), do.checkBoxLeerzeichenAnfangEntfernen.isChecked(), do.checkBoxLeerzeichenEndeEntfernen.isChecked(), class_Enums.EinzufuegendeZeichen[do.comboBoxZeichenEinfuegen.currentText().replace(" ", "_")], self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten
@@ -1943,6 +1970,13 @@ class MainWindow(QMainWindow):
                     class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, optimierungsId)
                     if testIdentWirdVerwendet:
                         class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, verwendeteOptimierungsId)
+                    # self.optimierungsIds bereinigen
+                    zuLoeschen = []
+                    for zeile in self.optimierungsIds:
+                        if self.optimierungsIds[zeile] == optimierungsId:
+                            zuLoeschen.append(zeile)
+                    for zl in zuLoeschen:
+                        self.optimierungsIds.pop(zl)
                     self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                     self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
                     self.setStatusMessage("Optimierung entfernt")
@@ -1972,7 +2006,23 @@ class MainWindow(QMainWindow):
                 if checked:
                     self.ungesichertesTemplate = False
                     logger.logger.info("Verzeichnungsüberwachungsbutton checked")
-                    if os.path.exists(self.gdtImportVerzeichnis):
+                    files = os.listdir(self.standardTemplateVerzeichnis)
+                    nichtExistierendeExportverzeichnisse = []
+                    ueberwachungStarten = True
+                    for templateDateiname in files:
+                        if templateDateiname[-4:] == ".ogt":
+                            exportverzeichnis = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[3]
+                            if not os.path.exists(exportverzeichnis):
+                                nichtExistierendeExportverzeichnisse.append(exportverzeichnis + "\" (Template \"" + templateDateiname[:-4] + "\")")
+                    if len(nichtExistierendeExportverzeichnisse) > 0:
+                        neev = "\n- ".join(nichtExistierendeExportverzeichnisse)
+                        mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die folgenden Exportverzeichnisse existieren nicht:\n- " + neev + "\nSoll die Verzeichnisüberwachung dennoch gerstartet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                        mb.setDefaultButton(QMessageBox.StandardButton.No)
+                        mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
+                        mb.button(QMessageBox.StandardButton.No).setText("Nein")
+                        if mb.exec() == QMessageBox.StandardButton.No:
+                            ueberwachungStarten = False
+                    if os.path.exists(self.gdtImportVerzeichnis) and ueberwachungStarten:
                         # Importverzeichnis auf nicht bearbeitete GDT-Dateien prüfen
                         gdtDateien = []
                         for importordnerFile in os.listdir(self.gdtImportVerzeichnis):
@@ -2040,7 +2090,10 @@ class MainWindow(QMainWindow):
                         if not self.isHidden():
                             self.setWindowState(Qt.WindowState.WindowNoState)
                             self.setHidden(True)
-                    else:
+                    elif not ueberwachungStarten:
+                        self.pushButtonUeberwachungStarten.setChecked(False)
+                    elif not os.path.exists(self.gdtImportVerzeichnis):
+                        self.pushButtonUeberwachungStarten.setChecked(False)
                         mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Das Importverzeichnis \"" + self.gdtImportVerzeichnis + "\" existiert nicht.", QMessageBox.StandardButton.Ok)
                         mb.exec()
                 else:
@@ -2095,7 +2148,7 @@ class MainWindow(QMainWindow):
             logger.logger.info("Name in files: " + gdtDateiname)
             if len(gdtDateiname) > 4:
                 dateiendung = gdtDateiname[-4:]
-                if re.match(reGdtDateiendung, dateiendung.lower()) != None:
+                if re.match(reGdtDateiendung, dateiendung.lower()) != None or re.match(reGdtDateiendungSequentiell, dateiendung) != None:
                     logger.logger.info("GDT-Datei " + gdtDateiname + " gefunden")
                     gd = class_gdtdatei.GdtDatei(class_gdtdatei.GdtZeichensatz.IBM_CP437)
                     gd.laden(os.path.join(changeVerzeichnis, gdtDateiname))
@@ -2143,7 +2196,7 @@ class MainWindow(QMainWindow):
                                 gdtDateinameKorrekt = gdtDateinameInTemplate == gdtDateiname
                             elif re.match(reGdtDateiendungSequentiell, dateiendung) != None:
                                 gdtDateinameKorrekt = re.match(reGdtDateiendungSequentiell, gdtDateinameInTemplate[-4:]) and gdtDateinameInTemplate[:-4] == gdtDateiname[:-4]
-                            if gdtDateinameKorrekt and kennfeldKorrekt and gdtIdKorrekt:
+                            if gdtDateinameKorrekt and kennfeldKorrekt and gdtIdKorrekt and os.path.exists(exportverzeichnis): # Template gefunden
                                 templateGefunden = True
                                 logger.logger.info("Zu " + gdtDateiname + " passendendes Template " + os.path.join(self.standardTemplateVerzeichnis, templateDateiname) + " gefunden")
                                 try:
@@ -2154,14 +2207,12 @@ class MainWindow(QMainWindow):
                                         logger.logger.warning("Fehlerliste nach Templateanwendung: " + exceptionListe)
                                     ## Auf gesetzte Zeilenumbrüche prüfen
                                     try:
-                                        erster6220Inhalt = gd.getInhalte("6220")[0]
                                         befundzeilen = []
-                                        if "//" in erster6220Inhalt:
-                                            for befundzeile in erster6220Inhalt.split("//"):
+                                        alle6220inhalte = gd.getInhalte("6220")
+                                        for inhalt in alle6220inhalte:
+                                            for befundzeile in inhalt.split("//"):
                                                 befundzeilen.append(befundzeile)
-                                        else:
-                                            befundzeilen.append(erster6220Inhalt)
-                                        gd.deleteZeile("", "6220")
+                                        gd.deleteZeile("", "6220", True)
                                         for zeile in befundzeilen:
                                             zeileMitKommas = zeile
                                             # Dezimalpunkt in Komma wandeln
@@ -2184,6 +2235,7 @@ class MainWindow(QMainWindow):
                                     with open(os.path.join(exportverzeichnis, gdtDateiname), "w", encoding=gd.getZeichensatzAlsPythonString(), newline="") as file:
                                         for zeile in gd.getZeilen():
                                             file.write(zeile + "\r\n")
+
                                     if immerGdtAlsExportDateiendung:
                                         logger.logger.info("Optimierte GDT-Datei " + gdtDateiname + " in " + exportverzeichnis + " gespeichert (Dateiendung von " + dateiendung + " in .gdt geändert)") 
                                     else:
@@ -2191,14 +2243,14 @@ class MainWindow(QMainWindow):
                                     os.unlink(os.path.join(changeVerzeichnis, gdtDateiname))
                                     logger.logger.info("Originale GDT-Datei " + gdtDateiname + " gelöscht")
                                     self.tray.showMessage("OptiGDT", "Template \"" + templateDateiname[:-4] + "\" angewendet")
+                                    os.wait()
                                     break
                                 except IOError as e:
                                     logger.logger.error("IO-Error beim Speichern der optimierten GDT-Datei "+ gdtDateiname + " in " + exportverzeichnis)
                                 except class_optimierung.OptimierungsfehlerException as e:
                                     logger.logger.warning("OptimierungsfehlerException bei Templateanwendung: " + e.meldung)
                     if not templateGefunden:
-                        logger.logger.warning("Template für GDT-Datei " + gdtDateiname + " nicht gefunden")
-                        raise class_optimierung.OptimierungsfehlerException("Template für GDT-Datei " + gdtDateiname + " nicht gefunden")
+                        self.tray.showMessage("OptiGDT", "Kein passendes Template für GDT-Datei " + gdtDateiname + " gefunden")
             else:
                 logger.logger.info("Dateiname zu kurz: " + gdtDateiname)   
 
@@ -2243,8 +2295,7 @@ class MainWindow(QMainWindow):
     @staticmethod
     def setTreeWidgetZeileHintergrund(treeWidget:QTreeWidget, index:int, farbe:QColor):
         for i in range(treeWidget.columnCount()):
-            treeWidget.topLevelItem(index).setBackground(i, farbe)
-
+            treeWidget.topLevelItem(index).setBackground(i, farbe) # type: ignore
     @staticmethod
     def setTreeWidgetItemHintergrund(item:QTreeWidgetItem, anzahlColumns:int, farbe:QColor):
         for i in range(anzahlColumns):

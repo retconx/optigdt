@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungTestAus6228(QDialog):
-    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int, angepassteErgebnisse:dict):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int, angepassteErgebnisse:dict, ausgewaehlteZeilennummer:int):
         super().__init__()
         self.gdtDateiOptimiert = gdtDateiOptimiert
         self.duplizieren = duplizieren
@@ -38,6 +38,7 @@ class OptimierungTestAus6228(QDialog):
         self.testEinheit = testEinheit
         self.maxAnzahl6228Spalten = maxAnzahl6228Spalten
         self.angepassteErgebnisseDict = angepassteErgebnisse
+        self.ausgewaehlteZeilennummer = ausgewaehlteZeilennummer
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontBold = QFont()
@@ -59,9 +60,16 @@ class OptimierungTestAus6228(QDialog):
         groupBox6228Erkennung.setLayout(dialogLayoutG)
         self.comboBox6228 = QComboBox()
         self.comboBox6228.setFont(self.fontNormal)
+        gdtzeilennummer = 1
+        anzahl6228Zeilen = 0
+        ausgewaehlte6228Zeile = 0
         for zeile in self.gdtDateiOptimiert.getZeilen():
             if zeile[3:7] == "6228":
                 self.comboBox6228.addItem(zeile[7:].replace(" ", "\u2423")) 
+                if self.ausgewaehlteZeilennummer == gdtzeilennummer: # Combobox-Auswahl entsprechend Treeview-Auswahl
+                    ausgewaehlte6228Zeile = anzahl6228Zeilen
+                anzahl6228Zeilen += 1
+            gdtzeilennummer += 1
         label6228Zeile = QLabel("6228-Zeile:")
         label6228Zeile.setFont(self.fontNormal)
         labelAufteilung = QLabel("Aufteilung")
@@ -74,10 +82,11 @@ class OptimierungTestAus6228(QDialog):
             self.lineEdit6228Spalten.append(QLineEdit())
             self.lineEdit6228Spalten[i].setFont(self.fontNormal)
             self.lineEdit6228Spalten[i].setReadOnly(True)
-        labelTrennzeichen = QLabel("Trennzeichen (regulärer Ausdruck)")
+        labelTrennzeichen = QLabel("Trennzeichen (RA)")
         labelTrennzeichen.setFont(self.fontNormal)
         self.lineEditTrennRegexPattern = QLineEdit(self.trennRegexPattern)
         self.lineEditTrennRegexPattern.setFont(self.fontNormal)
+        self.lineEditTrennRegexPattern.setPlaceholderText("RA = Regulärer Ausdruck")
         self.lineEditTrennRegexPattern.textEdited.connect(self.lineEditPruefung) 
         labelErkennungstext = QLabel("Erkennungstext")
         labelErkennungstext.setFont(self.fontNormal)
@@ -91,12 +100,13 @@ class OptimierungTestAus6228(QDialog):
         self.lineEditErkennungsspalte = QLineEdit(str(self.erkennungsspalte))
         self.lineEditErkennungsspalte.setFont(self.fontNormal)
         self.lineEditErkennungsspalte.textEdited.connect(self.lineEditPruefung)
-        labelErkennungEindeutig = QLabel("Erkennung eindeutig")
+        labelErkennungEindeutig = QLabel("Erkennung\neindeutig")
         labelErkennungEindeutig.setFont(self.fontNormal)
         self.labelHaekchen = QLabel()
         self.labelHaekchen.setFont(self.fontGross)
-        self.checkBoxEindeutigkeitErzwingen = QCheckBox("Eindeutigkeit erzwingen")
-        self.checkBoxEindeutigkeitErzwingen.setFont(self.fontNormal)
+        labelEindeutigkeitErzwingen = QLabel("Eindeutigkeit\nerzwingen")
+        labelEindeutigkeitErzwingen.setFont(self.fontNormal)
+        self.checkBoxEindeutigkeitErzwingen = QCheckBox("")
         self.checkBoxEindeutigkeitErzwingen.setChecked(self.eindeutigkeitErzwingen)
         self.checkBoxEindeutigkeitErzwingen.clicked.connect(self.checkBoxEindeutigkeitErzwingenClicked)
 
@@ -110,12 +120,13 @@ class OptimierungTestAus6228(QDialog):
         dialogLayoutG.addWidget(self.lineEditTrennRegexPattern, 4, 1, 1, self.maxAnzahl6228Spalten)
         dialogLayoutG.addWidget(labelErkennungstext, 5, 0, 1, 1)
         dialogLayoutG.addWidget(self.lineEditErkennungstext, 5, 1, 1, self.maxAnzahl6228Spalten)
-        dialogLayoutG.addWidget(self.labelNtesVorkommen, 6, 1)
+        dialogLayoutG.addWidget(self.labelNtesVorkommen, 6, 1, 1, self.maxAnzahl6228Spalten)
         dialogLayoutG.addWidget(labelErkennungsspalte, 7, 0, 1, 1)
         dialogLayoutG.addWidget(self.lineEditErkennungsspalte, 7, 1, 1, self.maxAnzahl6228Spalten)
         dialogLayoutG.addWidget(labelErkennungEindeutig, 8, 0, 1, 1)
         dialogLayoutG.addWidget(self.labelHaekchen, 8, 1, 1, self.maxAnzahl6228Spalten)
-        dialogLayoutG.addWidget(self.checkBoxEindeutigkeitErzwingen, 9, 0, 1, 1)
+        dialogLayoutG.addWidget(labelEindeutigkeitErzwingen, 9, 0, 1, 1)
+        dialogLayoutG.addWidget(self.checkBoxEindeutigkeitErzwingen, 9, 1, 1, 1)
 
         dialogLayoutG = QGridLayout()
         groupBoxTestDefinition = QGroupBox("Test-Definition")
@@ -162,13 +173,18 @@ class OptimierungTestAus6228(QDialog):
         dialogLayoutV.addWidget(groupBoxTestDefinition)
         dialogLayoutV.addWidget(self.buttonBox)
         self.setLayout(dialogLayoutV)
+        if self.checkBoxEindeutigkeitErzwingen.isChecked():
+            self.labelNtesVorkommen.setText("")
 
         # Test-Ident merken, falls Bearbeiten-Modus
         self.testIdentVergeben = self.lineEditTestIdent.text()
 
         self.setErkennungEindeutig(False)
         self.comboBox6228.currentTextChanged.connect(self.lineEditPruefung) # type: ignore
-        self.comboBox6228.setCurrentIndex(self.ntesVorkommenIndexInCombobox(self.ntesVorkommen))
+        if self.ausgewaehlteZeilennummer != -1: # Aufruf über 6228-Zeile in Treeview (nicht Contextmenü Bearbeiten)
+            self.comboBox6228.setCurrentIndex(ausgewaehlte6228Zeile)
+        else:
+            self.comboBox6228.setCurrentIndex(self.ntesVorkommenIndexInCombobox(self.ntesVorkommen)) # Aufruf über neu angelegten Test in Treeview (Contextmenü Bearbeiten)
         self.lineEditPruefung()
     
     def ntesVorkommenIndexInCombobox(self, ntesVorkommen:int):
@@ -266,10 +282,10 @@ class OptimierungTestAus6228(QDialog):
             self.lineEditPruefung()
 
     def setLabelNtesVorkommen(self, n:int):
-        if n == 0:
-            self.labelNtesVorkommen.setText("Kein Vorkommen in gewählter 6228-Zeile")
-        elif n == -1:
+        if self.checkBoxEindeutigkeitErzwingen.isChecked():
             self.labelNtesVorkommen.setText("")
+        elif n == 0:
+            self.labelNtesVorkommen.setText("Kein Vorkommen in gewählter 6228-Zeile")
         else:
             self.labelNtesVorkommen.setText(str(n) + ". Vorkommen innerhalb der GDT-Datei")
 
@@ -318,6 +334,9 @@ class OptimierungTestAus6228(QDialog):
             if mb.exec() == QMessageBox.StandardButton.No:
                 testOhneEinheitOk = False
         if len(fehler) == 0 and testOhneEinheitOk:
+            self.ntesVorkommen = 1
+            if self.labelNtesVorkommen.text() != "":
+                self.ntesVorkommen = int(self.labelNtesVorkommen.text().split(".")[0])
             self.done(1)
         elif len(fehler) > 0:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Formular nicht korrekt ausgefüllt:\n- " + "\n- ".join(fehler), QMessageBox.StandardButton.Ok)
