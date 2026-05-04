@@ -321,12 +321,14 @@ class OptiBefundAusTest(Optimierung):
         return optimierungElement
 
 class OptiConcatInhalte(Optimierung):
-    def __init__(self, feldkennung:str, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, bisherigesRoot:ElementTree.Element):
+    def __init__(self, feldkennung:str, begrenzungAnfang:bool, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, begrenzungEnde:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, bisherigesRoot:ElementTree.Element):
         super().__init__("concatInhalte", bisherigesRoot)
         self.feldkennung = feldkennung
+        self.begrenzungAnfang = begrenzungAnfang
         self.feldkennungAnfang = feldkennungAnfang
         self.inhaltAnfang = inhaltAnfang
         self.inkludiertAnfang = inkludiertAnfang
+        self.begrenzungEnde = begrenzungEnde
         self.feldkennungEnde = feldkennungEnde
         self.inhaltEnde = inhaltEnde
         self.inkludiertEnde = inkludiertEnde
@@ -347,6 +349,7 @@ class OptiConcatInhalte(Optimierung):
         optimierungElement.append(feldkennungElement)
         begrenzungenElement = ElementTree.Element("begrenzungen") # ab 2.16.0
         anfangElement = ElementTree.Element("anfang")
+        anfangElement.set("aktiv", str(self.begrenzungAnfang)) # ab 2.16.3
         anfangElement.set("inkludiert", str(self.inkludiertAnfang))
         feldkennungAnfangElement = ElementTree.Element("feldkennung")
         feldkennungAnfangElement.text = self.feldkennungAnfang
@@ -356,6 +359,7 @@ class OptiConcatInhalte(Optimierung):
         anfangElement.append(inhaltAnfangElement)
         begrenzungenElement.append(anfangElement)
         endeElement = ElementTree. Element("ende")
+        endeElement.set("aktiv", str(self.begrenzungEnde)) # ab 2.16.3
         endeElement.set("inkludiert", str(self.inkludiertEnde))
         feldkennungEndeElement = ElementTree.Element("feldkennung")
         feldkennungEndeElement.text = self.feldkennungEnde

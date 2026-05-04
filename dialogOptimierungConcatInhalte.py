@@ -17,13 +17,15 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungConcatInhalte(QDialog):
-    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen):
+    def __init__(self, gdtDateiOriginal:class_gdtdatei.GdtDatei, feldkennung:str, begrenzungAnfang:bool, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, begrenzungEnde:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen):
         super().__init__()
         self.gdtDateiOriginal = gdtDateiOriginal
         self.feldkennung = feldkennung
+        self.begrenzungAnfang = begrenzungAnfang
         self.feldkennungAnfang = feldkennungAnfang
         self.inhaltAnfang = inhaltAnfang
         self.inkludiertAnfang = inkludiertAnfang
+        self.begrenzungEnde = begrenzungEnde
         self.feldkennungEnde = feldkennungEnde
         self.inhaltEnde = inhaltEnde
         self.inkludiertEnde = inkludiertEnde
@@ -35,6 +37,12 @@ class OptimierungConcatInhalte(QDialog):
         self.fontNormal.setBold(False)
         self.fontBold = QFont()
         self.fontBold.setBold(True)
+
+        # Bei Update auf 2.16.3
+        if self.feldkennungAnfang != "" and self.inhaltAnfang != "":
+            self.begrenzungAnfang = True
+        if self.feldkennungEnde != "" and self.inhaltEnde != "":
+            self.begrenzungEnde = True
 
         self.setWindowTitle("GDT-Optimierung: Inhalte zusammenführen")
         self.setMinimumWidth(300)
@@ -57,36 +65,46 @@ class OptimierungConcatInhalte(QDialog):
         groupBoxBegrenzung = QGroupBox("Begrenzungen")
         groupBoxBegrenzung.setFont(self.fontBold)
         begrenzungLayoutG = QGridLayout()
+        self.checkBoxBegrenzungAnfang = QCheckBox("Begrenzung Anfang")
+        self.checkBoxBegrenzungAnfang.setFont(self.fontNormal)
+        self.checkBoxBegrenzungAnfang.setChecked(self.begrenzungAnfang)
+        self.checkBoxBegrenzungAnfang.clicked.connect(self.checkBoxBegrenzungAnfangClicked)
+        self.checkBoxBegrenzungEnde = QCheckBox("Begrenzung Ende")
+        self.checkBoxBegrenzungEnde.setFont(self.fontNormal)
+        self.checkBoxBegrenzungEnde.setChecked(self.begrenzungEnde)
+        self.checkBoxBegrenzungEnde.clicked.connect(self.checkBoxBegrenzungEndeClicked)
         labelBegrenzungFeldkennung = QLabel("Feldkennung")
         labelBegrenzungFeldkennung.setFont(self.fontNormal)
         labelBegrenzungInhalt = QLabel("Inhalt (Regulärer Ausdruck)")
         labelBegrenzungInhalt.setFont(self.fontNormal)
         labelBegrenzungInkludiert = QLabel("Inkludiert")
         labelBegrenzungInkludiert.setFont(self.fontNormal)
-        labelBegrenzungAnfang = QLabel("Begrenzung Anfang")
-        labelBegrenzungAnfang.setFont(self.fontNormal)
         self.lineEditFeldkennungAnfang = QLineEdit(self.feldkennungAnfang)
         self.lineEditFeldkennungAnfang.setFont(self.fontNormal)
+        self.lineEditFeldkennungAnfang.setEnabled(self.checkBoxBegrenzungAnfang.isChecked())
         self.lineEditInhaltAnfang = QLineEdit(self.inhaltAnfang)
         self.lineEditInhaltAnfang.setFont(self.fontNormal)
+        self.lineEditInhaltAnfang.setEnabled(self.checkBoxBegrenzungAnfang.isChecked())
         self.checkBoxInkludiertAnfang = QCheckBox()
         self.checkBoxInkludiertAnfang.setChecked(self.inkludiertAnfang)
-        labelBegrenzungEnde = QLabel("Begrenzung Ende")
-        labelBegrenzungEnde.setFont(self.fontNormal)
+        self.checkBoxInkludiertAnfang.setEnabled(self.begrenzungAnfang)
         self.lineEditFeldkennungEnde = QLineEdit(self.feldkennungEnde)
         self.lineEditFeldkennungEnde.setFont(self.fontNormal)
+        self.lineEditFeldkennungEnde.setEnabled(self.checkBoxBegrenzungEnde.isChecked())
         self.lineEditInhaltEnde = QLineEdit(self.inhaltEnde)
         self.lineEditInhaltEnde.setFont(self.fontNormal)
+        self.lineEditInhaltEnde.setEnabled(self.checkBoxBegrenzungEnde.isChecked())
         self.checkBoxInkludiertEnde = QCheckBox()
         self.checkBoxInkludiertEnde.setChecked(self.inkludiertEnde)
+        self.checkBoxInkludiertEnde.setEnabled(self.begrenzungEnde)
         begrenzungLayoutG.addWidget(labelBegrenzungFeldkennung, 0, 1, 1, 1)
         begrenzungLayoutG.addWidget(labelBegrenzungInhalt, 0, 2, 1, 1)
         begrenzungLayoutG.addWidget(labelBegrenzungInkludiert, 0, 3, 1, 1)
-        begrenzungLayoutG.addWidget(labelBegrenzungAnfang, 1, 0, 1, 1)
+        begrenzungLayoutG.addWidget(self.checkBoxBegrenzungAnfang, 1, 0, 1, 1)
         begrenzungLayoutG.addWidget(self.lineEditFeldkennungAnfang, 1, 1, 1, 1)
         begrenzungLayoutG.addWidget(self.lineEditInhaltAnfang, 1, 2, 1, 1)
         begrenzungLayoutG.addWidget(self.checkBoxInkludiertAnfang, 1, 3, 1, 1, Qt.AlignmentFlag.AlignCenter)
-        begrenzungLayoutG.addWidget(labelBegrenzungEnde, 2, 0, 1, 1)
+        begrenzungLayoutG.addWidget(self.checkBoxBegrenzungEnde, 2, 0, 1, 1)
         begrenzungLayoutG.addWidget(self.lineEditFeldkennungEnde, 2, 1, 1, 1)
         begrenzungLayoutG.addWidget(self.lineEditInhaltEnde, 2, 2, 1, 1)
         begrenzungLayoutG.addWidget(self.checkBoxInkludiertEnde, 2, 3, 1, 1, Qt.AlignmentFlag.AlignCenter)
@@ -137,6 +155,16 @@ class OptimierungConcatInhalte(QDialog):
     def lineEditFeldkennungChanged(self):
         self.lineEditFeldkennungZu.setPlaceholderText(self.lineEditFeldkennung.text())
 
+    def checkBoxBegrenzungAnfangClicked(self, clicked):
+        self.lineEditFeldkennungAnfang.setEnabled(clicked)
+        self.lineEditInhaltAnfang.setEnabled(clicked)
+        self.checkBoxInkludiertAnfang.setEnabled(clicked)
+
+    def checkBoxBegrenzungEndeClicked(self, clicked):
+        self.lineEditFeldkennungEnde.setEnabled(clicked)
+        self.lineEditInhaltEnde.setEnabled(clicked)
+        self.checkBoxInkludiertEnde.setEnabled(clicked)
+
     def accept(self):
         if not re.match(reFeldkennung, self.lineEditFeldkennung.text()):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
@@ -148,26 +176,26 @@ class OptimierungConcatInhalte(QDialog):
             mb.exec()
             self.lineEditFeldkennungZu.setFocus()
             self.lineEditFeldkennungZu.selectAll()
-        elif self.lineEditFeldkennungAnfang.text() != "" and not re.match(reFeldkennung, self.lineEditFeldkennungAnfang.text()):
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditFeldkennungAnfang.setFocus()
-            self.lineEditFeldkennungAnfang.selectAll()
-        elif self.lineEditFeldkennungAnfang.text() != "" and self.lineEditInhaltAnfang.text() == "":
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Kein Inhalt für die Anfangsbegrenzung angegeben.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditInhaltAnfang.setFocus()
-            self.lineEditInhaltAnfang.selectAll()
-        elif self.lineEditFeldkennungEnde.text() != "" and not re.match(reFeldkennung, self.lineEditFeldkennungEnde.text()):
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditFeldkennungEnde.setFocus()
-            self.lineEditFeldkennungEnde.selectAll()
-        elif self.lineEditFeldkennungEnde.text() != "" and self.lineEditInhaltEnde.text() == "":
-            mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Kein Inhalt für die Anfangsbegrenzung angegeben.", QMessageBox.StandardButton.Ok)
-            mb.exec()
-            self.lineEditInhaltEnde.setFocus()
-            self.lineEditInhaltEnde.selectAll()
+        elif self.checkBoxBegrenzungAnfang.isChecked() and self.lineEditFeldkennungAnfang.text() != "" and not re.match(reFeldkennung, self.lineEditFeldkennungAnfang.text()):
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditFeldkennungAnfang.setFocus()
+                self.lineEditFeldkennungAnfang.selectAll()
+        elif self.checkBoxBegrenzungAnfang.isChecked() and self.lineEditFeldkennungAnfang.text() != "" and self.lineEditInhaltAnfang.text() == "":
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Kein Inhalt für die Anfangsbegrenzung angegeben.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditInhaltAnfang.setFocus()
+                self.lineEditInhaltAnfang.selectAll()
+        elif self.checkBoxBegrenzungEnde.isChecked() and self.lineEditFeldkennungEnde.text() != "" and not re.match(reFeldkennung, self.lineEditFeldkennungEnde.text()):
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung muss aus vier Ziffern bestehen.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditFeldkennungEnde.setFocus()
+                self.lineEditFeldkennungEnde.selectAll()
+        elif self.checkBoxBegrenzungEnde.isChecked() and self.lineEditFeldkennungEnde.text() != "" and self.lineEditInhaltEnde.text() == "":
+                mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Kein Inhalt für die Endebegrenzung angegeben.", QMessageBox.StandardButton.Ok)
+                mb.exec()
+                self.lineEditInhaltEnde.setFocus()
+                self.lineEditInhaltEnde.selectAll()
         elif not self.gdtDateiOriginal.feldkennungVorhanden(self.lineEditFeldkennung.text()):
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die Feldkennung " + self.lineEditFeldkennung.text() + " ist in der Original-GDT-Datei nicht vorhanden.", QMessageBox.StandardButton.Ok)
             mb.exec()
@@ -186,8 +214,8 @@ class OptimierungConcatInhalte(QDialog):
                     haeufigkeitInhaltAnfang += 1
                 if tempFeldkennung == self.lineEditFeldkennungEnde.text() and re.search(self.lineEditInhaltEnde.text(), tempInhalt) != None:
                     haeufigkeitInhaltEnde += 1
-            inhaltAnfangEindeutig = haeufigkeitInhaltAnfang == 1
-            inhaltEndeEindeutig = haeufigkeitInhaltEnde == 1
+            inhaltAnfangEindeutig = haeufigkeitInhaltAnfang == 1 or not self.checkBoxBegrenzungAnfang.isChecked()
+            inhaltEndeEindeutig = haeufigkeitInhaltEnde == 1 or not self.checkBoxBegrenzungEnde.isChecked()
             if not inhaltAnfangEindeutig:
                 meldung = "Der Inhalt der Anfangbegrenzung \"" + self.lineEditInhaltAnfang.text() + "\" ist innerhalb der GDT-Datei nicht eindeutig."
                 if haeufigkeitInhaltAnfang == 0:
@@ -205,4 +233,13 @@ class OptimierungConcatInhalte(QDialog):
                 self.lineEditInhaltEnde.setFocus()
                 self.lineEditInhaltEnde.selectAll()
             else:    
+                # Begrenzungen bereinigen
+                if not self.checkBoxBegrenzungAnfang.isChecked():
+                    self.lineEditFeldkennungAnfang.setText("")
+                    self.lineEditInhaltAnfang.setText("")
+                    self.checkBoxInkludiertAnfang.setChecked(False)
+                if not self.checkBoxBegrenzungEnde.isChecked():
+                    self.lineEditFeldkennungEnde.setText("")
+                    self.lineEditInhaltEnde.setText("")
+                    self.checkBoxInkludiertEnde.setChecked(False)
                 self.done(1)

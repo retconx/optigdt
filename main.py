@@ -1320,7 +1320,12 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("GDT-Zeile " + class_gdtdatei.GdtDatei.getZeile(do.lineEditFeldkennung.text(), do.lineEditInhalt.text()) + " hinzugefügt")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                # self.optimierungsIds bereinigen
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1364,7 +1369,12 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("GDT-Zeile(n) mit der Feldkennung " + do.comboBoxZeile.currentText()[0:4] + " geändert")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                # self.optimierungsIds bereinigen
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1406,7 +1416,12 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("GDT-Zeile(n) mit der Feldkennung " + do.lineEditFeldkennung.text() + " entfernt")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                # self.optimierungsIds bereinigen
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1459,7 +1474,12 @@ class MainWindow(QMainWindow):
                                 self.setStatusMessage("Test geändert")
                             else:
                                 exceptionsListe = "\n-".join(exceptions)
-                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                zuEntfernendeId = optimierungElement.getXml().get("id")
+                                if optimierungsId != "":
+                                    zuEntfernendeId = optimierungsId
+                                    # self.optimierungsIds bereinigen
+                                    self.optimierungsIdsBereinigen(zuEntfernendeId)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                                 mb.exec() 
                             self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1510,7 +1530,12 @@ class MainWindow(QMainWindow):
                                 self.setStatusMessage("Test entfernt")
                             else:
                                 exceptionsListe = "\n-".join(exceptions)
-                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                zuEntfernendeId = optimierungElement.getXml().get("id")
+                                if optimierungsId != "":
+                                    zuEntfernendeId = optimierungsId
+                                    # self.optimierungsIds bereinigen
+                                    self.optimierungsIdsBereinigen(zuEntfernendeId)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                                 mb.exec() 
                             self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1586,7 +1611,12 @@ class MainWindow(QMainWindow):
                                     self.setStatusMessage("Test aus 6228 erstellt")
                                 else:
                                     exceptionsListe = "\n-".join(exceptions)
-                                    class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                    zuEntfernendeId = optimierungElement.getXml().get("id")
+                                    if optimierungsId != "":
+                                        zuEntfernendeId = optimierungsId
+                                        # self.optimierungsIds bereinigen
+                                        self.optimierungsIdsBereinigen(zuEntfernendeId)
+                                    class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                                     mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                                     mb.exec() 
                                 self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1649,7 +1679,12 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("Befundzeile erzeugt (alternative Feldkennung:" + do.lineEditAlterativeFeldkennung.text() + ")")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                # self.optimierungsIds bereinigen
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1666,9 +1701,11 @@ class MainWindow(QMainWindow):
 
     def optimierenMenuInhalteZusammenfuehren(self, checked, optimierungsId:str=""):
         if self.addOnsFreigeschaltet:
+            begrenzungAnfang = False
             feldkennungAnfang = ""
             inhaltAnfang = ""
             inkludiertAnfang = False
+            begrenzungEnde = False
             feldkennungEnde = ""
             inhaltEnde = ""
             inkludiertEnde = False
@@ -1683,10 +1720,14 @@ class MainWindow(QMainWindow):
                         if optimierungElement.find("begrenzungen") != None: # ab 2.16.0
                             begrenzungenElement = optimierungElement.find("begrenzungen")
                             anfangElement = begrenzungenElement.find("anfang") # type: ignore
+                            if anfangElement.get("aktiv") != None: # ab 2.16.3 # type:ignore
+                                begrenzungAnfang = str(anfangElement.get("aktiv")) == "True" # type: ignore
                             feldkennungAnfang = str(anfangElement.findtext("feldkennung")) # type: ignore
                             inhaltAnfang = str(anfangElement.findtext("inhalt")) # type: ignore
                             inkludiertAnfang = str(anfangElement.get("inkludiert")) == "True" # type: ignore
                             endeElement = begrenzungenElement.find("ende") # type: ignore
+                            if endeElement.get("aktiv") != None: # ab 2.16.3 # type:ignore
+                                begrenzungEnde = str(endeElement.get("aktiv")) == "True" # type: ignore
                             feldkennungEnde = str(endeElement.findtext("feldkennung")) # type: ignore
                             inhaltEnde = str(endeElement.findtext("inhalt")) # type: ignore
                             inkludiertEnde = str(endeElement.get("inkludiert")) == "True" # type: ignore
@@ -1702,10 +1743,10 @@ class MainWindow(QMainWindow):
             if self.treeWidgetOptimiert.currentItem() != None:
                 feldkennung = self.treeWidgetOptimiert.currentItem().text(1)
             if self.treeWidgetOriginal.topLevelItemCount() > 0:
-                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(self.gdtDateiOriginal, feldkennung, feldkennungAnfang, inhaltAnfang, inkludiertAnfang, feldkennungEnde, inhaltEnde, inkludiertEnde, feldkennungZu, leerzeichenAnfangEntfernen, leerzeichenEndeEntfernen, einzufuegendesZeichen)
+                do = dialogOptimierungConcatInhalte.OptimierungConcatInhalte(self.gdtDateiOriginal, feldkennung, begrenzungAnfang, feldkennungAnfang, inhaltAnfang, inkludiertAnfang, begrenzungEnde, feldkennungEnde, inhaltEnde, inkludiertEnde, feldkennungZu, leerzeichenAnfangEntfernen, leerzeichenEndeEntfernen, einzufuegendesZeichen)
                 if do.exec() == 1:
                     self.templateRootDefinieren()
-                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), do.lineEditFeldkennungAnfang.text(), do.lineEditInhaltAnfang.text(), do.checkBoxInkludiertAnfang.isChecked(), do.lineEditFeldkennungEnde.text(), do.lineEditInhaltEnde.text(), do.checkBoxInkludiertEnde.isChecked(), do.lineEditFeldkennungZu.text(), do.checkBoxLeerzeichenAnfangEntfernen.isChecked(), do.checkBoxLeerzeichenEndeEntfernen.isChecked(), class_Enums.EinzufuegendeZeichen[do.comboBoxZeichenEinfuegen.currentText().replace(" ", "_")], self.templateRootElement)
+                    optimierungElement = class_optimierung.OptiConcatInhalte(do.lineEditFeldkennung.text(), do.checkBoxBegrenzungAnfang.isChecked(), do.lineEditFeldkennungAnfang.text(), do.lineEditInhaltAnfang.text(), do.checkBoxInkludiertAnfang.isChecked(), do.checkBoxBegrenzungEnde.isChecked(), do.lineEditFeldkennungEnde.text(), do.lineEditInhaltEnde.text(), do.checkBoxInkludiertEnde.isChecked(), do.lineEditFeldkennungZu.text(), do.checkBoxLeerzeichenAnfangEntfernen.isChecked(), do.checkBoxLeerzeichenEndeEntfernen.isChecked(), class_Enums.EinzufuegendeZeichen[do.comboBoxZeichenEinfuegen.currentText().replace(" ", "_")], self.templateRootElement)
                     if optimierungsId == "": # Neue zeile
                         self.templateRootElement.append(optimierungElement.getXml())
                     else: # Zeile bearbeiten
@@ -1716,7 +1757,11 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("Inhalte der GDT-Zeilen mit der Feldkennung " + do.lineEditFeldkennung.text() + " zusammengeführt")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1763,7 +1808,12 @@ class MainWindow(QMainWindow):
                             self.setStatusMessage("PDF-Datei hinzugefügt")
                         else:
                             exceptionsListe = "\n-".join(exceptions)
-                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                            zuEntfernendeId = optimierungElement.getXml().get("id")
+                            if optimierungsId != "":
+                                zuEntfernendeId = optimierungsId
+                                # self.optimierungsIds bereinigen
+                                self.optimierungsIdsBereinigen(zuEntfernendeId)
+                            class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                             mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                             mb.exec() 
                         self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1845,7 +1895,12 @@ class MainWindow(QMainWindow):
                                 self.setStatusMessage("Tests erzeugt aus " + ", ".join(testErzeugtAus))
                             else:
                                 exceptionsListe = "\n-".join(exceptions)
-                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(optimierungElement.getXml().get("id")))
+                                zuEntfernendeId = optimierungElement.getXml().get("id")
+                                if optimierungsId != "":
+                                    zuEntfernendeId = optimierungsId
+                                    # self.optimierungsIds bereinigen
+                                    self.optimierungsIdsBereinigen(zuEntfernendeId)
+                                class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, str(zuEntfernendeId))
                                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Die Optimierung wurde nicht gespeichert:\n- " + exceptionsListe + "\nBitte definieren Sie diese neu.", QMessageBox.StandardButton.Ok)
                                 mb.exec() 
                             self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
@@ -1945,7 +2000,7 @@ class MainWindow(QMainWindow):
         mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
         mb.button(QMessageBox.StandardButton.No).setText("Nein")
         if mb.exec() == QMessageBox.StandardButton.Yes:
-            optimierungEntfernen = True
+            optimierungEntfernenOk = True
             testIdentWirdVerwendet = False
             verwendeteOptimierungsId = ""
             verwendeterBefundtext = ""
@@ -1964,19 +2019,14 @@ class MainWindow(QMainWindow):
                     mb.button(QMessageBox.StandardButton.Yes).setText("Ja")
                     mb.button(QMessageBox.StandardButton.No).setText("Nein")
                     if mb.exec() == QMessageBox.StandardButton.No:
-                        optimierungEntfernen = False
-            if optimierungEntfernen:
+                        optimierungEntfernenOk = False
+            if optimierungEntfernenOk:
                 try:
                     class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, optimierungsId)
                     if testIdentWirdVerwendet:
                         class_optimierung.Optimierung.removeOptimierungElement(self.templateRootElement, verwendeteOptimierungsId)
                     # self.optimierungsIds bereinigen
-                    zuLoeschen = []
-                    for zeile in self.optimierungsIds:
-                        if self.optimierungsIds[zeile] == optimierungsId:
-                            zuLoeschen.append(zeile)
-                    for zl in zuLoeschen:
-                        self.optimierungsIds.pop(zl)
+                    self.optimierungsIdsBereinigen(optimierungsId)
                     self.gdtDateiOptimiert.applyTemplate(self.templateRootElement, vorschau=True)
                     self.treeWidgetAusfuellen(self.treeWidgetOptimiert, self.gdtDateiOptimiert)
                     self.setStatusMessage("Optimierung entfernt")
@@ -1984,6 +2034,14 @@ class MainWindow(QMainWindow):
                 except class_gdtdatei.GdtFehlerException as e:
                     mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Fehler beim Entfernen der Optimierung: " + e.meldung, QMessageBox.StandardButton.Ok)
                     mb.exec()
+
+    def optimierungsIdsBereinigen(self, zuEntfernendeId:str):
+        zuLoeschen = []
+        for zeile in self.optimierungsIds:
+            if self.optimierungsIds[zeile] == zuEntfernendeId:
+                zuLoeschen.append(zeile)
+        for zl in zuLoeschen:
+            self.optimierungsIds.pop(zl)
 
     def pushButtonUeberwachungStartenClicked(self, checked):
         if self.addOnsFreigeschaltet:

@@ -420,15 +420,17 @@ class GdtDatei():
         else:
             raise GdtFehlerException("Zu löschende Zeile(n) mit der Feldkennung " + feldkennung + " nicht gefunden")
 
-    def concatInhalte(self, id, feldkennung:str, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, vorschau:bool=False):
+    def concatInhalte(self, id, feldkennung:str, begrenzungAnfang: bool, feldkennungAnfang:str, inhaltAnfang:str, inkludiertAnfang:bool, begrenzungEnde, feldkennungEnde:str, inhaltEnde:str, inkludiertEnde:bool, feldkennungZu:str, leerzeichenAnfangEntfernen:bool, leerzeichenEndeEntfernen:bool, einzufuegendesZeichen:class_Enums.EinzufuegendeZeichen, vorschau:bool=False):
         """
         Führt die Inhalte einer Feldkunnung in der Zeile des ersten Vorkommens der Feldkennung zusammen und fügt optional ein Zeichen zwischen den Inhalten ein. Optional können Begrenzungsinhalte angegeben werden, zwischen denen der Inhalt zusammengeführt wird. Optional kann der zusammengefügte Inhalt in eine neue Feldkennung geschrieben werden (feldkennungZu).
         Parameter:
             id:str Optimierungs-Id
             feldkennung:str
+            begrenzungAnfang:bool
             feldkennungAnfang:str 
             inhaltAnfang:str
             inkludiertAnfang:bool
+            begrenzungEnde:bool
             feldkennungEnde:str 
             inhaltEnde:str
             inkludiertEnde:bool
@@ -437,13 +439,12 @@ class GdtDatei():
             leerzeichenEndeEntfernen:bool
             einzufuegendesZeichen:EinzufuegendeZeichen
             vorschau:bool Zusammengefassten Zeilen wird __Optimierungs-Id__ angehängt
+        Exception:
+            GdtFehlerException, wenn zusammengeführte Zeile über 990 Zeichen lang
         """
         zusammenzufuehrendeZeilen = {} # key: gdt-zeilennummer, value: inhalt
 
-        # zeilenMitFeldkennung = self.getZeilennummern(feldkennung)
-        # ersteZeileMitFeldkennung = zeilenMitFeldkennung[0]
-
-        ersteBegrenzungPassiert = feldkennungAnfang == ""
+        ersteBegrenzungPassiert = begrenzungAnfang == False
         zweiteBegrenzungPassiert = False
         gdtZeilennummer = 0
         for zeile in self.getZeilen():
@@ -465,15 +466,16 @@ class GdtDatei():
             inhalt = zusammenzufuehrendeZeilen[zeile]
             if inhalt.strip() != "":
                 if leerzeichenAnfangEntfernen:
-                    concatZeilen.append(inhalt.lstrip())
+                    inhalt = inhalt.lstrip()
                 if leerzeichenEndeEntfernen:
-                    concatZeilen.append(inhalt.rstrip())
-                if not leerzeichenAnfangEntfernen and not leerzeichenEndeEntfernen:
-                    concatZeilen.append(inhalt)
+                    inhalt = inhalt.rstrip()
+                concatZeilen.append(inhalt)
         concat = einzufuegendesZeichen.value.join(concatZeilen)
         concat = " ".join(re.split(r"\s{2,}", concat)) # überzählige Leerzeichen entfernen
         ersteZusammenzufuehrendeZeile = list(zusammenzufuehrendeZeilen)[0]
-        if vorschau:
+        if len(concat) > 990:
+            raise GdtFehlerException("Zusammengeführte Zeile zu lang (> 990 Zeichen)")
+        elif vorschau:
             for zeile in zusammenzufuehrendeZeilen:
                 if zeile == ersteZusammenzufuehrendeZeile:
                     self.zeilen[ersteZusammenzufuehrendeZeile] = self.getZeile(feldkennungZu, concat + "__" + id + "__")
@@ -876,10 +878,12 @@ class GdtDatei():
                         self.addZeile(alternativeFeldkennung, befundBereinigt)
                 elif typ == "concatInhalte":
                     feldkennung = str(optimierungElement.find("feldkennung").text) # type: ignore
+                    begrenzungAnfang = False
                     feldkennungAnfang = ""
                     inhaltAnfang = ""
                     inkludiertAnfang = False
-                    feldkennungungEnde = ""
+                    begrenzungEnde = False
+                    feldkennungEnde = ""
                     inhaltEnde = ""
                     inkludiertEnde = False
                     leerzeichnAnfangEntfernen = False
@@ -888,23 +892,32 @@ class GdtDatei():
                     if optimierungElement.find("begrenzungen") != None: # ab 2.16.0
                         begrenzungenElement = optimierungElement.find("begrenzungen")
                         anfangElement = begrenzungenElement.find("anfang") # type: ignore
+                        if anfangElement.get("aktiv") != None: # ab 2.16.3 # type:ignore
+                            begrenzungAnfang = str(anfangElement.get("aktiv")) == "True" # type: ignore
                         feldkennungAnfang = str(anfangElement.findtext("feldkennung")) # type: ignore
                         inhaltAnfang = str(anfangElement.findtext("inhalt")) # type: ignore
                         inkludiertAnfang = str(anfangElement.get("inkludiert")) == "True" # type: ignore
                         endeElement = begrenzungenElement.find("ende") # type: ignore
-                        feldkennungungEnde = str(endeElement.findtext("feldkennung")) # type: ignore
+                        if endeElement.get("aktiv") != None: # ab 2.16.3 # type:ignore
+                            begrenzungEnde = str(endeElement.get("aktiv")) == "True" # type: ignore
+                        feldkennungEnde = str(endeElement.findtext("feldkennung")) # type: ignore
                         inhaltEnde = str(endeElement.findtext("inhalt")) # type: ignore
                         inkludiertEnde = str(endeElement.get("inkludiert")) == "True" # type: ignore
                         feldkennungZu = str(optimierungElement.findtext("feldkennungzu"))
                     if optimierungElement.get("leerzeichenanfangentfernen") != None: # ab 2.16.2
                         leerzeichnAnfangEntfernen = optimierungElement.get("leerzeichenanfangentfernen") == "True"
-                        leerzeichnEndeEntfernen = optimierungElement.get("leerzeichenendeentfernen") == "True"
+                        leerzeichenEndeEntfernen = optimierungElement.get("leerzeichenendeentfernen") == "True"
                     einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen.Kein_Zeichen
                     if optimierungElement.find("einzufuegendeszeichen") != None:
                         einzufuegendesZeichen = class_Enums.EinzufuegendeZeichen[str(optimierungElement.find("einzufuegendeszeichen").text)] # type: ignore
+                    # Bei Update auf 2.16.3
+                    if feldkennungAnfang != "" and inhaltAnfang != "":
+                        begrenzungAnfang = True
+                    if feldkennungEnde != "" and inhaltEnde != "":
+                        begrenzungEnde = True
                     if feldkennung != "None" :
                         try:
-                            self.concatInhalte(id, feldkennung, feldkennungAnfang, inhaltAnfang, inkludiertAnfang, feldkennungungEnde, inhaltEnde, inkludiertEnde, feldkennungZu, leerzeichnAnfangEntfernen, leerzeichenEndeEntfernen, einzufuegendesZeichen, vorschau)
+                            self.concatInhalte(id, feldkennung, begrenzungAnfang, feldkennungAnfang, inhaltAnfang, inkludiertAnfang, begrenzungEnde, feldkennungEnde, inhaltEnde, inkludiertEnde, feldkennungZu, leerzeichnAnfangEntfernen, leerzeichenEndeEntfernen, einzufuegendesZeichen, vorschau)
                         except GdtFehlerException as e:
                             exceptions.append(e.meldung)
                     else:
