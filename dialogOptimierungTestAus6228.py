@@ -1,4 +1,5 @@
 import re
+import xml.etree.ElementTree as ElementTree
 import  class_gdtdatei, dialogErgebnisAnpassen, farbe
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -18,7 +19,7 @@ from PySide6.QtWidgets import (
 reFeldkennung = r"^\d{4}$"
 
 class OptimierungTestAus6228(QDialog):
-    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int, angepassteErgebnisse:dict, ausgewaehlteZeilennummer:int):
+    def __init__(self, gdtDateiOptimiert:class_gdtdatei.GdtDatei, duplizieren:bool, trennRegexPattern:str, erkennungstext:str, erkennungsspalte:int, ergebnisspalte:int, eindeutigkeitErzwingen:bool, ntesVorkommen:int, testIdent:str, testBezeichnung:str, testEinheit:str, standard6228Trennzeichen:str, maxAnzahl6228Spalten:int, angepassteErgebnisse:dict, ausgewaehlteZeilennummer:int, templateRoot:ElementTree.Element):
         super().__init__()
         self.gdtDateiOptimiert = gdtDateiOptimiert
         self.duplizieren = duplizieren
@@ -39,6 +40,8 @@ class OptimierungTestAus6228(QDialog):
         self.maxAnzahl6228Spalten = maxAnzahl6228Spalten
         self.angepassteErgebnisseDict = angepassteErgebnisse
         self.ausgewaehlteZeilennummer = ausgewaehlteZeilennummer
+        self.templateRoot = templateRoot
+
         self.fontNormal = QFont()
         self.fontNormal.setBold(False)
         self.fontBold = QFont()
@@ -337,6 +340,17 @@ class OptimierungTestAus6228(QDialog):
             self.ntesVorkommen = 1
             if self.labelNtesVorkommen.text() != "":
                 self.ntesVorkommen = int(self.labelNtesVorkommen.text().split(".")[0])
+            # Geändertes Test-Ident ggf. in Befund aus Test ändern
+            for optimierungElement in self.templateRoot:
+                optimierungstyp = str(optimierungElement.get("typ"))
+                if optimierungstyp == "befundAusTest":
+                    for testElement in optimierungElement.findall("test"):
+                        eindeutigkeitskriterienElement = testElement.find("eindeutigkeitskriterien")
+                        for kriteriumElement in eindeutigkeitskriterienElement.findall("kriterium"): # type: ignore
+                            feldkennung = str(kriteriumElement.get("feldkennung"))
+                            inhalt = kriteriumElement.text
+                            if feldkennung == "8410" and inhalt == self.testIdentVergeben:
+                                kriteriumElement.text = self.lineEditTestIdent.text()
             self.done(1)
         elif len(fehler) > 0:
             mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Formular nicht korrekt ausgefüllt:\n- " + "\n- ".join(fehler), QMessageBox.StandardButton.Ok)

@@ -1596,8 +1596,8 @@ class MainWindow(QMainWindow):
                     if len(self.gdtDateiOriginal.getInhalte("6228")) > 0:
                         ausgewaehlteZeilennummer = -1
                         if self.treeWidgetOptimiert.currentItem() != None and self.treeWidgetOptimiert.currentItem().text(1) == "6228":
-                            ausgewaehlteZeilennummer = int(self.treeWidgetOptimiert.currentItem().text(0) )
-                        do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten, angepassteErgebnisseDict, ausgewaehlteZeilennummer)
+                            ausgewaehlteZeilennummer = int(self.treeWidgetOptimiert.currentItem().text(0))
+                        do = dialogOptimierungTestAus6228.OptimierungTestAus6228(self.gdtDateiOptimiert, duplizieren, trennRegexPattern, erkennungstext, erkennungsspalte, ergebnisspalte, eindeutigkeitErzwingen, ntesVorkommen, testIdent, testBezeichnung, testEinheit, self.standard6228trennregexpattern, self.maxAnzahl6228Spalten, angepassteErgebnisseDict, ausgewaehlteZeilennummer, self.templateRootElement)
                         if do.exec() == 1:
                             self.templateRootDefinieren()
                             optimierungElement = class_optimierung.OptiTestAus6228(do.lineEditTrennRegexPattern.text(), do.lineEditErkennungstext.text(), int(do.lineEditErkennungsspalte.text()), int(do.lineEditErgebnisspalte.text()), do.checkBoxEindeutigkeitErzwingen.isChecked(), do.ntesVorkommen, do.lineEditTestIdent.text(), do.lineEditTestBezeichnung.text(), do.lineEditTestEinheit.text(), self.templateRootElement, do.angepassteErgebnisseDict)
@@ -2010,7 +2010,9 @@ class MainWindow(QMainWindow):
                     verwendeteOptimierungsId = str(optimierungElement.get("id"))
                     verwendeterBefundtext = str(optimierungElement.findtext("befund"))
                     for kriteriumElement in optimierungElement.findall("test/eindeutigkeitskriterien/kriterium"):
-                        if testIdent == str(kriteriumElement.text):
+                        feldkennung = str(kriteriumElement.get("feldkennung"))
+                        kriterium = str(kriteriumElement.text)
+                        if feldkennung == "8410" and testIdent == kriterium:
                             testIdentWirdVerwendet = True
                             break
                 if testIdentWirdVerwendet:
