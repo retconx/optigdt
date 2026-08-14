@@ -27,6 +27,7 @@ class EinstellungenAllgemein(QDialog):
         #config.ini lesen
         configIni = configparser.ConfigParser()
         configIni.read(os.path.join(configPath, "config.ini"))
+        self.exportverzeichnisExistenzPruefen = configIni["Allgemein"]["exportverzeichnisexistenzpruefen"] == "True"
         self.autoupdate = configIni["Allgemein"]["autoupdate"] == "True"
         self.updaterpfad = configIni["Allgemein"]["updaterpfad"]
 
@@ -37,6 +38,16 @@ class EinstellungenAllgemein(QDialog):
         self.buttonBox.rejected.connect(self.reject) 
 
         dialogLayoutV = QVBoxLayout()
+        # GroupBox Allgemein
+        groupBoxAllgemeinLayoutG = QGridLayout()
+        groupBoxAllgemein = QGroupBox("Allgemein")
+        groupBoxAllgemein.setFont(self.fontBold)
+        self.checkBoxExportverzeichnisExistenzPruefen = QCheckBox("Existenz der Exportverzeichnisse bei Start der Verzeichnisüberwachung prüfen")
+        self.checkBoxExportverzeichnisExistenzPruefen.setFont(self.fontNormal)
+        self.checkBoxExportverzeichnisExistenzPruefen.setChecked(self.exportverzeichnisExistenzPruefen)
+        groupBoxAllgemeinLayoutG.addWidget(self.checkBoxExportverzeichnisExistenzPruefen, 0, 0)
+        groupBoxAllgemein.setLayout(groupBoxAllgemeinLayoutG)
+
         # GroupBox Updates
         groupBoxUpdatesLayoutG = QGridLayout()
         groupBoxUpdates = QGroupBox("Updates")
@@ -54,12 +65,13 @@ class EinstellungenAllgemein(QDialog):
         self.checkBoxAutoUpdate = QCheckBox("Automatisch auf Update prüfen")
         self.checkBoxAutoUpdate.setFont(self.fontNormal)
         self.checkBoxAutoUpdate.setChecked(self.autoupdate)
-
         groupBoxUpdatesLayoutG.addWidget(labelUpdaterPfad, 0, 0)
         groupBoxUpdatesLayoutG.addWidget(self.lineEditUpdaterPfad, 0, 1)
         groupBoxUpdatesLayoutG.addWidget(self.pushButtonUpdaterPfad, 0, 2)
         groupBoxUpdatesLayoutG.addWidget(self.checkBoxAutoUpdate, 1, 0)
         groupBoxUpdates.setLayout(groupBoxUpdatesLayoutG)
+
+        dialogLayoutV.addWidget(groupBoxAllgemein)
         dialogLayoutV.addWidget(groupBoxUpdates)
         dialogLayoutV.addWidget(self.buttonBox)
         self.setLayout(dialogLayoutV)

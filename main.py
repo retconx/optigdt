@@ -84,8 +84,8 @@ def versionVeraltet(versionAktuell:str, versionVergleich:str):
 # Sicherstellen, dass Icon in Windows angezeigt wird
 try:
     from ctypes import windll # type: ignore
-    mayappid = "gdttools.optigdt"
-    windll.shell32.SetCurrentProcessExplicitAppUserModelID(mayappid)
+    myappid = "gdttools.optigdt"
+    windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 except ImportError:
     pass
 
@@ -165,15 +165,15 @@ class MainWindow(QMainWindow):
         self.configPath = updateSafePath
         self.configIni = configparser.ConfigParser()
         if os.path.exists(os.path.join(updateSafePath, "config.ini")):
-            logger.logger.info("config.ini in " + updateSafePath + " exisitert")
+            logger.logger.info("config.ini in " + updateSafePath + " existiert")
             self.configPath = updateSafePath
         elif os.path.exists(os.path.join(basedir, "config.ini")):
-            logger.logger.info("config.ini in " + updateSafePath + " exisitert nicht")
+            logger.logger.info("config.ini in " + updateSafePath + " existiert nicht")
             try:
                 if not os.path.exists(updateSafePath):
-                    logger.logger.info(updateSafePath + " exisitert nicht")
+                    logger.logger.info(updateSafePath + " existiert nicht")
                     os.makedirs(updateSafePath, 0o777)
-                    logger.logger.info(updateSafePath + "erzeugt")
+                    logger.logger.info(updateSafePath + " erzeugt")
                 shutil.copy(os.path.join(basedir, "config.ini"), updateSafePath)
                 logger.logger.info("config.ini von " + basedir + " nach " + updateSafePath + " kopiert")
                 self.configPath = updateSafePath
@@ -209,7 +209,7 @@ class MainWindow(QMainWindow):
         self.gdtDateiOriginal = class_gdtdatei.GdtDatei(self.zeichensatz)
         self.gdtDateiOptimiert = class_gdtdatei.GdtDatei(self.zeichensatz)
 
-        # Nachträglich hinzufefügte Options
+        # Nachträglich hinzugefügte Options
         # 2.0.8
         self.eulagelesen = False
         if self.configIni.has_option("Allgemein", "eulagelesen"):
@@ -234,7 +234,11 @@ class MainWindow(QMainWindow):
         self.updaterpfad = ""
         if self.configIni.has_option("Allgemein", "updaterpfad"):
             self.updaterpfad = self.configIni["Allgemein"]["updaterpfad"]
-        # /Nachträglich hinzufefügte Options
+        # 2.16.5
+        self.exportverzeichnisExistenzPruefen = False
+        if self.configIni.has_option("Allgemein", "exportverzeichnisexistenzpruefen"):
+            self.exportverzeichnisExistenzPruefen = self.configIni["Allgemein"]["exportverzeichnisexistenzpruefen"] == "True"
+        # /Nachträglich hinzugefügte Options
 
         ## Nur mit Lizenz
         # Prüfen, ob Lizenzschlüssel unverschlüsselt
@@ -302,6 +306,9 @@ class MainWindow(QMainWindow):
                 # 2.8.2 -> 2.9.0 ["Allgemein"]["updaterpfad"] hinzufügen
                 if not self.configIni.has_option("Allgemein", "updaterpfad"):
                     self.configIni["Allgemein"]["updaterpfad"] = ""
+                # 2.16.4 -> 2.16.5
+                if not self.configIni.has_option("Allgemein", "exportverzeichnisexistenzpruefen"):
+                    self.configIni["Allgemein"]["exportverzeichnisexistenzpruefen"] = "True"
                 # /config.ini aktualisieren
 
                 with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
@@ -461,31 +468,32 @@ class MainWindow(QMainWindow):
         self.lineEditExportverzeichnis.setFont(self.fontNormal)
         self.lineEditExportverzeichnis.setReadOnly(True)
         self.lineEditExportverzeichnis.textChanged.connect(self.lineEditTemplateInfoChanged) 
-        self.checkBoxKennfeld = QCheckBox("PR\u00b9")
+        self.checkBoxKennfeld = QCheckBox("Prüfungsrelevant\u00b9")
         self.checkBoxKennfeld.setFont(self.fontNormal)
         self.checkBoxKennfeld.setToolTip("Prüfungsrelevant")
         self.checkBoxKennfeld.stateChanged.connect(self.checkBoxKennfeldChanged) 
-        self.checkBoxGdtId = QCheckBox("PR\u00b9")
+        self.checkBoxGdtId = QCheckBox("Prüfungsrelevant\u00b9")
         self.checkBoxGdtId.setFont(self.fontNormal)
         self.checkBoxGdtId.setToolTip("Prüfungsrelevant")
         self.checkBoxGdtId.stateChanged.connect(self.checkBoxGdtIdChanged) 
         self.pushButtonExportverzeichnis = QPushButton("...")
         self.pushButtonExportverzeichnis.setFont(self.fontNormal)
+        self.pushButtonExportverzeichnis.setFixedWidth(40)
         self.pushButtonExportverzeichnis.setToolTip("Durchsuchen")
         self.pushButtonExportverzeichnis.clicked.connect(self.pushButtonExportverzeichnisClicked) 
         labelFussnote1 = QLabel("\u00b9 Prüfungsrelevant: wird vor Anwendung des Templates neben dem GDT-Dateinamen auf Übereinstimmung geprüft")
         labelFussnote1.setFont(self.fontNormal)
-        labelFussnote2 = QLabel("\u00b2 Diese Option kann zu Konflikten beim Ex-/ Importvorgang führen.")
+        labelFussnote2 = QLabel("\u00b2 Cave: Diese Option kann zu Konflikten beim Ex-/ Importvorgang führen.")
         labelFussnote2.setFont(self.fontNormal)
 
         templateInfosLayout.addWidget(labelName, 0, 0, 1, 1)
         templateInfosLayout.addWidget(self.lineEditName, 0, 1, 1, 2)
         templateInfosLayout.addWidget(labelKennfeld, 1, 0, 1, 1)
         templateInfosLayout.addWidget(self.lineEditKennfeld, 1, 1, 1, 2)
-        templateInfosLayout.addWidget(self.checkBoxKennfeld, 1, 3)
+        templateInfosLayout.addWidget(self.checkBoxKennfeld, 1, 3, 1, 2)
         templateInfosLayout.addWidget(labelGdtId, 2, 0)
         templateInfosLayout.addWidget(self.lineEditGdtId, 2, 1, 1, 2)
-        templateInfosLayout.addWidget(self.checkBoxGdtId, 2, 3)
+        templateInfosLayout.addWidget(self.checkBoxGdtId, 2, 3, 1, 2)
         templateInfosLayout.addWidget(labelGdtDateiname, 3, 0)
         templateInfosLayout.addWidget(self.lineEditGdtDateiname, 3, 1)
         templateInfosLayout.addWidget(self.checkboxImmerGdtAlsExportDateiendung, 3, 2)
@@ -816,6 +824,7 @@ class MainWindow(QMainWindow):
     def einstellungenAllgemein(self, checked, neustartfrage):
         de = dialogEinstellungenAllgemein.EinstellungenAllgemein(self.configPath)
         if de.exec() == 1:
+            self.configIni["Allgemein"]["exportverzeichnisexistenzpruefen"] = str(de.checkBoxExportverzeichnisExistenzPruefen.isChecked())
             self.configIni["Allgemein"]["updaterpfad"] = de.lineEditUpdaterPfad.text()
             self.configIni["Allgemein"]["autoupdate"] = str(de.checkBoxAutoUpdate.isChecked())
             with open(os.path.join(self.configPath, "config.ini"), "w") as configfile:
@@ -2074,7 +2083,7 @@ class MainWindow(QMainWindow):
                             exportverzeichnis = class_gdtdatei.GdtDatei.getTemplateInfo(os.path.join(self.standardTemplateVerzeichnis, templateDateiname))[3]
                             if not os.path.exists(exportverzeichnis):
                                 nichtExistierendeExportverzeichnisse.append(exportverzeichnis + "\" (Template \"" + templateDateiname[:-4] + "\")")
-                    if len(nichtExistierendeExportverzeichnisse) > 0:
+                    if len(nichtExistierendeExportverzeichnisse) > 0 and self.exportverzeichnisExistenzPruefen:
                         neev = "\n- ".join(nichtExistierendeExportverzeichnisse)
                         mb = QMessageBox(QMessageBox.Icon.Question, "Hinweis von OptiGDT", "Die folgenden Exportverzeichnisse existieren nicht:\n- " + neev + "\nSoll die Verzeichnisüberwachung dennoch gerstartet werden?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
                         mb.setDefaultButton(QMessageBox.StandardButton.No)

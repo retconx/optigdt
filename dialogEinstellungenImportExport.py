@@ -220,7 +220,7 @@ class EinstellungenImportExport(QDialog):
                             except:
                                 mb = QMessageBox(QMessageBox.Icon.Warning, "Hinweis von OptiGDT", "Problem beim Komprimieren des Referenz-GDT-Dateiverzeichnisses", QMessageBox.StandardButton.Ok)
                                 mb.exec()
-                        mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die gewünschten Einstellungen" + referenzdateienExportiert + " wurden erfolgreich unter dem Namen " + zipName + " exportiert." + referenzdateienExportiert, QMessageBox.StandardButton.Ok)
+                        mb = QMessageBox(QMessageBox.Icon.Information, "Hinweis von OptiGDT", "Die gewünschten Einstellungen" + referenzdateienExportiert + " wurden erfolgreich unter dem Namen " + zipName + " exportiert.", QMessageBox.StandardButton.Ok)
                         mb.exec()
                         self.done(1)
                 except Exception as e:
